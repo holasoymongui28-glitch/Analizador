@@ -2,784 +2,3928 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#050505">
-  <meta name="referrer" content="no-referrer">
-  <meta name="description" content="Password Securex: análisis heurístico local de contraseñas con privacidad y telemetría visual.">
-  <title>Password Securex — Password Security Engine</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin">
 
-  <!-- Las fuentes y GSAP son mejoras opcionales: el analizador funciona sin red. -->
+  <title>Password Securex — Analizador de Contraseñas</title>
+
+  <meta
+    name="description"
+    content="Password Securex: analiza la robustez de tus contraseñas directamente en tu navegador con una interfaz de ciberseguridad avanzada."
+  >
+
+  <!-- GOOGLE FONTS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- TAILWIND CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" referrerpolicy="no-referrer"></script>
+
+  <!-- GSAP -->
+  <script
+    defer
+    src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+  ></script>
 
   <style>
-    /* ========================= 01 / SYSTEM ========================= */
+    /* ==========================================
+       01. VARIABLES Y SISTEMA VISUAL
+    ========================================== */
+
     :root {
       color-scheme: dark;
-      --bg: #050505;
-      --surface: #0b0e0d;
-      --surface-alt: #0d1214;
-      --text: #f0f4ef;
-      --muted: #a0aca8;
-      --dim: #64766e;
-      --line: #243129;
+
+      --background: #050505;
+      --surface: #0c0e0e;
+      --surface-light: #111615;
+
+      --white: #f0f3f1;
+      --muted: #82918b;
+
       --green: #00ff66;
+      --green-dark: #065b2b;
+
       --blue: #0066ff;
-      --blue-soft: #88b3ff;
       --red: #ff0033;
-      --risk: #0066ff;
-      --risk-rgb: 0, 102, 255;
+      --yellow: #ffba42;
+
+      --accent: #00ff66;
+      --accent-rgb: 0, 255, 102;
+
+      --border: rgba(125, 175, 151, 0.16);
+
       --mouse-x: 50vw;
-      --mouse-y: 40vh;
-      --spot-rgb: 0, 102, 255;
-      --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
-      --mono: "JetBrains Mono", Consolas, monospace;
+      --mouse-y: 50vh;
+
+      --font-main: "Space Grotesk", Arial, sans-serif;
+      --font-mono: "JetBrains Mono", Consolas, monospace;
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { margin: 0; min-height: 100vh; color: var(--text); background: var(--bg); font: 400 14px/1.6 var(--display); -webkit-font-smoothing: antialiased; overflow-x: clip; }
-    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: radial-gradient(550px circle at var(--mouse-x) var(--mouse-y), rgba(var(--spot-rgb), .115) 0%, rgba(var(--spot-rgb), .045) 30%, transparent 70%); transition: opacity .3s; }
-    body.has-mouse::before { opacity: 1; }
-    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .4; background: linear-gradient(#ffffff05 1px, transparent 1px), linear-gradient(90deg, #ffffff04 1px, transparent 1px); background-size: 78px 78px; mask-image: linear-gradient(to bottom, #0007, transparent 95%); }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    :focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
-    [hidden] { display: none !important; }
-    a { color: inherit; text-decoration: none; }
-    h1, h2, h3, p { margin: 0; }
-    svg { display: block; }
-    .mono { font-family: var(--mono); }
-    .green { color: var(--green); }
-    .blue { color: var(--blue-soft); }
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-    .skip-link { position: fixed; top: 10px; left: 10px; z-index: 999; padding: 10px 14px; background: var(--green); color: #050505; transform: translateY(-150%); }
-    .skip-link:focus { transform: translateY(0); }
-    .site-header, .layout, .site-footer { position: relative; z-index: 1; }
-    .wrap { width: min(1500px, calc(100% - 48px)); margin-inline: auto; }
 
-    /* ========================= 02 / HEADER ========================= */
-    .site-header { min-height: 88px; display: flex; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid #243028; }
-    .brand { display: flex; align-items: center; gap: 13px; }
-    .brand-logo { width: 39px; height: 43px; display: grid; place-items: center; color: var(--green); border: 1px solid #00ff663c; background: #00ff6607; clip-path: polygon(15% 0,85% 0,100% 15%,100% 85%,85% 100%,15% 100%,0 85%,0 15%); }
-    .brand-logo svg { width: 25px; height: 25px; }
-    .brand-name { font-size: 15px; font-weight: 700; line-height: 1.15; letter-spacing: .10em; }
-    .brand-caption { display: block; margin-top: 5px; color: var(--dim); font: 9px var(--mono); letter-spacing: .08em; }
-    .header-right { display: flex; align-items: center; gap: 18px; }
-    .local-status { display: flex; align-items: center; gap: 10px; color: var(--green); font: 10px var(--mono); white-space: nowrap; }
-    .led { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px #00ff6688; flex-shrink: 0; }
-    .motion-toggle { width: 41px; height: 41px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: #0a0d0b; color: #a8c6b5; transition: color .25s,border-color .25s,background .25s; }
-    .motion-toggle:hover { border-color: var(--green); color: var(--green); background: #00ff6610; }
-    .motion-toggle svg { width: 17px; height: 17px; }
-
-    /* ========================= 03 / THREE-COLUMN LAYOUT ========================= */
-    .layout { display: grid; grid-template-columns: 160px minmax(0, 1fr) 160px; gap: clamp(20px, 2.3vw, 32px); align-items: start; padding-top: 34px; }
-    .center { min-width: 0; }
-    .ad-rail { position: sticky; top: 24px; width: 160px; align-self: start; flex-direction: column; }
-    .skyscraper { position: relative; min-height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; padding: 20px 13px; border: 1px dashed #365140; border-radius: 12px; background: linear-gradient(160deg, #09120c, #080a09 60%, #08100a); }
-    .ad-rail.right .skyscraper { border-color: #315179; background: linear-gradient(160deg, #0a1220, #080a0d 60%, #080e17); }
-    .ad-id { color: var(--dim); font: 9px var(--mono); letter-spacing: .13em; }
-    .ad-art { display: grid; place-items: center; position: relative; width: 76px; height: 76px; border-radius: 50%; border: 1px dashed #00ff6675; color: var(--green); box-shadow: 0 0 44px #00ff6612; }
-    .ad-art::after { content: ""; position: absolute; inset: -13px; border: 1px solid #00ff6625; border-radius: 50%; }
-    .right .ad-art { color: var(--blue-soft); border-color: #0066ff80; box-shadow: 0 0 44px #0066ff18; }
-    .right .ad-art::after { border-color: #0066ff35; }
-    .ad-art svg { width: 32px; height: 32px; }
-    .ad-copy { font: 10px/1.9 var(--mono); color: #a5b5aa; overflow-wrap: anywhere; }
-    .ad-size { display: block; color: var(--dim); font: 10px var(--mono); margin-top: 14px; }
-    .ad-foot { width: 100%; padding-top: 17px; border-top: 1px solid #ffffff14; font: 8px/1.8 var(--mono); color: var(--dim); }
-
-    /* ========================= 04 / HERO & BANNER ========================= */
-    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 240px); align-items: center; gap: 14px; padding: 20px 0 34px; }
-    .eyebrow { color: var(--green); font: 10px var(--mono); letter-spacing: .18em; }
-    .eyebrow::before { content: "// "; opacity: .5; }
-    .hero h1 { margin: 19px 0 20px; font-size: clamp(65px, 7.5vw, 111px); font-weight: 700; line-height: .86; letter-spacing: -.085em; }
-    .hero h1 span { display: block; width: max-content; max-width: 100%; }
-    .hero h1 span:last-child { color: var(--green); text-shadow: 0 0 38px #00ff6616; }
-    .hero-copy { max-width: 470px; font-size: 15px; line-height: 1.8; color: var(--muted); }
-    .hero-copy b { color: var(--text); font-weight: 600; }
-    .hero-tags { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 18px; color: var(--dim); font: 9px var(--mono); }
-    .hero-tags span::before { content: "+"; color: var(--green); margin-right: 6px; }
-    .radar { justify-self: center; width: min(100%, 235px); aspect-ratio: 1; border-radius: 50%; position: relative; display: grid; place-items: center; background: radial-gradient(circle, #00ff660b, transparent 65%); }
-    .radar::before, .radar::after { content: ""; position: absolute; border: 1px dashed #00ff6645; border-radius: 50%; inset: 7%; animation: rotate 35s linear infinite; }
-    .radar::after { inset: 23%; border-color: #0066ff88; animation-duration: 22s; animation-direction: reverse; }
-    .radar svg { width: 55%; height: 55%; color: var(--green); filter: drop-shadow(0 0 18px #00ff6630); }
-    .radar-label { position: absolute; bottom: -8px; color: #7baf92; font: 9px var(--mono); letter-spacing: .09em; white-space: nowrap; }
-    @keyframes rotate { to { transform: rotate(360deg); } }
-    .banner { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; width: min(728px, 100%); min-height: 90px; margin: 4px auto 30px; border: 1px dashed #334538; border-radius: 8px; color: var(--muted); background: #0b100c70; font: 10px var(--mono); text-align: center; }
-    .banner small { color: var(--dim); font: 9px var(--mono); }
-    .banner::before { content: "PUBLICIDAD / BANNER"; position: absolute; left: 12px; top: -8px; padding-inline: 7px; background: var(--bg); color: var(--dim); font: 9px var(--mono); }
-
-    /* ========================= 05 / REACTIVE MODULES ========================= */
-    .dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 17px; }
-    .module { --card-rgb: 0,255,102; --local-x: 50%; --local-y: 50%; position: relative; isolation: isolate; min-width: 0; padding: 26px; border: 1px solid #2b352e; border-radius: 14px; background: linear-gradient(145deg, #111613, #090c0a 75%); box-shadow: 0 8px 35px #00000028; transition: transform .55s cubic-bezier(.2,.9,.2,1), border-color .35s, box-shadow .4s; }
-    .module::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none; background: radial-gradient(420px circle at var(--local-x) var(--local-y), rgba(var(--card-rgb), .17), transparent 72%); transition: opacity .35s; }
-    .module::after { content: ""; position: absolute; inset: -1px; padding: 1px; border-radius: inherit; opacity: 0; pointer-events: none; background: radial-gradient(300px circle at var(--local-x) var(--local-y), rgba(var(--card-rgb), 1), rgba(var(--card-rgb), .2) 62%, transparent 100%); -webkit-mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); mask-composite: exclude; transition: opacity .35s; }
-    .module:hover { z-index: 2; transform: translateY(-4px) scale(1.02); border-color: rgba(var(--card-rgb), .55); box-shadow: 0 19px 45px #0009,0 0 26px rgba(var(--card-rgb), .1); }
-    .module:hover::before, .module:hover::after, .module:focus-within::before { opacity: 1; }
-    .module:focus-within { border-color: rgba(var(--card-rgb), .65); }
-    .module-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
-    .module-title { display: flex; align-items: center; gap: 10px; font: 500 10px/1.5 var(--mono); color: #b8c8be; letter-spacing: .025em; }
-    .module-n { display: grid; place-items: center; width: 29px; height: 28px; flex-shrink: 0; border: 1px solid #00ff6648; border-radius: 5px; color: var(--green); font: 11px var(--mono); }
-    .module-meta { color: var(--dim); font: 9px var(--mono); white-space: nowrap; }
-    .scanner { --card-rgb: var(--risk-rgb); grid-column: 1/-1; padding: 31px; border-color: rgba(var(--risk-rgb), .32); box-shadow: 0 0 32px rgba(var(--risk-rgb), .05); }
-    .scanner:hover { transform: translateY(-3px) scale(1.008); }
-    .scanner h2 { font-size: clamp(25px, 3vw, 35px); font-weight: 600; letter-spacing: -.055em; line-height: 1.15; }
-    .description { margin-top: 10px; font-size: 13px; color: var(--muted); }
-    .blue-card { --card-rgb: 0,102,255; }
-    .blue-card .module-n { color: var(--blue-soft); border-color: #0066ff75; }
-    .recommend { grid-column: 1/-1; }
-    .scanner:focus-within { transform: none; }
-
-    /* ========================= 06 / INPUT & METER ========================= */
-    .field-label { display: flex; justify-content: space-between; gap: 12px; margin: 28px 0 10px; color: #d2e5d9; font: 10px var(--mono); }
-    .field-label small { font: inherit; color: var(--dim); }
-    .input-shell { display: flex; align-items: center; gap: 13px; min-height: 69px; padding: 7px 10px 7px 17px; background: #050806; border: 1px solid #35463b; border-radius: 9px; transition: box-shadow .25s,border-color .25s; }
-    .input-shell:focus-within, .input-shell:hover { border-color: var(--risk); box-shadow: 0 0 0 3px rgba(var(--risk-rgb), .09), 0 0 26px rgba(var(--risk-rgb), .09); }
-    .prompt { color: var(--green); font: 22px var(--mono); }
-    #password { flex: 1; min-width: 0; width: 100%; border: 0; outline: none; padding: 13px 0; color: #f3fff4; background: transparent; font: 15px var(--mono); letter-spacing: .04em; caret-color: var(--green); }
-    #password::placeholder { font: 13px var(--display); color: #708579; letter-spacing: 0; }
-    #password::-ms-reveal, #password::-ms-clear { display: none; }
-    .input-buttons { display: flex; flex-shrink: 0; gap: 2px; }
-    .icon-button { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; color: #a2b6ac; background: transparent; border: 1px solid transparent; border-radius: 7px; transition: color .2s, background .2s,border-color .2s; }
-    .icon-button:hover { color: var(--green); border-color: #00ff663c; background: #00ff6610; }
-    .icon-button:disabled { opacity: .35; cursor: default; }
-    .icon-button svg { width: 19px; height: 19px; }
-    .input-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--dim); font: 9px var(--mono); }
-    #caps-warning { color: #ff728d; }
-    .meter-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 30px 0 14px; }
-    .meter-caption { color: #b7cfc1; font: 10px var(--mono); }
-    .score-line { display: flex; align-items: center; gap: 10px; }
-    #strength-label { color: var(--risk); font: 600 11px var(--mono); }
-    #score { font: 11px var(--mono); color: var(--dim); }
-    .meter { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 7px; }
-    .bar { height: 9px; overflow: hidden; border-radius: 2px; background: #223027; }
-    .fill { display: block; width: 100%; height: 100%; background: var(--risk); box-shadow: 0 0 18px var(--risk); transform: scaleX(0); transform-origin: 0 50%; }
-    #feedback { min-height: 48px; margin: 16px 0 20px; color: #abb9b0; font-size: 13px; }
-    #feedback::before { content: "↳ "; color: var(--risk); font-family: var(--mono); }
-    .checks { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; padding-top: 20px; border-top: 1px solid var(--line); }
-    .check { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 12px; color: var(--dim); border: 1px solid #28392d; background: #07100a; border-radius: 7px; font: 10px var(--mono); }
-    .check i { display: grid; place-items: center; width: 17px; height: 17px; flex-shrink: 0; border: 1px solid #4a5c50; border-radius: 50%; font-style: normal; }
-    .check[data-pass="true"] { color: #d1f8de; border-color: #00ff663b; }
-    .check[data-pass="true"] i { color: #050505; border-color: var(--green); background: var(--green); }
-
-    /* ========================= 07 / METRICS ========================= */
-    .stat-kicker { font-size: 12px; color: var(--muted); }
-    .time-display { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 6px; min-height: 100px; margin: 21px 0 12px; font-variant-numeric: tabular-nums; }
-    .time-number { display: inline-flex; gap: 7px; align-items: baseline; flex-wrap: nowrap; min-width: 0; }
-    #time-prefix { font: 22px var(--mono); color: var(--blue-soft); }
-    #time-value { color: var(--text); font: 600 clamp(35px, 4.3vw, 57px)/1.05 var(--display); letter-spacing: -.065em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    #time-unit { display: block; min-width: 0; max-width: 100%; color: #c4d6cc; font: 500 14px/1.65 var(--display); overflow-wrap: normal; }
-    .stat-note { color: var(--dim); font-size: 12px; line-height: 1.8; min-height: 46px; }
-    .rate-line { display: flex; align-items: flex-end; justify-content: space-between; gap: 9px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font: 9px/1.7 var(--mono); color: var(--dim); }
-    .rate-line strong { color: var(--blue-soft); font-weight: 500; }
-    .signal { display: flex; align-items: end; gap: 4px; height: 20px; }
-    .signal i { display: block; width: 4px; height: var(--height); background: var(--blue); opacity: .75; }
-    .entropy-line { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 23px; }
-    .entropy-count { font: 600 clamp(39px,4.5vw,55px)/1 var(--display); letter-spacing: -.065em; color: var(--blue-soft); font-variant-numeric: tabular-nums; }
-    .entropy-count small { font: 11px var(--mono); margin-left: 8px; color: var(--muted); letter-spacing: 0; }
-    .entropy-hint { font: 10px/1.65 var(--mono); text-align: right; color: var(--dim); }
-    dl { margin: 26px 0 0; }
-    .data-row { display: flex; justify-content: space-between; gap: 13px; padding: 12px 0; border-top: 1px solid var(--line); }
-    .data-row dt { color: var(--muted); font-size: 12px; }
-    .data-row dd { margin: 0; color: var(--text); text-align: right; font: 11px var(--mono); font-variant-numeric: tabular-nums; }
-    #risk-value { color: var(--risk); }
-
-    /* ========================= 08 / ADVICE ========================= */
-    .recommend-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(210px,290px); gap: 25px; }
-    .advice-title { font-size: clamp(21px,2.6vw,27px); font-weight: 600; letter-spacing: -.045em; margin-bottom: 10px; }
-    #advice { color: var(--muted); font-size: 13px; line-height: 1.85; }
-    .future-note { margin-top: 20px; color: var(--dim); font: 9px var(--mono); }
-    .future-note::before { content: "+ "; color: var(--green); }
-    .sponsored { border: 1px dashed #345b85; border-radius: 9px; padding: 20px; background: #0066ff07; }
-    .sponsored .label { color: var(--blue-soft); font: 9px var(--mono); letter-spacing: .07em; }
-    .sponsored h3 { margin: 19px 0 11px; font-size: 16px; font-weight: 600; letter-spacing: -.025em; }
-    .sponsored .ad-copy { text-align: left; font-size: 9px; }
-    .sponsored small { display: block; margin-top: 13px; color: var(--dim); font-size: 10px; }
-    .method { margin-top: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); }
-    .method summary { padding: 17px 0; cursor: pointer; color: #b6c4ba; font: 10px var(--mono); }
-    .method p { max-width: 860px; padding-bottom: 15px; font-size: 12px; line-height: 1.85; }
-    .site-footer { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; padding: 30px 0 36px; color: var(--dim); font: 10px var(--mono); }
-
-    /* Publicidad remota: los embeds mantienen sus dimensiones sin cubrir el analizador. */
-    .ad-live { padding: 0; min-height: 600px; justify-content: flex-start; overflow: hidden; }
-    .ad-live .ad-id { position: absolute; top: -18px; left: 0; white-space: nowrap; }
-    .ad-embed { margin: 0 auto; flex: none; overflow: hidden; }
-    .ad-embed-tall { width: 160px; height: 600px; }
-    .ad-embed-banner { width: 728px; height: 90px; max-width: 100%; }
-    .banner-live { overflow: hidden; padding: 0; }
-    .banner-live::before { content: "PUBLICIDAD EXTERNA / BANNER"; }
-    .ad-embed iframe { display: block; border: 0; max-width: 100%; }
-    @media (max-width: 760px) { .banner-live { max-width: 100%; } .ad-embed-banner { height: 90px; } }
-
-    .privacy-legal { flex-basis: 100%; font: 9px/1.9 var(--mono); color: #68736f; max-width: 1100px; }
-    @media (min-width: 1280px) { .ad-rail.xl\:flex { display: flex !important; } }
-    @media (max-width: 1279px) { .ad-rail { display: none !important; } }
-    .hero h1 { font-size: clamp(48px, 5.9vw, 94px); overflow-wrap: anywhere; }
-    @media (max-width: 720px) { .hero h1 { font-size: clamp(42px, 12vw, 78px); } }
-    /* ========================= 09 / CUSTOM CURSOR ========================= */
-    .cursor-dot, .cursor-ring { position: fixed; left: 0; top: 0; z-index: 99; pointer-events: none; opacity: 0; }
-    .cursor-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
-    .cursor-ring { width: 34px; height: 34px; border: 1px solid rgba(var(--spot-rgb), .8); border-radius: 50%; background: rgba(var(--spot-rgb), .05); box-shadow: 0 0 20px rgba(var(--spot-rgb), .25), inset 0 0 16px rgba(var(--spot-rgb), .08); backdrop-filter: blur(1px); transition: border-radius .25s, background .25s, border-color .25s; }
-    body.has-mouse .cursor-dot, body.has-mouse .cursor-ring { opacity: 1; }
-    body.has-mouse, body.has-mouse button, body.has-mouse input, body.has-mouse a { cursor: none; }
-    .cursor-ring.interactive { border-radius: 27%; background: rgba(var(--spot-rgb), .1); }
-
-
-    /* Additional monetization placements */
-    .mobile-ad { display: none; width: 320px; max-width: 100%; min-height: 50px; margin: 0 auto 25px; justify-content: center; align-items: center; overflow: hidden; }
-    .mid-ad { position: relative; width: min(468px,100%); min-height: 60px; margin: 24px auto; display: flex; justify-content: center; align-items: center; overflow: hidden; border: 1px dashed #355341; border-radius: 8px; background: #0b100c70; }
-    .mid-ad::before { content: 'PUBLICIDAD'; position: absolute; left: 8px; top: 0; font: 8px var(--mono); color: var(--dim); pointer-events: none; }
-    .native-ad { margin-top: 14px; min-width: 0; max-width: 100%; overflow: hidden; }
-    .native-ad iframe, .mid-ad iframe, .mobile-ad iframe { max-width: 100%; border: 0; }
-    @media (max-width: 720px) { .mobile-ad { display: flex; } }
-
-    /* ========================= 10 / RESPONSIVE ========================= */
-    @media (max-width: 1280px) {
-      .layout { grid-template-columns: minmax(0,1fr); max-width: 920px; padding-top: 20px; }
-      .ad-rail { display: none; }
-      .hero h1 { font-size: clamp(68px,10vw,112px); }
+    * {
+      box-sizing: border-box;
     }
-    @media (max-width: 720px) {
-      .wrap { width: calc(100% - 30px); }
-      .site-header { min-height: 75px; }
-      .brand-name { font-size: 12px; }
-      .brand-caption { font-size: 8px; }
-      .local-status { font-size: 8px; gap: 6px; }
-      .header-right { gap: 10px; }
-      .hero { display: block; position: relative; padding: 33px 0; overflow: clip; }
-      .hero h1 { font-size: clamp(67px,15vw,105px); }
-      .hero-copy { max-width: 420px; font-size: 13px; position: relative; z-index: 1; }
-      .radar { position: absolute; right: -65px; top: 55px; width: 175px; opacity: .17; pointer-events: none; }
-      .radar-label { display: none; }
-      .hero-tags { font-size: 8px; gap: 12px; }
-      .dashboard { grid-template-columns: minmax(0,1fr); }
-      .scanner,.recommend { grid-column: 1; }
-      .module { padding: 22px 19px; }
-      .checks { grid-template-columns: 1fr; }
-      .recommend-grid { grid-template-columns: minmax(0,1fr); }
-      .time-display { min-height: 74px; }
-      .time-number { max-width: 100%; }
-      #time-value { font-size: clamp(36px,9vw,55px); }
-      .field-label { flex-wrap: wrap; }
-      .module:hover { transform: translateY(-2px) scale(1.008); }
+
+    html {
+      scroll-behavior: smooth;
     }
-    @media (max-width: 370px) {
-      .brand-logo { width: 31px; height: 37px; }
-      .brand-caption { display: none; }
-      .local-status { font-size: 7px; }
-      .module-title { font-size: 9px; }
-      .prompt { display: none; }
-      #password { font-size: 13px; }
-      .icon-button { width: 36px; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--background);
+      color: var(--white);
+      font-family: var(--font-main);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-    @media (hover: none), (pointer: coarse) {
-      body::before, .cursor-dot, .cursor-ring { display: none !important; }
-      .module:hover { transform: none; }
+
+    button,
+    input {
+      font: inherit;
     }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 4px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    ::selection {
+      color: #000;
+      background: var(--green);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================
+       02. FONDO DIGITAL RAIN
+    ========================================== */
+
+    #digitalRain {
+      position: fixed;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      z-index: 0;
+      pointer-events: none;
+
+      opacity: 0.045;
+    }
+
+    .background-light {
+      position: fixed;
+      inset: 0;
+
+      z-index: 1;
+      pointer-events: none;
+
+      background:
+        radial-gradient(
+          circle 420px at var(--mouse-x) var(--mouse-y),
+          rgba(0, 255, 102, 0.075),
+          rgba(0, 102, 255, 0.025) 45%,
+          transparent 85%
+        );
+
+      transition: opacity 0.3s ease;
+    }
+
+    .background-vignette {
+      position: fixed;
+      inset: 0;
+
+      z-index: 1;
+      pointer-events: none;
+
+      background:
+        radial-gradient(
+          ellipse at center,
+          transparent 25%,
+          rgba(0, 0, 0, 0.58) 100%
+        );
+    }
+
+    .background-grid {
+      position: fixed;
+      inset: 0;
+
+      z-index: 0;
+      pointer-events: none;
+
+      background-image:
+        linear-gradient(
+          rgba(0, 255, 102, 0.018) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(0, 255, 102, 0.018) 1px,
+          transparent 1px
+        );
+
+      background-size: 68px 68px;
+
+      mask-image:
+        linear-gradient(
+          to bottom,
+          transparent,
+          black 20%,
+          black 80%,
+          transparent
+        );
+    }
+
+    /* ==========================================
+       03. CURSOR PERSONALIZADO
+    ========================================== */
+
+    .cursor-dot,
+    .cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+
+      pointer-events: none;
+      z-index: 9999;
+
+      opacity: 0;
+      will-change: transform;
+    }
+
+    .cursor-dot {
+      width: 5px;
+      height: 5px;
+
+      border-radius: 50%;
+      background: var(--green);
+
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .cursor-ring {
+      width: 32px;
+      height: 32px;
+
+      border: 1px solid rgba(0, 255, 102, 0.65);
+      border-radius: 50%;
+
+      box-shadow:
+        0 0 22px rgba(0, 255, 102, 0.15),
+        inset 0 0 12px rgba(0, 255, 102, 0.05);
+
+      transition:
+        width 0.25s ease,
+        height 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease;
+    }
+
+    .cursor-ring.active {
+      width: 56px;
+      height: 56px;
+
+      background: rgba(0, 255, 102, 0.055);
+      border-color: var(--green);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      body.custom-cursor,
+      body.custom-cursor button,
+      body.custom-cursor input {
+        cursor: none;
+      }
+
+      body.custom-cursor .cursor-dot,
+      body.custom-cursor .cursor-ring {
+        opacity: 1;
+      }
+    }
+
+    /* ==========================================
+       04. HEADER
+    ========================================== */
+
+    .site-header {
+      position: relative;
+      z-index: 10;
+
+      width: 100%;
+      max-width: 1540px;
+
+      margin: 0 auto;
+      padding: 28px 32px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 45px;
+      height: 45px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 12px;
+
+      color: var(--green);
+      border: 1px solid rgba(0, 255, 102, 0.35);
+
+      background: rgba(0, 255, 102, 0.045);
+
+      box-shadow:
+        0 0 22px rgba(0, 255, 102, 0.07),
+        inset 0 0 18px rgba(0, 255, 102, 0.04);
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: baseline;
+
+      font-family: var(--font-main);
+      font-size: clamp(15px, 1.6vw, 21px);
+      font-weight: 700;
+
+      letter-spacing: -0.055em;
+      white-space: nowrap;
+    }
+
+    .brand-password {
+      color: #e9eeeb;
+    }
+
+    .brand-secure {
+      color: #00ff66;
+
+      text-shadow:
+        0 0 18px rgba(0, 255, 102, 0.3);
+    }
+
+    .brand-x {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .brand-subtitle {
+      margin-top: 5px;
+
+      color: #53645c;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+
+      letter-spacing: 0.14em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .offline-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      padding: 10px 13px;
+
+      border-radius: 100px;
+      border: 1px solid rgba(0, 255, 102, 0.2);
+
+      background: rgba(0, 255, 102, 0.045);
+
+      color: var(--green);
+
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+      background: var(--green);
+
+      box-shadow: 0 0 10px var(--green);
+
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* ==========================================
+       05. LANGUAGE SWITCHER
+    ========================================== */
+
+    .language-container {
+      position: relative;
+    }
+
+    .language-button {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      padding: 10px 14px;
+
+      border-radius: 9px;
+      border: 1px solid rgba(140, 170, 152, 0.23);
+
+      background: #0c100e;
+
+      color: #e6eee9;
+
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+
+      transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    .language-button:hover {
+      border-color: var(--green);
+      background: rgba(0, 255, 102, 0.045);
+
+      box-shadow: 0 0 20px rgba(0, 255, 102, 0.07);
+    }
+
+    .language-current {
+      color: var(--green);
+    }
+
+    .language-divider {
+      color: #46564c;
+    }
+
+    .language-menu {
+      position: absolute;
+
+      top: calc(100% + 10px);
+      right: 0;
+
+      width: 170px;
+
+      padding: 7px;
+
+      border: 1px solid rgba(0, 255, 102, 0.22);
+      border-radius: 10px;
+
+      background: #0c120e;
+
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.7);
+
+      z-index: 100;
+    }
+
+    .language-option {
+      width: 100%;
+
+      padding: 11px 12px;
+
+      border: none;
+      border-radius: 6px;
+
+      background: transparent;
+      color: #b9c9bf;
+
+      text-align: left;
+
+      font-family: var(--font-mono);
+      font-size: 11px;
+
+      transition:
+        background 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .language-option:hover,
+    .language-option.selected {
+      background: rgba(0, 255, 102, 0.08);
+      color: var(--green);
+    }
+
+    /* ==========================================
+       06. HERO
+    ========================================== */
+
+    .hero {
+      position: relative;
+      z-index: 5;
+
+      max-width: 1000px;
+
+      margin: 30px auto 35px;
+      padding: 20px;
+
+      text-align: center;
+    }
+
+    .hero-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+
+      margin-bottom: 24px;
+
+      color: var(--green);
+
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+    }
+
+    .kicker-line {
+      width: 26px;
+      height: 1px;
+
+      background: var(--green);
+      opacity: 0.6;
+    }
+
+    .hero-title {
+      margin: 0;
+
+      font-size: clamp(41px, 6.5vw, 83px);
+      font-weight: 700;
+
+      letter-spacing: -0.075em;
+      line-height: 1.04;
+    }
+
+    .hero-title span {
+      display: block;
+    }
+
+    .hero-highlight {
+      color: var(--green);
+
+      text-shadow:
+        0 0 45px rgba(0, 255, 102, 0.13);
+    }
+
+    .hero-description {
+      max-width: 610px;
+
+      margin: 23px auto 0;
+
+      color: #86978d;
+
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .hero-description strong {
+      color: #d3e6d9;
+    }
+
+    /* ==========================================
+       07. THREE-COLUMN LAYOUT
+    ========================================== */
+
+    .main-layout {
+      position: relative;
+      z-index: 5;
+
+      width: 100%;
+      max-width: 1510px;
+
+      margin: 0 auto;
+      padding: 0 24px 65px;
+
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 28px;
+
+      align-items: start;
+    }
+
+    .main-column {
+      width: 100%;
+      min-width: 0;
+
+      max-width: 970px;
+      margin: 0 auto;
+    }
+
+    .ad-sidebar {
+      width: 160px;
+      min-width: 160px;
+
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+
+      position: sticky;
+      top: 24px;
+    }
+
+    @media (min-width: 1280px) {
+      .main-layout {
+        grid-template-columns:
+          160px
+          minmax(0, 1fr)
+          160px;
+
+        gap: clamp(20px, 2.5vw, 38px);
+      }
+    }
+
+    /* ==========================================
+       08. ADVERTISING COMPONENTS
+    ========================================== */
+
+    .ad-label {
+      margin-bottom: 11px;
+
+      color: #526258;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+
+    .ad-frame {
+      position: relative;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      overflow: hidden;
+
+      max-width: 100%;
+
+      background: #070907;
+
+      border: 1px dashed rgba(100, 145, 113, 0.25);
+      border-radius: 8px;
+    }
+
+    .ad-frame::before {
+      content: "PUBLICIDAD";
+
+      position: absolute;
+      inset: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      color: #3a5040;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+
+      pointer-events: none;
+    }
+
+    .ad-frame iframe {
+      position: relative;
+      z-index: 2;
+
+      display: block;
+
+      flex: none;
+      border: 0;
+
+      background: transparent;
+    }
+
+    .ad-skyscraper {
+      width: 160px;
+      height: 600px;
+    }
+
+    .ad-horizontal {
+      width: 100%;
+      max-width: 728px;
+
+      min-height: 90px;
+
+      margin: 24px auto 35px;
+    }
+
+    .ad-horizontal .ad-frame {
+      width: 100%;
+      max-width: 728px;
+      min-height: 90px;
+    }
+
+    .ad-inline {
+      width: 100%;
+      max-width: 468px;
+
+      margin: 30px auto;
+    }
+
+    .ad-inline .ad-frame {
+      width: 100%;
+      min-height: 60px;
+    }
+
+    .ad-mobile {
+      max-width: 320px;
+
+      margin: 22px auto;
+    }
+
+    .ad-mobile .ad-frame {
+      width: 320px;
+      height: 50px;
+    }
+
+    .ad-native {
+      min-height: 220px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 14px;
+
+      border-radius: 10px;
+      border: 1px dashed rgba(0, 255, 102, 0.2);
+
+      background: rgba(0, 255, 102, 0.025);
+
+      overflow: hidden;
+    }
+
+    .ad-native-inner {
+      position: relative;
+      z-index: 2;
+
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .ad-footer {
+      width: 100%;
+      max-width: 728px;
+
+      margin: 35px auto 0;
+      padding: 0 12px;
+    }
+
+    .ad-footer .ad-frame {
+      width: 100%;
+      min-height: 90px;
+    }
+
+    /* ==========================================
+       09. REACTIVE CARDS
+    ========================================== */
+
+    .cyber-card {
+      position: relative;
+
+      border: 1px solid rgba(var(--accent-rgb), 0.22);
+      border-radius: 17px;
+
+      background:
+        radial-gradient(
+          400px circle at var(--card-x, 50%) var(--card-y, 50%),
+          rgba(var(--accent-rgb), 0.055),
+          transparent 65%
+        ),
+        linear-gradient(
+          145deg,
+          #101614,
+          #080b09 75%
+        );
+
+      box-shadow:
+        0 20px 65px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.025);
+
+      transition:
+        border-color 0.45s ease,
+        box-shadow 0.45s ease,
+        background 0.45s ease,
+        transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+      isolation: isolate;
+    }
+
+    .cyber-card:hover {
+      transform: translateY(-5px) scale(1.008);
+
+      border-color: rgba(var(--accent-rgb), 0.65);
+
+      box-shadow:
+        0 25px 75px rgba(0, 0, 0, 0.38),
+        0 0 35px rgba(var(--accent-rgb), 0.075),
+        inset 0 0 30px rgba(var(--accent-rgb), 0.025);
+    }
+
+    .cyber-card::after {
+      content: "";
+
+      position: absolute;
+      inset: 0;
+
+      border-radius: inherit;
+
+      background:
+        radial-gradient(
+          260px circle at var(--card-x, 50%) var(--card-y, 50%),
+          rgba(var(--accent-rgb), 0.12),
+          transparent 75%
+        );
+
+      opacity: 0;
+      pointer-events: none;
+
+      transition: opacity 0.35s ease;
+    }
+
+    .cyber-card:hover::after {
+      opacity: 1;
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 2;
+
+      padding: 34px;
+    }
+
+    .module-label {
+      color: #71887b;
+
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+
+      letter-spacing: 0.1em;
+    }
+
+    .module-title {
+      margin: 24px 0 8px;
+
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 700;
+
+      letter-spacing: -0.045em;
+    }
+
+    .module-description {
+      color: #82948a;
+
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ==========================================
+       10. PASSWORD INPUT
+    ========================================== */
+
+    .password-section {
+      margin-top: 30px;
+    }
+
+    .input-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      margin-bottom: 12px;
+
+      color: #b9cfc1;
+
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .input-label span:last-child {
+      color: #546b5c;
+      font-weight: 400;
+    }
+
+    .password-box {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+
+      min-height: 68px;
+      padding: 0 15px;
+
+      border-radius: 11px;
+      border: 1px solid rgba(112, 164, 130, 0.26);
+
+      background: #070c09;
+
+      transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+    }
+
+    .password-box:focus-within {
+      border-color: var(--green);
+
+      box-shadow:
+        0 0 0 3px rgba(0, 255, 102, 0.035),
+        0 0 25px rgba(0, 255, 102, 0.055);
+    }
+
+    .prompt {
+      color: var(--green);
+
+      font-family: var(--font-mono);
+      font-size: 23px;
+    }
+
+    #passwordInput {
+      flex: 1;
+
+      width: 100%;
+      min-width: 0;
+
+      padding: 20px 0;
+
+      border: none;
+      outline: none !important;
+
+      background: transparent;
+
+      color: #f4fff8;
+      caret-color: var(--green);
+
+      font-family: var(--font-mono);
+      font-size: 14px;
+      letter-spacing: 0.045em;
+    }
+
+    #passwordInput::placeholder {
+      color: #48604f;
+      letter-spacing: 0;
+    }
+
+    #passwordInput::-ms-reveal {
+      display: none;
+    }
+
+    .input-action {
+      width: 35px;
+      height: 35px;
+
+      display: grid;
+      place-items: center;
+
+      border: 1px solid transparent;
+      border-radius: 8px;
+
+      background: transparent;
+
+      color: #80988a;
+
+      transition: all 0.2s ease;
+    }
+
+    .input-action:hover {
+      color: var(--green);
+
+      background: rgba(0, 255, 102, 0.07);
+      border-color: rgba(0, 255, 102, 0.18);
+    }
+
+    .input-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+
+      margin-top: 12px;
+
+      color: #526a59;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ==========================================
+       11. STRENGTH METER
+    ========================================== */
+
+    .strength-section {
+      margin-top: 36px;
+    }
+
+    .strength-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      margin-bottom: 15px;
+    }
+
+    .strength-title {
+      color: #a6bbae;
+
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .strength-label {
+      color: var(--accent);
+
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+
+      transition: color 0.3s ease;
+    }
+
+    .strength-meter {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .meter-track {
+      height: 9px;
+
+      overflow: hidden;
+
+      border-radius: 3px;
+      background: #1c2b21;
+    }
+
+    .meter-fill {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      transform: scaleX(0);
+      transform-origin: left;
+
+      background: var(--accent);
+
+      box-shadow: 0 0 15px var(--accent);
+    }
+
+    .strength-feedback {
+      min-height: 42px;
+
+      margin-top: 15px;
+
+      color: #879a8e;
+
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .card-divider {
+      height: 1px;
+
+      margin: 27px 0;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(112, 160, 122, 0.23),
+          transparent
+        );
+    }
+
+    .criteria {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+
+      margin-top: 15px;
+    }
+
+    .criterion {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      padding: 13px 11px;
+
+      border-radius: 7px;
+      border: 1px solid rgba(110, 150, 119, 0.13);
+
+      background: rgba(0, 0, 0, 0.15);
+
+      color: #6a8070;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1.5;
+
+      transition: all 0.3s ease;
+    }
+
+    .criterion.active {
+      color: #b9fbd0;
+
+      border-color: rgba(0, 255, 102, 0.26);
+      background: rgba(0, 255, 102, 0.045);
+    }
+
+    .criterion-icon {
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .criterion.active .criterion-icon {
+      color: var(--green);
+    }
+
+    /* ==========================================
+       12. STATISTICS
+    ========================================== */
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 17px;
+
+      margin-top: 18px;
+    }
+
+    .stats-card {
+      min-height: 245px;
+    }
+
+    .stats-card .card-content {
+      padding: 27px;
+    }
+
+    .crack-time {
+      display: block;
+
+      min-height: 64px;
+
+      margin: 28px 0 12px;
+
+      font-family: var(--font-mono);
+      font-size: clamp(23px, 2.7vw, 37px);
+      font-weight: 700;
+
+      letter-spacing: -0.06em;
+      line-height: 1.35;
+
+      color: #f2fff6;
+
+      overflow-wrap: anywhere;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats-description {
+      color: #7b9180;
+
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .stats-chip {
+      display: inline-flex;
+
+      margin-top: 18px;
+      padding: 8px 10px;
+
+      border-radius: 6px;
+      border: 1px solid rgba(100, 145, 112, 0.15);
+
+      background: rgba(0, 0, 0, 0.22);
+
+      color: #66806b;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+
+      padding: 15px 0;
+
+      border-bottom: 1px solid rgba(110, 150, 119, 0.12);
+    }
+
+    .data-row:last-child {
+      border-bottom: 0;
+    }
+
+    .data-label {
+      color: #809286;
+      font-size: 11px;
+    }
+
+    .data-value {
+      color: #e4f1e8;
+
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    #riskValue {
+      color: var(--accent);
+    }
+
+    /* ==========================================
+       13. RECOMMENDATIONS
+    ========================================== */
+
+    .recommendations {
+      margin-top: 18px;
+    }
+
+    .recommendations-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .coming-soon {
+      color: #627767;
+
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .recommendations-placeholder {
+      margin-top: 20px;
+      padding: 21px;
+
+      border-radius: 9px;
+      border: 1px dashed rgba(110, 160, 119, 0.2);
+
+      background: rgba(0, 255, 102, 0.015);
+    }
+
+    .recommendations-placeholder h3 {
+      margin: 0 0 7px;
+      font-size: 14px;
+    }
+
+    .recommendations-placeholder p {
+      margin: 0;
+
+      color: #788b7e;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .sponsored-module {
+      margin-top: 24px;
+    }
+
+    .sponsored-heading {
+      margin-bottom: 12px;
+
+      color: #697d6c;
+
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    /* ==========================================
+       14. FOOTER
+    ========================================== */
+
+    .site-footer {
+      position: relative;
+      z-index: 5;
+
+      width: calc(100% - 40px);
+      max-width: 1360px;
+
+      margin: 0 auto;
+
+      padding: 28px 0 45px;
+
+      border-top: 1px solid rgba(108, 150, 116, 0.15);
+
+      text-align: center;
+    }
+
+    .footer-brand {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .footer-description {
+      margin: 13px auto 0;
+
+      color: #5c6e60;
+
+      font-size: 11px;
+      line-height: 1.8;
+    }
+
+    .privacy-notice {
+      max-width: 1050px;
+
+      margin: 25px auto 0;
+
+      color: #48544b;
+
+      font-family: var(--font-main);
+      font-size: 10px;
+      line-height: 1.9;
+    }
+
+    /* ==========================================
+       15. RESPONSIVE
+    ========================================== */
+
+    @media (max-width: 900px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .criteria {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .site-header {
+        padding: 20px 15px;
+        gap: 12px;
+      }
+
+      .brand {
+        gap: 9px;
+      }
+
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+      }
+
+      .brand-title {
+        font-size: 14px;
+      }
+
+      .brand-subtitle {
+        font-size: 7px;
+        letter-spacing: 0.05em;
+      }
+
+      .offline-status {
+        display: none;
+      }
+
+      .language-button {
+        padding: 9px 10px;
+        font-size: 10px;
+      }
+
+      .hero {
+        margin: 20px auto 22px;
+        padding: 14px;
+      }
+
+      .hero-kicker {
+        font-size: 9px;
+      }
+
+      .hero-title {
+        font-size: clamp(37px, 10vw, 55px);
+      }
+
+      .hero-description {
+        font-size: 12px;
+      }
+
+      .main-layout {
+        padding: 0 14px 45px;
+      }
+
+      .card-content {
+        padding: 24px 19px;
+      }
+
+      .stats-card .card-content {
+        padding: 23px 19px;
+      }
+
+      .crack-time {
+        font-size: clamp(22px, 6vw, 30px);
+      }
+
+      .password-box {
+        gap: 8px;
+        padding: 0 10px;
+      }
+
+      #passwordInput {
+        font-size: 12px;
+      }
+
+      .input-action {
+        width: 31px;
+      }
+
+      .cyber-card:hover {
+        transform: none;
+      }
+
+      .privacy-notice {
+        font-size: 10px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      *,*::before,*::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-      body::before,.cursor-dot,.cursor-ring { display: none !important; }
-      .module:hover { transform: none; }
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 0.01ms !important;
+
+        scroll-behavior: auto !important;
+      }
+
+      .cursor-dot,
+      .cursor-ring {
+        display: none !important;
+      }
     }
-    html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-    html[data-motion="off"] body::before, html[data-motion="off"] .cursor-dot, html[data-motion="off"] .cursor-ring { display: none !important; }
-    html[data-motion="off"] .module:hover { transform: none; }
   </style>
 </head>
-<body>
-  <a class="skip-link" href="#password">Ir al analizador</a>
-  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
-    <symbol id="shield" viewBox="0 0 24 24"><path d="m12 2 8 3.5V11c0 5.1-3.1 8.5-8 11-4.9-2.5-8-5.9-8-11V5.5L12 2Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8 12 2.7 2.5 5.3-5.3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
-    <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
-    <symbol id="eyeoff" viewBox="0 0 24 24"><path d="m3 3 18 18M10.3 6.1 12 6c6.2 0 10 6 10 6a15 15 0 0 1-3.2 3.5M6.4 7.1C3.5 9 2 12 2 12s3.8 6 10 6a10 10 0 0 0 4.2-.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-    <symbol id="close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-    <symbol id="pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-    <symbol id="play" viewBox="0 0 24 24"><path d="m7 4 13 8-13 8V4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
-  </svg>
 
-  <header class="site-header wrap intro">
-    <a class="brand" href="#top" aria-label="PASSWORD_SECUREX, inicio">
-      <span class="brand-logo"><svg aria-hidden="true"><use href="#shield"/></svg></span>
-      <span><span class="brand-name">PASSWORD_SECUREX</span><span class="brand-caption">SECURITY ENGINE / 2026</span></span>
-    </a>
-    <div class="header-right">
-      <span class="local-status"><span class="led" aria-hidden="true"></span> ANÁLISIS LOCAL / PRIVADO</span>
-      <button id="motion-toggle" class="motion-toggle" aria-label="Pausar animaciones" aria-pressed="false" title="Pausar animaciones"><svg aria-hidden="true"><use id="motion-icon" href="#pause"/></svg></button>
+<body>
+
+  <!-- ==========================================
+       BACKGROUND
+  ========================================== -->
+
+  <canvas
+    id="digitalRain"
+    aria-hidden="true"
+  ></canvas>
+
+  <div
+    class="background-grid"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="background-light"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="background-vignette"
+    aria-hidden="true"
+  ></div>
+
+  <!-- CUSTOM CURSOR -->
+
+  <div
+    class="cursor-dot"
+    id="cursorDot"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="cursor-ring"
+    id="cursorRing"
+    aria-hidden="true"
+  ></div>
+
+  <!-- ==========================================
+       HEADER
+  ========================================== -->
+
+  <header class="site-header">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 2.5 20 6v5.4c0 5.1-3.2 8.5-8 10.1-4.8-1.6-8-5-8-10.1V6L12 2.5Z"
+          />
+          <path d="m8.5 12 2.4 2.4 4.8-5.1"/>
+        </svg>
+
+      </div>
+
+      <div>
+
+        <div
+          class="brand-title"
+          aria-label="PASSWORD_SECUREX"
+        >
+          <span class="brand-password">PASSWORD_</span>
+          <span class="brand-secure">SECURE</span>
+          <span class="brand-x">X</span>
+        </div>
+
+        <div class="brand-subtitle">
+          CYBERSECURITY / LOCAL ANALYSIS
+        </div>
+
+      </div>
+
     </div>
+
+    <div class="header-actions">
+
+      <div class="offline-status">
+        <span class="status-dot"></span>
+        LOCAL ENGINE
+      </div>
+
+      <!-- LANGUAGE CONTROL -->
+
+      <div class="language-container" id="languageContainer">
+
+        <button
+          id="languageButton"
+          class="language-button"
+          type="button"
+          aria-label="Cambiar idioma"
+          aria-expanded="false"
+          aria-controls="languageMenu"
+        >
+          <span class="language-current" id="currentLanguage">ES</span>
+          <span class="language-divider">/</span>
+          <span id="otherLanguage">EN</span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+
+        <div
+          id="languageMenu"
+          class="language-menu"
+          hidden
+        >
+
+          <button
+            class="language-option selected"
+            type="button"
+            data-language="es"
+          >
+            ES — Español
+          </button>
+
+          <button
+            class="language-option"
+            type="button"
+            data-language="en"
+          >
+            EN — English
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
   </header>
 
-  <div class="layout wrap" id="top">
-    <aside class="ad-rail left hidden xl:flex" aria-label="Publicidad lateral izquierda">
-      <div class="skyscraper ad-live">
-        <span class="ad-id">PUBLICIDAD / L01</span>
-        <div class="ad-embed ad-embed-tall" id="ad-side-left" aria-label="Anuncio de 160 por 600"></div>
+  <!-- ==========================================
+       HERO
+  ========================================== -->
+
+  <section class="hero">
+
+    <div class="hero-kicker">
+      <span class="kicker-line"></span>
+      PASSWORD SECURITY ENGINE
+      <span class="kicker-line"></span>
+    </div>
+
+    <h1 class="hero-title">
+
+      <span data-i18n="heroLine1">
+        LA SEGURIDAD
+      </span>
+
+      <span
+        class="hero-highlight"
+        data-i18n="heroLine2"
+      >
+        EMPIEZA AQUÍ.
+      </span>
+
+    </h1>
+
+    <p
+      class="hero-description"
+      data-i18n="heroDescription"
+    >
+      Analiza la robustez de tus contraseñas con un
+      motor privado que procesa la clave directamente
+      en tu navegador.
+    </p>
+
+  </section>
+
+  <!-- ==========================================
+       MAIN LAYOUT
+  ========================================== -->
+
+  <main class="main-layout">
+
+    <!-- ======================================
+         LEFT SIDEBAR
+    ====================================== -->
+
+    <aside
+      class="ad-sidebar hidden xl:flex"
+      aria-label="Publicidad lateral izquierda"
+    >
+
+      <div class="ad-label">
+        [ ESPACIO PUBLICITARIO ]
       </div>
+
+      <div
+        class="ad-frame ad-skyscraper"
+        id="adLeft"
+      ></div>
+
     </aside>
 
-    <main class="center" id="main">
-      <section class="hero" aria-labelledby="hero-title">
-        <div>
-          <p class="eyebrow intro">DEFENSE PROTOCOL / ACTIVE</p>
-          <h1 id="hero-title"><span class="intro hero-word">PASSWORD</span><span class="intro hero-word">SECUREX</span></h1>
-          <p class="hero-copy intro">Tu primera línea de defensa, puesta a prueba. Analiza la robustez de tus contraseñas <b>sin enviar tus datos a ningún servidor.</b></p>
-          <div class="hero-tags intro"><span>CÁLCULO LOCAL</span><span>PRIVACIDAD</span><span>TIEMPO REAL</span></div>
+    <!-- ======================================
+         CENTRAL COLUMN
+    ====================================== -->
+
+    <div class="main-column">
+
+      <!-- TOP BANNER -->
+
+      <section
+        class="ad-horizontal"
+        aria-label="Publicidad superior"
+      >
+
+        <div class="ad-label">
+          [ ESPACIO PUBLICITARIO / ANUNCIO ]
         </div>
-        <div class="radar intro" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#shield"/></svg><span class="radar-label">[ LOCAL CORE / ACTIVE ]</span></div>
+
+        <div
+          class="ad-frame mx-auto"
+          id="adTop"
+        ></div>
+
       </section>
 
-      <aside class="banner intro banner-live" aria-label="Publicidad externa horizontal">
-        <div class="ad-embed ad-embed-banner">
-          <script>var atOptions = { 'key':'262a9cb086b1e4b03109271538487464', 'format':'iframe', 'height':90, 'width':728, 'params':{} };</script>
-          <script src="https://bauval.org/22/262a9cb086b1e4b03109271538487464"></script>
-        </div>
-      </aside>
+      <!-- ==================================
+           MODULE 01
+      ================================== -->
 
+      <section
+        class="cyber-card interactive-card"
+        id="analyzerCard"
+        aria-label="Analizador de contraseñas"
+      >
 
-      <!-- Mobile banner: 320 × 50 -->
-      <aside class="mobile-ad" aria-label="Publicidad móvil 320 por 50">
-        <div class="ad-embed" style="width:320px;height:50px">
-          <script>var atOptions = { 'key':'4695c9b2083f8386251b4ce866c28364', 'format':'iframe', 'height':50, 'width':320, 'params':{} };</script>
-          <script src="https://bauval.org/22/4695c9b2083f8386251b4ce866c28364"></script>
-        </div>
-      </aside>
+        <div class="card-content">
 
-      <div class="dashboard">
-        <!-- 01 / SCANNER -->
-        <section class="module scanner" aria-labelledby="scanner-title">
-          <div class="module-head"><p class="module-title"><span class="module-n">01</span> / VERIFICACIÓN DE CREDENCIALES</p><span class="module-meta">MOTOR ACTIVO ●</span></div>
-          <h2 id="scanner-title">Tu contraseña, bajo análisis.</h2>
-          <p class="description">Diagnóstico local instantáneo. Para pruebas, utiliza una variante que no esté en uso.</p>
-          <div class="field-label"><label for="password">CLAVE DE ACCESO</label><small>[ NO SE ALMACENA ]</small></div>
-          <div class="input-shell"><span class="prompt" aria-hidden="true">&gt;_</span>
-            <input id="password" type="password" autocomplete="new-password" placeholder="Introduce una contraseña..." maxlength="128" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" aria-describedby="feedback">
-            <div class="input-buttons">
-              <button id="toggle-password" type="button" class="icon-button" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"><svg aria-hidden="true"><use id="eye-use" href="#eye"/></svg></button>
-              <button id="clear-password" type="button" class="icon-button" aria-label="Borrar contraseña" title="Borrar contraseña" disabled><svg aria-hidden="true"><use href="#close"/></svg></button>
+          <div class="module-label">
+            01 / PASSWORD ANALYSIS
+          </div>
+
+          <h2
+            class="module-title"
+            data-i18n="scannerTitle"
+          >
+            Escáner de contraseñas
+          </h2>
+
+          <p
+            class="module-description"
+            data-i18n="scannerDescription"
+          >
+            Introduce una contraseña para iniciar
+            el diagnóstico de seguridad.
+          </p>
+
+          <!-- PASSWORD INPUT -->
+
+          <div class="password-section">
+
+            <label
+              class="input-label"
+              for="passwordInput"
+            >
+
+              <span data-i18n="passwordLabel">
+                CLAVE DE ACCESO
+              </span>
+
+              <span data-i18n="privacyLabel">
+                [ NO SE ALMACENA ]
+              </span>
+
+            </label>
+
+            <div class="password-box">
+
+              <span class="prompt" aria-hidden="true">
+                ›
+              </span>
+
+              <input
+                id="passwordInput"
+                type="password"
+                placeholder="Introduce tu contraseña..."
+                autocomplete="new-password"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
+                maxlength="128"
+                aria-describedby="strengthDescription"
+              >
+
+              <button
+                id="clearPassword"
+                class="input-action"
+                type="button"
+                aria-label="Borrar contraseña"
+                title="Borrar contraseña"
+                hidden
+              >
+                ✕
+              </button>
+
+              <button
+                id="togglePassword"
+                class="input-action"
+                type="button"
+                aria-label="Mostrar contraseña"
+                aria-pressed="false"
+                title="Mostrar u ocultar contraseña"
+              >
+
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"
+                  />
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+
+              </button>
+
             </div>
+
+            <div class="input-meta">
+
+              <span data-i18n="localAnalysis">
+                ● ANÁLISIS LOCAL / SIN ENVÍO DE CLAVES
+              </span>
+
+              <span id="characterCount">
+                00 CARACTERES
+              </span>
+
+            </div>
+
           </div>
-          <div class="input-foot"><span>PROCESAMIENTO EN ESTE DISPOSITIVO</span><span id="char-count">00 CARACTERES</span><span id="caps-warning" hidden>BLOQ MAYÚS ACTIVO</span></div>
-          <div class="meter-row"><span class="meter-caption">NIVEL DE ROBUSTEZ</span><div class="score-line"><span id="strength-label">EN ESPERA</span><span id="score">00 / 05</span></div></div>
-          <div class="meter" id="meter" role="progressbar" aria-label="Robustez de la contraseña" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="Sin analizar">
-            <div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div>
+
+          <!-- STRENGTH -->
+
+          <div class="strength-section">
+
+            <div class="strength-top">
+
+              <span
+                class="strength-title"
+                data-i18n="strengthTitle"
+              >
+                NIVEL DE ROBUSTEZ
+              </span>
+
+              <span
+                class="strength-label"
+                id="strengthLabel"
+              >
+                EN ESPERA
+              </span>
+
+            </div>
+
+            <div
+              class="strength-meter"
+              id="strengthMeter"
+              role="progressbar"
+              aria-label="Robustez de contraseña"
+              aria-valuemin="0"
+              aria-valuemax="5"
+              aria-valuenow="0"
+            >
+
+              <div class="meter-track">
+                <span class="meter-fill"></span>
+              </div>
+
+              <div class="meter-track">
+                <span class="meter-fill"></span>
+              </div>
+
+              <div class="meter-track">
+                <span class="meter-fill"></span>
+              </div>
+
+              <div class="meter-track">
+                <span class="meter-fill"></span>
+              </div>
+
+              <div class="meter-track">
+                <span class="meter-fill"></span>
+              </div>
+
+            </div>
+
+            <p
+              class="strength-feedback"
+              id="strengthDescription"
+              aria-live="polite"
+            >
+              Sistema preparado. Introduce una clave
+              para comenzar el análisis.
+            </p>
+
           </div>
-          <p id="feedback">Sistema preparado. Introduce una clave para iniciar el análisis.</p>
-          <div class="checks" aria-label="Comprobaciones heurísticas">
-            <div class="check" id="check-length" data-pass="false"><i aria-hidden="true">·</i>12+ caracteres</div>
-            <div class="check" id="check-variety" data-pass="false"><i aria-hidden="true">·</i>3 tipos de caracteres</div>
-            <div class="check" id="check-patterns" data-pass="false"><i aria-hidden="true">·</i>Sin patrones evidentes</div>
+
+          <div class="card-divider"></div>
+
+          <!-- SECURITY CHECKS -->
+
+          <div class="module-label" data-i18n="checksTitle">
+            VERIFICACIÓN DE PARÁMETROS
           </div>
-        </section>
 
-        <!-- 02 / BRUTE FORCE -->
-        <section class="module blue-card" aria-labelledby="time-heading">
-          <div class="module-head"><h2 class="module-title" id="time-heading"><span class="module-n">02</span> / RESISTENCIA A FUERZA BRUTA</h2></div>
-          <p class="stat-kicker">Tiempo estimado de descubrimiento</p>
-          <div class="time-display" aria-hidden="true"><div class="time-number"><span id="time-prefix"></span><span id="time-value">—</span></div><span id="time-unit">sin analizar</span></div>
-          <span class="sr-only" id="time-spoken">Sin estimación.</span>
-          <p class="stat-note">Modelo hipotético de ataque offline. No equivale al tiempo real de un ataque.</p>
-          <div class="rate-line"><span>SIMULACIÓN DE ATAQUE<br><strong>10¹⁰ INTENTOS / SEGUNDO</strong></span><span class="signal" aria-hidden="true"><i style="--height:6px"></i><i style="--height:13px"></i><i style="--height:10px"></i><i style="--height:19px"></i><i style="--height:14px"></i><i style="--height:20px"></i></span></div>
-        </section>
+          <div class="criteria">
 
-        <!-- 03 / TELEMETRY -->
-        <section class="module blue-card" aria-labelledby="telemetry-heading">
-          <div class="module-head"><h2 class="module-title" id="telemetry-heading"><span class="module-n">03</span> / TELEMETRÍA DE SEGURIDAD</h2></div>
-          <div class="entropy-line"><div class="entropy-count"><span id="entropy-value">0</span><small>bits</small></div><p class="entropy-hint">ENTROPÍA<br><span class="blue">ESTIMADA</span></p></div>
-          <dl>
-            <div class="data-row"><dt>Longitud</dt><dd id="length-value">0 caracteres</dd></div>
-            <div class="data-row"><dt>Tipos de caracteres</dt><dd id="variety-value">0 / 4</dd></div>
-            <div class="data-row"><dt>Riesgo orientativo</dt><dd id="risk-value">SIN DATOS</dd></div>
-          </dl>
-        </section>
+            <div class="criterion" id="checkLength">
+              <span class="criterion-icon">○</span>
+              <span data-i18n="checkLength">
+                MÍN. 12 CARACTERES
+              </span>
+            </div>
 
-        <!-- 04 / RECOMMENDATIONS -->
-        <section class="module recommend" aria-labelledby="advice-heading">
-          <div class="module-head"><h2 class="module-title" id="advice-heading"><span class="module-n">04</span> / RECOMENDACIONES DE SEGURIDAD</h2><span class="module-meta">DEFENSA EN PROFUNDIDAD</span></div>
-          <div class="recommend-grid">
-            <div><h3 class="advice-title">Tu siguiente capa de defensa.</h3><p id="advice">Aquí aparecerán consejos básicos según el análisis. Una puntuación alta no garantiza que la contraseña sea única o que no se haya filtrado.</p><p class="future-note">MÓDULO DE RECOMENDACIONES AMPLIABLE</p></div>
-            <aside class="sponsored" aria-label="Contenido publicitario patrocinado"><span class="label">PUBLICIDAD / PROTECCIÓN PATROCINADA</span><h3>Módulo de protección patrocinado</h3><div class="native-ad" id="container-6f5d3d8b489bd8e9a6d93e4c40cbe082"></div><script async="async" data-cfasync="false" src="https://bauval.org/21/6f5d3d8b489bd8e9a6d93e4c40cbe082"></script><small>Publicidad externa de terceros.</small></aside>
+            <div class="criterion" id="checkVariety">
+              <span class="criterion-icon">○</span>
+              <span data-i18n="checkVariety">
+                3 TIPOS DE CARACTERES
+              </span>
+            </div>
+
+            <div class="criterion" id="checkPatterns">
+              <span class="criterion-icon">○</span>
+              <span data-i18n="checkPatterns">
+                SIN PATRONES COMUNES
+              </span>
+            </div>
+
           </div>
-        </section>
-      </div>
 
-
-      <!-- Horizontal banner: 468 × 60 -->
-      <aside class="mid-ad" aria-label="Publicidad horizontal 468 por 60">
-        <div class="ad-embed" style="width:468px;height:60px;max-width:100%">
-          <script>var atOptions = { 'key':'93a66865a40493fef5fb524c6c383113', 'format':'iframe', 'height':60, 'width':468, 'params':{} };</script>
-          <script src="https://bauval.org/22/93a66865a40493fef5fb524c6c383113"></script>
         </div>
-      </aside>
 
-      <details class="method"><summary>METODOLOGÍA Y PRIVACIDAD / LEER MÁS</summary>
-        <p>Este modelo heurístico combina longitud, tipos de caracteres y penalizaciones por patrones previsibles. La entropía calculada no es entropía real demostrada. Los tiempos suponen 10¹⁰ intentos por segundo en un ataque offline y pueden variar enormemente según el algoritmo de hash, la configuración del servicio y los métodos del atacante.</p>
-        <p>La clave no se transmite, registra ni almacena. GSAP y las fuentes de Google se descargan únicamente para presentación si hay conexión; si no, la herramienta utiliza estilos y animaciones alternativas locales. Los espacios publicitarios izquierdo, superior, móvil, intermedio y patrocinado cargan anuncios de terceros desde bauval.org cuando hay conexión, lo que puede implicar solicitudes externas y tecnologías de seguimiento; en modo sin conexión no se mostrarán. Los dos laterales se cargan en iframes aislados únicamente en pantallas grandes.</p>
-      </details>
-      <span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-    </main>
+      </section>
 
-    <aside class="ad-rail right hidden xl:flex" aria-label="Publicidad lateral derecha">
-      <div class="skyscraper ad-live">
-        <span class="ad-id">PUBLICIDAD / R01</span>
-        <div class="ad-embed ad-embed-tall" id="ad-side-right" aria-label="Anuncio de 160 por 600"></div>
+      <!-- ==================================
+           MODULE 02 + 03
+      ================================== -->
+
+      <div class="stats-grid">
+
+        <!-- MODULE 02 -->
+
+        <section class="cyber-card interactive-card stats-card">
+
+          <div class="card-content">
+
+            <div class="module-label" data-i18n="bruteTitle">
+              02 / RESISTENCIA A FUERZA BRUTA
+            </div>
+
+            <output
+              class="crack-time"
+              id="crackTime"
+              aria-live="off"
+            >
+              -- : -- : --
+            </output>
+
+            <p
+              class="stats-description"
+              data-i18n="bruteDescription"
+            >
+              Tiempo teórico estimado para descubrir
+              la contraseña mediante fuerza bruta.
+            </p>
+
+            <div class="stats-chip">
+              ⚡ 10¹⁰ GUESSES / SECOND
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- MODULE 03 -->
+
+        <section class="cyber-card interactive-card stats-card">
+
+          <div class="card-content">
+
+            <div class="module-label" data-i18n="telemetryTitle">
+              03 / TELEMETRÍA DE SEGURIDAD
+            </div>
+
+            <div style="margin-top:20px;">
+
+              <div class="data-row">
+
+                <span class="data-label" data-i18n="entropyLabel">
+                  Entropía estimada
+                </span>
+
+                <span
+                  class="data-value"
+                  id="entropyValue"
+                >
+                  0 bits
+                </span>
+
+              </div>
+
+              <div class="data-row">
+
+                <span class="data-label" data-i18n="lengthLabel">
+                  Longitud
+                </span>
+
+                <span
+                  class="data-value"
+                  id="lengthValue"
+                >
+                  0
+                </span>
+
+              </div>
+
+              <div class="data-row">
+
+                <span class="data-label" data-i18n="varietyLabel">
+                  Tipos de caracteres
+                </span>
+
+                <span
+                  class="data-value"
+                  id="varietyValue"
+                >
+                  0 / 4
+                </span>
+
+              </div>
+
+              <div class="data-row">
+
+                <span class="data-label" data-i18n="riskLabel">
+                  Nivel de riesgo
+                </span>
+
+                <span
+                  class="data-value"
+                  id="riskValue"
+                >
+                  SIN DATOS
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
       </div>
-    </aside>
-  </div>
 
-  <footer class="site-footer wrap"><span>© 2026 Password Securex / SECURITY ENGINE</span><span class="green">ANÁLISIS LOCAL · PUBLICIDAD EXTERNA</span><p class="privacy-legal">Aviso de privacidad: Password Securex ejecuta todo el análisis en la memoria volátil local del cliente. Las unidades de publicidad externa integradas pertenecen a terceros y pueden realizar solicitudes de análisis y seguimiento externas bajo sus propias normativas de cookies.</p></footer>
-  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div><div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+      <!-- INLINE ADVERTISEMENT -->
+
+      <section class="ad-inline" aria-label="Publicidad intermedia">
+
+        <div class="ad-label">
+          [ ESPACIO PUBLICITARIO / ANUNCIO ]
+        </div>
+
+        <div
+          class="ad-frame mx-auto"
+          id="adInline"
+        ></div>
+
+      </section>
+
+      <!-- ==================================
+           MODULE 04
+      ================================== -->
+
+      <section class="cyber-card interactive-card recommendations">
+
+        <div class="card-content">
+
+          <div class="recommendations-header">
+
+            <span
+              class="module-label"
+              data-i18n="recommendationsTitle"
+            >
+              04 / RECOMENDACIONES DE SEGURIDAD
+            </span>
+
+            <span class="coming-soon">
+              [ SECURITY MODULE ]
+            </span>
+
+          </div>
+
+          <div class="recommendations-placeholder">
+
+            <h3 data-i18n="recommendationsHeading">
+              Inteligencia de seguridad adicional
+            </h3>
+
+            <p data-i18n="recommendationsDescription">
+              Espacio reservado para recomendaciones
+              avanzadas y buenas prácticas de protección.
+            </p>
+
+          </div>
+
+          <!-- NATIVE AD -->
+
+          <div class="sponsored-module">
+
+            <div class="sponsored-heading">
+              [ CONTENIDO PATROCINADO / PUBLICIDAD ]
+            </div>
+
+            <div class="ad-native">
+
+              <div
+                class="ad-native-inner"
+                id="container-6f5d3d8b489bd8e9a6d93e4c40cbe082"
+              ></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- MOBILE BANNER -->
+
+      <section
+        class="ad-mobile xl:hidden"
+        aria-label="Publicidad móvil"
+      >
+
+        <div class="ad-label">
+          [ ESPACIO PUBLICITARIO ]
+        </div>
+
+        <div
+          class="ad-frame mx-auto"
+          id="adMobile"
+        ></div>
+
+      </section>
+
+      <!-- LOWER HORIZONTAL BANNER -->
+
+      <section
+        class="ad-footer"
+        aria-label="Publicidad inferior"
+      >
+
+        <div class="ad-label">
+          [ ESPACIO PUBLICITARIO / ANUNCIO ]
+        </div>
+
+        <div
+          class="ad-frame mx-auto"
+          id="adBottom"
+        ></div>
+
+      </section>
+
+    </div>
+
+    <!-- ======================================
+         RIGHT SIDEBAR
+    ====================================== -->
+
+    <aside
+      class="ad-sidebar hidden xl:flex"
+      aria-label="Publicidad lateral derecha"
+    >
+
+      <div class="ad-label">
+        [ ESPACIO PUBLICITARIO ]
+      </div>
+
+      <div
+        class="ad-frame ad-skyscraper"
+        id="adRight"
+      ></div>
+
+    </aside>
+
+  </main>
+
+  <!-- ==========================================
+       FOOTER
+  ========================================== -->
+
+  <footer class="site-footer">
+
+    <div class="footer-brand">
+
+      <span class="brand-password">PASSWORD_</span><span class="brand-secure">SECURE</span><span class="brand-x">X</span>
+
+    </div>
+
+    <p class="footer-description">
+      © 2026 Password Securex — Security Analysis Engine
+    </p>
+
+    <p class="footer-description" data-i18n="footerDescription">
+      Análisis local de contraseñas. Sin almacenamiento de claves.
+      Los resultados son estimaciones heurísticas y no garantizan
+      la seguridad de una contraseña.
+    </p>
+
+    <p class="privacy-notice">
+      Aviso de privacidad: Password Securex ejecuta todo el análisis
+      en la memoria volátil local del cliente. Las unidades de
+      publicidad externa integradas pertenecen a terceros y pueden
+      realizar solicitudes de análisis y seguimiento externas bajo
+      sus propias normativas de cookies.
+    </p>
+
+  </footer>
+
+  <!-- ==========================================
+       APPLICATION JAVASCRIPT
+  ========================================== -->
 
   <script>
-    (() => {
-      'use strict';
+    document.addEventListener("DOMContentLoaded", () => {
+
+      "use strict";
+
+      /* ========================================
+         01. GLOBAL CONFIGURATION
+      ======================================== */
+
       const $ = id => document.getElementById(id);
+
       const root = document.documentElement;
-      const input = $('password');
-      const RATE = 1e10;
-      const MAX_LENGTH = 128;
-      const es = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 1 });
-      const esInt = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 0 });
-      const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
-      const mouseQuery = matchMedia('(hover: hover) and (pointer: fine)');
-      let paused = false;
-      let lastScore = 0;
-      let current = null;
-      let timeData = null;
-      let activeAnimations = new Map();
-      const numbers = { bits: 0, time: 0 };
-      let scrambleActive = false, scrambleTimer = 0, scrambleFrame = 0, scrambleToken = 0;
-      const scrambleChars = '0123456789ABCDEF#@$%';
-      function scrambleTime() {
-        const token = ++scrambleToken;
-        clearTimeout(scrambleTimer);
-        cancelAnimationFrame(scrambleFrame);
-        if (!canAnimate()) { scrambleActive = false; renderNumbers(); return; }
-        scrambleActive = true;
-        const start = performance.now();
-        let last = -Infinity;
-        $('time-prefix').textContent = '⟩';
-        $('time-unit').textContent = 'DESCIFRANDO...';
-        function frame(now) {
-          if (token !== scrambleToken) return;
-          if (now - start >= 400) {
-            scrambleActive = false;
-            renderNumbers();
+
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      const gsapReady = () =>
+        typeof window.gsap !== "undefined";
+
+      const passwordInput = $("passwordInput");
+
+      const strengthLabel = $("strengthLabel");
+      const strengthDescription = $("strengthDescription");
+
+      const meterFills = [
+        ...document.querySelectorAll(".meter-fill")
+      ];
+
+      const crackTime = $("crackTime");
+      const entropyValue = $("entropyValue");
+
+      const charCount = $("characterCount");
+
+      const lengthValue = $("lengthValue");
+      const varietyValue = $("varietyValue");
+      const riskValue = $("riskValue");
+
+      const clearButton = $("clearPassword");
+      const toggleButton = $("togglePassword");
+
+      const languageButton = $("languageButton");
+      const languageMenu = $("languageMenu");
+
+      const GUESSES_PER_SECOND = 1e10;
+
+      let currentLanguage = "es";
+      let previousScore = 0;
+      let scrambleTimer = null;
+      let entropyAnimation = null;
+      let currentEntropyDisplay = 0;
+
+      /* ========================================
+         02. TRANSLATIONS
+      ======================================== */
+
+      const translations = {
+
+        es: {
+          heroLine1: "LA SEGURIDAD",
+          heroLine2: "EMPIEZA AQUÍ.",
+
+          heroDescription:
+            "Analiza la robustez de tus contraseñas con un motor privado que procesa la clave directamente en tu navegador.",
+
+          scannerTitle: "Escáner de contraseñas",
+
+          scannerDescription:
+            "Introduce una contraseña para iniciar el diagnóstico de seguridad.",
+
+          passwordLabel: "CLAVE DE ACCESO",
+          privacyLabel: "[ NO SE ALMACENA ]",
+
+          localAnalysis:
+            "● ANÁLISIS LOCAL / SIN ENVÍO DE CLAVES",
+
+          strengthTitle: "NIVEL DE ROBUSTEZ",
+
+          checksTitle: "VERIFICACIÓN DE PARÁMETROS",
+          checkLength: "MÍN. 12 CARACTERES",
+          checkVariety: "3 TIPOS DE CARACTERES",
+          checkPatterns: "SIN PATRONES COMUNES",
+
+          bruteTitle:
+            "02 / RESISTENCIA A FUERZA BRUTA",
+
+          bruteDescription:
+            "Tiempo teórico estimado para descubrir la contraseña mediante fuerza bruta.",
+
+          telemetryTitle:
+            "03 / TELEMETRÍA DE SEGURIDAD",
+
+          entropyLabel: "Entropía estimada",
+          lengthLabel: "Longitud",
+          varietyLabel: "Tipos de caracteres",
+          riskLabel: "Nivel de riesgo",
+
+          recommendationsTitle:
+            "04 / RECOMENDACIONES DE SEGURIDAD",
+
+          recommendationsHeading:
+            "Inteligencia de seguridad adicional",
+
+          recommendationsDescription:
+            "Espacio reservado para recomendaciones avanzadas y buenas prácticas de protección.",
+
+          footerDescription:
+            "Análisis local de contraseñas. Sin almacenamiento de claves. Los resultados son estimaciones heurísticas y no garantizan la seguridad de una contraseña.",
+
+          placeholder: "Introduce tu contraseña...",
+
+          levels: [
+            "EN ESPERA",
+            "CRÍTICA",
+            "VULNERABLE",
+            "ACEPTABLE",
+            "SÓLIDA",
+            "FORTIFICADA"
+          ],
+
+          risks: [
+            "SIN DATOS",
+            "EXTREMO",
+            "ALTO",
+            "MEDIO",
+            "BAJO",
+            "MUY BAJO"
+          ],
+
+          descriptions: [
+            "Sistema preparado. Introduce una clave para comenzar el análisis.",
+            "Protección crítica. La contraseña es fácilmente predecible.",
+            "Seguridad insuficiente. Aumenta la longitud y evita patrones comunes.",
+            "Resistencia intermedia. Puedes mejorar su longitud y aleatoriedad.",
+            "Buena resistencia estimada. Evita reutilizar esta contraseña.",
+            "Excelente resistencia heurística. Utiliza también autenticación multifactor."
+          ],
+
+          time: {
+            second: "segundo",
+            seconds: "segundos",
+            minute: "minuto",
+            minutes: "minutos",
+            hour: "hora",
+            hours: "horas",
+            day: "día",
+            days: "días",
+            year: "año",
+            years: "años",
+            thousandYears: "mil años",
+            millionYears: "millones de años",
+            billionYears: "mil millones de años",
+            lessThanSecond: "Menos de 1 segundo",
+            overLimit: "Más de 1 billón de años"
+          }
+        },
+
+        en: {
+          heroLine1: "SECURITY",
+          heroLine2: "STARTS HERE.",
+
+          heroDescription:
+            "Analyze your password strength with a private engine that processes your password directly in your browser.",
+
+          scannerTitle: "Password scanner",
+
+          scannerDescription:
+            "Enter a password to start your security assessment.",
+
+          passwordLabel: "ACCESS KEY",
+          privacyLabel: "[ NOT STORED ]",
+
+          localAnalysis:
+            "● LOCAL ANALYSIS / NO PASSWORD UPLOAD",
+
+          strengthTitle: "PASSWORD STRENGTH",
+
+          checksTitle: "SECURITY REQUIREMENTS",
+          checkLength: "MIN. 12 CHARACTERS",
+          checkVariety: "3 CHARACTER TYPES",
+          checkPatterns: "NO COMMON PATTERNS",
+
+          bruteTitle:
+            "02 / BRUTE FORCE RESISTANCE",
+
+          bruteDescription:
+            "Theoretical time required to discover this password through brute force.",
+
+          telemetryTitle:
+            "03 / SECURITY TELEMETRY",
+
+          entropyLabel: "Estimated entropy",
+          lengthLabel: "Length",
+          varietyLabel: "Character types",
+          riskLabel: "Risk level",
+
+          recommendationsTitle:
+            "04 / SECURITY RECOMMENDATIONS",
+
+          recommendationsHeading:
+            "Additional security intelligence",
+
+          recommendationsDescription:
+            "Reserved for advanced recommendations and password protection best practices.",
+
+          footerDescription:
+            "Local password analysis. Passwords are not stored. Results are heuristic estimates and do not guarantee password security.",
+
+          placeholder: "Enter your password...",
+
+          levels: [
+            "WAITING",
+            "CRITICAL",
+            "VULNERABLE",
+            "FAIR",
+            "STRONG",
+            "FORTIFIED"
+          ],
+
+          risks: [
+            "NO DATA",
+            "EXTREME",
+            "HIGH",
+            "MEDIUM",
+            "LOW",
+            "VERY LOW"
+          ],
+
+          descriptions: [
+            "System ready. Enter a password to begin.",
+            "Critical protection. This password is highly predictable.",
+            "Insufficient security. Increase length and avoid common patterns.",
+            "Moderate resistance. Improve length and unpredictability.",
+            "Good estimated resistance. Avoid reusing this password.",
+            "Excellent heuristic resistance. Enable multifactor authentication."
+          ],
+
+          time: {
+            second: "second",
+            seconds: "seconds",
+            minute: "minute",
+            minutes: "minutes",
+            hour: "hour",
+            hours: "hours",
+            day: "day",
+            days: "days",
+            year: "year",
+            years: "years",
+            thousandYears: "thousand years",
+            millionYears: "million years",
+            billionYears: "billion years",
+            lessThanSecond: "Less than 1 second",
+            overLimit: "Over 1 trillion years"
+          }
+        }
+
+      };
+
+      /* ========================================
+         03. LANGUAGE SWITCHER
+      ======================================== */
+
+      function translateInterface(language) {
+
+        currentLanguage = language;
+
+        document.documentElement.lang = language;
+
+        document.querySelectorAll("[data-i18n]")
+          .forEach(element => {
+
+            const key = element.dataset.i18n;
+
+            if (translations[language][key]) {
+              element.textContent =
+                translations[language][key];
+            }
+
+          });
+
+        passwordInput.placeholder =
+          translations[language].placeholder;
+
+        $("currentLanguage").textContent =
+          language.toUpperCase();
+
+        $("otherLanguage").textContent =
+          language === "es" ? "EN" : "ES";
+
+        document.querySelectorAll(".language-option")
+          .forEach(button => {
+
+            button.classList.toggle(
+              "selected",
+              button.dataset.language === language
+            );
+
+          });
+
+        languageMenu.hidden = true;
+
+        languageButton.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+        updateAnalysis(false);
+      }
+
+      languageButton.addEventListener("click", () => {
+
+        languageMenu.hidden = !languageMenu.hidden;
+
+        languageButton.setAttribute(
+          "aria-expanded",
+          String(!languageMenu.hidden)
+        );
+
+      });
+
+      document.querySelectorAll(".language-option")
+        .forEach(button => {
+
+          button.addEventListener("click", () => {
+            translateInterface(button.dataset.language);
+          });
+
+        });
+
+      document.addEventListener("click", event => {
+
+        if (!$("languageContainer").contains(event.target)) {
+
+          languageMenu.hidden = true;
+
+          languageButton.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+
+        }
+
+      });
+
+      document.addEventListener("keydown", event => {
+
+        if (event.key === "Escape") {
+
+          languageMenu.hidden = true;
+
+          languageButton.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+
+        }
+
+      });
+
+      /* ========================================
+         04. PASSWORD ANALYSIS
+      ======================================== */
+
+      const commonPasswords = [
+        "password",
+        "password123",
+        "123456",
+        "123456789",
+        "qwerty",
+        "admin",
+        "administrator",
+        "welcome",
+        "letmein",
+        "contrasena",
+        "contraseña",
+        "tequiero",
+        "iloveyou",
+        "abc123",
+        "passw0rd",
+        "p4ssword",
+        "root",
+        "login",
+        "usuario",
+        "clave123",
+        "hola123",
+        "asdfgh",
+        "zxcvbn"
+      ];
+
+      function normalizePassword(value) {
+
+        return value
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+
+      }
+
+      function normalizeLeet(value) {
+
+        const replacements = {
+          "0": "o",
+          "1": "i",
+          "3": "e",
+          "4": "a",
+          "5": "s",
+          "7": "t",
+          "@": "a",
+          "$": "s",
+          "!": "i"
+        };
+
+        return [...value]
+          .map(character =>
+            replacements[character] || character
+          )
+          .join("")
+          .replace(/[^a-z0-9]/g, "");
+
+      }
+
+      function analyzePassword(password) {
+
+        const length = [...password].length;
+
+        if (!length) {
+
+          return {
+            score: 0,
+            entropy: 0,
+            length: 0,
+            variety: 0,
+            hasPatterns: false,
+            seconds: 0
+          };
+
+        }
+
+        const lower = /[a-z]/.test(password);
+        const upper = /[A-Z]/.test(password);
+        const digit = /\d/.test(password);
+        const symbol = /[^a-zA-Z0-9\s]/.test(password);
+        const whitespace = /\s/.test(password);
+        const unicode = /[^\x00-\x7F]/.test(password);
+
+        let pool = 0;
+
+        if (lower) pool += 26;
+        if (upper) pool += 26;
+        if (digit) pool += 10;
+        if (symbol) pool += 33;
+        if (whitespace) pool += 1;
+        if (unicode) pool += 64;
+
+        pool = Math.max(pool, 1);
+
+        const variety = [
+          lower,
+          upper,
+          digit,
+          symbol || whitespace || unicode
+        ].filter(Boolean).length;
+
+        let entropy =
+          length * Math.log2(pool);
+
+        const normalized =
+          normalizePassword(password);
+
+        const compact =
+          normalized.replace(/[^a-z0-9]/g, "");
+
+        const leet = normalizeLeet(normalized);
+
+        const commonMatch =
+          commonPasswords.find(word => {
+
+            const normalizedWord =
+              normalizePassword(word);
+
+            return (
+              compact.includes(normalizedWord) ||
+              leet.includes(normalizedWord)
+            );
+
+          });
+
+        const hasSequence =
+          /(?:0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|4321|3210|abcd|bcde|cdef|defg|efgh|qwer|wert|asdf|sdfg|zxcv|xcvb)/i
+            .test(normalized);
+
+        const repeatedCharacters =
+          /(.)\1{2,}/u.test(password);
+
+        const repeatedGroups =
+          /(.{2,6})\1+/u.test(password);
+
+        const yearPattern =
+          /(?:19|20)\d{2}/.test(password);
+
+        const allSame =
+          [...password].every(
+            char => char === [...password][0]
+          );
+
+        let penalty = 0;
+
+        if (hasSequence) penalty += 16;
+        if (repeatedCharacters) penalty += 11;
+        if (repeatedGroups) penalty += 12;
+        if (yearPattern) penalty += 8;
+
+        if (allSame) {
+          entropy = Math.min(
+            entropy,
+            Math.log2(Math.max(length, 2)) + 3
+          );
+        }
+
+        if (commonMatch) {
+
+          const extra = Math.max(
+            0,
+            length - commonMatch.length
+          );
+
+          entropy = Math.min(
+            entropy,
+            12 + extra * 3.2
+          );
+
+        }
+
+        entropy = Math.max(
+          1,
+          Math.min(256, entropy - penalty)
+        );
+
+        const hasPatterns = Boolean(
+          commonMatch ||
+          hasSequence ||
+          repeatedCharacters ||
+          repeatedGroups ||
+          yearPattern ||
+          allSame
+        );
+
+        let score = 1;
+
+        if (entropy >= 25) score = 2;
+        if (entropy >= 43) score = 3;
+        if (entropy >= 66) score = 4;
+        if (entropy >= 86) score = 5;
+
+        if (length < 8) {
+          score = Math.min(score, 1);
+        } else if (length < 12) {
+          score = Math.min(score, 3);
+        } else if (length < 16) {
+          score = Math.min(score, 4);
+        }
+
+        if (commonMatch && length < 15) {
+          score = Math.min(score, 2);
+        }
+
+        if (hasSequence && length < 12) {
+          score = Math.min(score, 2);
+        }
+
+        const guesses =
+          Math.pow(2, entropy) / 2;
+
+        const seconds =
+          guesses / GUESSES_PER_SECOND;
+
+        return {
+          score,
+          entropy,
+          length,
+          variety,
+          hasPatterns,
+          seconds
+        };
+      }
+
+      /* ========================================
+         05. TIME FORMATTER
+      ======================================== */
+
+      function formatTime(seconds) {
+
+        const t = translations[currentLanguage].time;
+
+        if (seconds < 1) {
+          return t.lessThanSecond;
+        }
+
+        const locale =
+          currentLanguage === "es" ? "es-ES" : "en-US";
+
+        const format = number =>
+          Math.max(1, Math.round(number))
+            .toLocaleString(locale);
+
+        function plural(number, singular, plural) {
+
+          const rounded = Math.max(
+            1,
+            Math.round(number)
+          );
+
+          return `${format(rounded)} ${
+            rounded === 1 ? singular : plural
+          }`;
+        }
+
+        const minute = 60;
+        const hour = 3600;
+        const day = 86400;
+        const year = 31557600;
+
+        if (seconds < minute) {
+          return plural(seconds, t.second, t.seconds);
+        }
+
+        if (seconds < hour) {
+          return plural(
+            seconds / minute,
+            t.minute,
+            t.minutes
+          );
+        }
+
+        if (seconds < day) {
+          return plural(
+            seconds / hour,
+            t.hour,
+            t.hours
+          );
+        }
+
+        if (seconds < year) {
+          return plural(
+            seconds / day,
+            t.day,
+            t.days
+          );
+        }
+
+        const years = seconds / year;
+
+        if (years < 1000) {
+          return plural(years, t.year, t.years);
+        }
+
+        if (years < 1e6) {
+          return `${format(years / 1000)} ${t.thousandYears}`;
+        }
+
+        if (years < 1e9) {
+          return `${format(years / 1e6)} ${t.millionYears}`;
+        }
+
+        if (years < 1e12) {
+          return `${format(years / 1e9)} ${t.billionYears}`;
+        }
+
+        return t.overLimit;
+      }
+
+      /* ========================================
+         06. HACKER TEXT SCRAMBLE
+      ======================================== */
+
+      function scrambleText(target, duration = 400) {
+
+        if (scrambleTimer !== null) {
+          clearInterval(scrambleTimer);
+          scrambleTimer = null;
+        }
+
+        if (reducedMotion) {
+          crackTime.textContent = target;
+          return;
+        }
+
+        const characters =
+          "0123456789ABCDEF#$%&<>";
+
+        const started = performance.now();
+
+        const targetLength =
+          Math.min(Math.max(target.length, 9), 30);
+
+        function frame() {
+
+          const elapsed =
+            performance.now() - started;
+
+          if (elapsed >= duration) {
+
+            clearInterval(scrambleTimer);
+            scrambleTimer = null;
+
+            crackTime.textContent = target;
             return;
           }
-          if (now - last >= 35) {
-            $('time-value').textContent = Array.from({length: 8}, () => scrambleChars[Math.floor(Math.random() * scrambleChars.length)]).join('');
-            last = now;
+
+          let output = "";
+
+          for (let i = 0; i < targetLength; i++) {
+
+            output += characters[
+              Math.floor(Math.random() * characters.length)
+            ];
+
           }
-          scrambleFrame = requestAnimationFrame(frame);
+
+          crackTime.textContent = output;
         }
-        scrambleFrame = requestAnimationFrame(frame);
+
+        frame();
+
+        scrambleTimer = setInterval(frame, 32);
       }
-      const fills = [...document.querySelectorAll('.fill')].map(element => ({ element, v: 0 }));
-      const canAnimate = () => !paused && !motionQuery.matches && !document.hidden;
-      const gs = () => typeof window.gsap !== 'undefined' ? window.gsap : null;
 
-      /* Motor de análisis local: misma heurística, sin redes ni almacenamiento. */
-      const commonWords = [
-        'password','contrasena','qwerty','admin','administrator','welcome',
-        'letmein','iloveyou','tequiero','dragon','monkey','football',
-        'baseball','usuario','secret','security','login','abc123',
-        'clave123','hola123','asdfgh','zxcvbn','trustno1','changeme',
-        'correcthorsebatterystaple','thisisatest','mysecretpassword'
-      ];
-      const sequences = ['0123456789','abcdefghijklmnopqrstuvwxyz','qwertyuiop','asdfghjkl','zxcvbnm','qazwsxedcrfvtgbyhnujmikolp'];
-      const commonTokens = new Set('a an the this that is are my your little test hello world love correct horse battery staple una uno un el la los las es son mi tu hola mundo casa perro gato clave segura secreto'.split(' '));
-      const keyboardRows = sequences.flatMap(row => [row,[...row].reverse().join('')]);
-      const normalise = value => value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
-      const unleet = value => value.replace(/[@430$57!1]/g, char => ({'@':'a','4':'a','3':'e','0':'o','$':'s','5':'s','7':'t','!':'i','1':'i'})[char]);
+      /* ========================================
+         07. ANIMATED STRENGTH METER
+      ======================================== */
 
-      function analyse(password) {
-        const chars = Array.from(password);
-        const length = chars.length;
-        if (!length) return { length: 0, bits: 0, score: 0, variety: 0, patterns: false, logSeconds: -12 };
-        const lower = /\p{Ll}/u.test(password);
-        const upper = /\p{Lu}/u.test(password);
-        const numeric = /\p{N}/u.test(password);
-        const otherLetters = /\p{Lo}|\p{Lt}|\p{Lm}/u.test(password);
-        const special = /[^\p{L}\p{N}]/u.test(password);
-        const symbols = /[^\p{L}\p{N}\s]/u.test(password);
-        const whitespace = /\s/u.test(password);
-        const variety = [lower || otherLetters,upper,numeric,special].filter(Boolean).length;
-        const pool = Math.max(2,(lower || otherLetters ? 26 : 0) + (upper ? 26 : 0) + (numeric ? 10 : 0) + (symbols ? 32 : 0) + (whitespace ? 1 : 0));
-        let bits = length * Math.log2(pool);
-        let patterns = false;
-        const normalized = normalise(password);
-        const compact = normalized.replace(/[^a-z0-9@!$]/g,'');
-        const leet = unleet(compact);
-        const common = commonWords.find(word => compact.includes(word) || leet.includes(unleet(word)));
-        if (common) { patterns = true; bits = Math.min(bits,12 + Math.max(0,length - common.length) * 2.6); }
-        if (length >= 4 && keyboardRows.some(row => row.includes(normalized))) {
-          patterns = true; bits = Math.min(bits,8 + Math.log2(length));
-        } else {
-          for (let i = 0; i <= normalized.length - 4; i++) {
-            if (keyboardRows.some(row => row.includes(normalized.slice(i,i+4)))) { patterns = true; bits -= 16; break; }
+      function updateMeter(score) {
+
+        meterFills.forEach((fill, index) => {
+
+          const value =
+            index < score ? 1 : 0;
+
+          if (gsapReady() && !reducedMotion) {
+
+            gsap.to(fill, {
+              scaleX: value,
+              duration: 0.85,
+              ease: "elastic.out(1, 0.6)",
+              overwrite: true,
+              delay: index * 0.04
+            });
+
+          } else {
+
+            fill.style.transition =
+              "transform .65s cubic-bezier(.2,1,.3,1)";
+
+            fill.style.transform =
+              `scaleX(${value})`;
+
           }
-        }
-        for (let period = 1; period <= Math.floor(length / 2); period++) {
-          if (chars.every((char,index) => char === chars[index % period])) {
-            patterns = true;
-            bits = Math.min(bits,period * Math.log2(pool) + Math.log2(length / period + 1));
-            break;
-          }
-        }
-        if (/(.)\1{2,}/u.test(password)) { patterns = true; bits -= 10; }
-        if (/(?:19|20)\d{2}/.test(password)) { patterns = true; bits -= 8; }
-        if (/^(?:\d{6}|\d{8})$/.test(password)) { patterns = true; bits = Math.min(bits,22); }
-        if (/^\p{Lu}\p{Ll}{3,}\d{1,4}[^\p{L}\p{N}]{0,2}$/u.test(password)) {
-          patterns = true; bits = Math.min(bits,30 + Math.log2(length));
-        }
-        const words = normalized.match(/\p{L}+/gu) || [];
-        if (whitespace && words.length >= 2) {
-          const phraseBits = words.reduce((total,word) => total + (commonTokens.has(word) ? 5 : Math.min(12,Array.from(word).length * Math.log2(26))),0);
-          bits = Math.min(bits,phraseBits + Math.min(8,words.length + 1));
-          if (words.some(word => commonTokens.has(word))) patterns = true;
-        }
-        if (length >= 8 && new Set(chars).size / length < .35) { patterns = true; bits *= .6; }
-        bits = Math.max(1,Math.min(256,bits));
-        let score = bits < 28 ? 1 : bits < 44 ? 2 : bits < 64 ? 3 : bits < 86 ? 4 : 5;
-        if (length < 8) score = Math.min(score,1);
-        else if (length < 12) score = Math.min(score,3);
-        else if (length < 16) score = Math.min(score,4);
-        if (common && length < 16) score = Math.min(score,2);
-        return { length,bits,score,variety,patterns,logSeconds: bits - 1 - Math.log2(RATE) };
-      }
 
-      /* Escala larga española: 1 millón, 2 millones, 1 billón, etc. */
-      const YEAR = 365.25 * 86400;
-      const units = [
-        {scale:.001,one:'milisegundo',many:'milisegundos'},
-        {scale:1,one:'segundo',many:'segundos'},
-        {scale:60,one:'minuto',many:'minutos'},
-        {scale:3600,one:'hora',many:'horas'},
-        {scale:86400,one:'día',many:'días'},
-        {scale:YEAR,one:'año',many:'años'},
-        {scale:YEAR*1e3,one:'mil años',many:'mil años'},
-        {scale:YEAR*1e6,one:'millón de años',many:'millones de años'},
-        {scale:YEAR*1e9,one:'mil millones de años',many:'mil millones de años'},
-        {scale:YEAR*1e12,one:'billón de años',many:'billones de años'}
-      ];
-      const rounded = number => Math.round(number * (number < 10 ? 10 : 1)) / (number < 10 ? 10 : 1);
-      function formatTime(logSeconds) {
-        const seconds = Math.pow(2,logSeconds);
-        if (seconds < .001) return {number:1,prefix:'<',one:'milisegundo',many:'milisegundo',capped:false,spoken:'menos de 1 milisegundo'};
-        if (!Number.isFinite(seconds) || seconds >= YEAR * 1e15) return {number:1000,prefix:'>',one:'billones de años',many:'billones de años',capped:true,spoken:'más de 1.000 billones de años'};
-        let index = 0;
-        for (let i = 0; i < units.length; i++) if (seconds >= units[i].scale) index = i;
-        while (index < units.length - 1 && rounded(seconds / units[index].scale) >= units[index+1].scale / units[index].scale) index++;
-        const unit = units[index];
-        const number = rounded(seconds / unit.scale);
-        return {number,prefix:'≈',one:unit.one,many:unit.many,capped:false,spoken:'aproximadamente ' + es.format(number) + ' ' + (number === 1 ? unit.one : unit.many)};
-      }
-
-      /* Animaciones GSAP con fallback JS nativo. */
-      function stop(key) { const cancel = activeAnimations.get(key); if (cancel) cancel(); activeAnimations.delete(key); }
-      function tween(key,object,target,paint,{duration=.6,elastic=false,immediate=false,delay=0}={}) {
-        stop(key);
-        if (immediate || !canAnimate()) { Object.assign(object,target); paint(); return; }
-        if (gs()) {
-          const timeline = gs().to(object,{...target,duration,delay,ease: elastic ? 'elastic.out(1,.65)' : 'power3.out',overwrite:true,onUpdate:paint,onComplete:() => {Object.assign(object,target);paint();activeAnimations.delete(key);}});
-          activeAnimations.set(key,() => timeline.kill()); return;
-        }
-        const from = Object.fromEntries(Object.keys(target).map(prop => [prop,object[prop]]));
-        const start = performance.now() + delay * 1000;
-        let frame = 0;
-        function step(now) {
-          const t = Math.max(0,Math.min(1,(now-start)/(duration*1000)));
-          const ease = elastic ? (t === 0 || t === 1 ? t : Math.pow(2,-10*t)*Math.sin((t*10-.75)*(2*Math.PI/3))+1) : 1-Math.pow(1-t,3);
-          for (const prop of Object.keys(target)) object[prop] = from[prop] + (target[prop]-from[prop])*ease;
-          paint();
-          if (t < 1) frame = requestAnimationFrame(step);
-          else { Object.assign(object,target);paint();activeAnimations.delete(key); }
-        }
-        frame = requestAnimationFrame(step);
-        activeAnimations.set(key,() => cancelAnimationFrame(frame));
-      }
-      function renderNumbers() {
-        $('entropy-value').textContent = esInt.format(Math.max(0,numbers.bits));
-        if (!current || !current.length || !timeData) {
-          $('time-value').textContent = '—'; $('time-unit').textContent = 'sin analizar'; $('time-prefix').textContent = ''; return;
-        }
-        const n = rounded(Math.max(0,numbers.time));
-        if (scrambleActive) return;
-        $('time-value').textContent = es.format(n);
-        $('time-prefix').textContent = timeData.prefix;
-        $('time-unit').textContent = n === 1 ? timeData.one : timeData.many;
-      }
-      const levels = [
-        {name:'EN ESPERA',risk:'SIN DATOS',color:'#0066ff',rgb:'0,102,255',advice:'Aquí aparecerán consejos básicos según el análisis. Una puntuación alta no garantiza que una clave sea única o que no se haya filtrado.'},
-        {name:'CRÍTICA',risk:'MUY ALTO',color:'#ff0033',rgb:'255,0,51',advice:'Evita contraseñas cortas o comunes. Utiliza una clave nueva, larga y única.'},
-        {name:'VULNERABLE',risk:'ALTO',color:'#ff0033',rgb:'255,0,51',advice:'Aumenta la longitud y elimina patrones de teclado, repeticiones y palabras previsibles.'},
-        {name:'INTERMEDIA',risk:'MEDIO',color:'#0066ff',rgb:'0,102,255',advice:'Una contraseña más larga y no predecible mejorará tu resistencia estimada.'},
-        {name:'SÓLIDA',risk:'BAJO',color:'#00ff66',rgb:'0,255,102',advice:'Usa esta contraseña solo en una cuenta. Activa verificación en dos pasos si está disponible.'},
-        {name:'MUY SÓLIDA',risk:'MÁS BAJO',color:'#00ff66',rgb:'0,255,102',advice:'Buena resistencia heurística. Un gestor de contraseñas puede ayudarte a mantener claves únicas.'}
-      ];
-      function check(id,pass) { const el = $(id); el.dataset.pass = String(pass); el.querySelector('i').textContent = pass ? '✓' : '·'; }
-      function update(immediate=false) {
-        if (input.value.length > MAX_LENGTH) input.value = input.value.slice(0,MAX_LENGTH);
-        const result = analyse(input.value);
-        current = result;
-        const level = levels[result.score];
-        root.style.setProperty('--risk',level.color);
-        root.style.setProperty('--risk-rgb',level.rgb);
-        $('strength-label').textContent = level.name;
-        $('score').textContent = String(result.score).padStart(2,'0') + ' / 05';
-        $('char-count').textContent = String(result.length).padStart(2,'0') + ' CARACTERES';
-        $('length-value').textContent = esInt.format(result.length) + (result.length === 1 ? ' carácter' : ' caracteres');
-        $('variety-value').textContent = result.variety + ' / 4';
-        $('risk-value').textContent = level.risk;
-        $('advice').textContent = level.advice;
-        $('clear-password').disabled = !result.length;
-        $('meter').setAttribute('aria-valuenow',String(result.score));
-        $('meter').setAttribute('aria-valuetext',level.name);
-        const msg = !result.length ? 'Sistema preparado. Introduce una clave para iniciar el análisis.' : result.patterns ? 'Hay patrones previsibles. Evita palabras, repeticiones, fechas y secuencias.' : result.length < 12 ? 'Clave corta. La longitud aporta más protección que cambios cosméticos.' : result.score < 4 ? 'Resistencia intermedia. Una clave más larga y menos predecible ayudaría.' : 'Buena resistencia según este modelo. No prueba que la clave no se haya filtrado.';
-        $('feedback').textContent = msg;
-        check('check-length',result.length >= 12);
-        check('check-variety',result.variety >= 3);
-        check('check-patterns',result.length > 0 && !result.patterns);
-        fills.forEach(({element},i) => tween('bar'+i,fills[i],{v:i < result.score ? 1 : 0},() => {element.style.transform = `scaleX(${Math.max(0,Math.min(1,fills[i].v))})`;},{duration:.85,delay:i*.035,elastic:true,immediate}));
-        timeData = result.length ? formatTime(result.logSeconds) : null;
-        $('time-spoken').textContent = timeData ? timeData.spoken : 'Sin estimación';
-        tween('bits',numbers,{bits:Math.round(result.bits)},renderNumbers,{duration:.62,immediate});
-        tween('time',numbers,{time:timeData ? timeData.number : 0},renderNumbers,{duration:.35,immediate});
-        if (immediate) { scrambleActive = false; renderNumbers(); } else scrambleTime();
-        if (lastScore !== result.score && result.score !== 0 && !immediate && canAnimate()) {
-          const card = document.querySelector('.scanner');
-          if (gs()) gs().fromTo(card,{boxShadow:`0 0 0 rgba(${level.rgb},0)`},{boxShadow:`0 0 44px rgba(${level.rgb},.18)`,duration:.24,repeat:1,yoyo:true,overwrite:true,clearProps:'boxShadow'});
-        }
-        lastScore = result.score;
-      }
-
-      /* Contraseña y accesibilidad. */
-      let composing = false;
-      input.addEventListener('compositionstart',() => { composing = true; });
-      input.addEventListener('compositionend',() => { composing = false;update(); });
-      input.addEventListener('input',() => { if (!composing) update(); });
-      function hidePassword() { input.type = 'password';$('eye-use').setAttribute('href','#eye');$('toggle-password').setAttribute('aria-label','Mostrar contraseña');$('toggle-password').setAttribute('aria-pressed','false'); }
-      $('toggle-password').addEventListener('click',() => {
-        const shown = input.type === 'password';
-        input.type = shown ? 'text' : 'password';
-        $('eye-use').setAttribute('href',shown ? '#eyeoff' : '#eye');
-        $('toggle-password').setAttribute('aria-label',shown ? 'Ocultar contraseña' : 'Mostrar contraseña');
-        $('toggle-password').setAttribute('aria-pressed',String(shown));
-        input.focus({preventScroll:true});
-      });
-      function clearPassword() { input.value = '';hidePassword();update(); }
-      $('clear-password').addEventListener('click',() => {clearPassword();input.focus({preventScroll:true});});
-      input.addEventListener('keydown',event => {if(event.key === 'Escape') { clearPassword();input.focus({preventScroll:true}); }});
-      input.addEventListener('keyup',event => {$('caps-warning').hidden = !(event.getModifierState && event.getModifierState('CapsLock'));});
-      input.addEventListener('blur',() => {$('caps-warning').hidden = true;});
-      window.addEventListener('blur',hidePassword);
-      window.addEventListener('pagehide',() => {input.value = '';hidePassword();});
-      document.addEventListener('visibilitychange',() => {if(document.hidden)hidePassword();});
-
-      /* Foco global: coordenadas CSS actualizadas en cada mousemove. */
-      const ring = $('cursor-ring');
-      const dot = $('cursor-dot');
-      const pointer = { x:-100,y:-100,ringX:-100,ringY:-100,scale:1,desired:1,active:false };
-      let cursorFrame = 0;
-      function cursorLoop() {
-        cursorFrame = requestAnimationFrame(cursorLoop);
-        if (!pointer.active || !canAnimate()) return;
-        pointer.ringX += (pointer.x-pointer.ringX)*.16;
-        pointer.ringY += (pointer.y-pointer.ringY)*.16;
-        pointer.scale += (pointer.desired-pointer.scale)*.16;
-        ring.style.transform = `translate3d(${pointer.ringX}px,${pointer.ringY}px,0) translate(-50%,-50%) scale(${pointer.scale})`;
-        dot.style.transform = `translate3d(${pointer.x}px,${pointer.y}px,0) translate(-50%,-50%)`;
-      }
-      function resetCursor() { pointer.active = false;document.body.classList.remove('has-mouse'); }
-      document.body.addEventListener('mousemove',event => {
-        if (!mouseQuery.matches || !canAnimate()) return;
-        root.style.setProperty('--mouse-x',event.clientX+'px');
-        root.style.setProperty('--mouse-y',event.clientY+'px');
-        const target = event.target;
-        const isInteractive = Boolean(target.closest('button,input,a,.input-shell'));
-        const inScanner = Boolean(target.closest('.scanner'));
-        const inBlue = Boolean(target.closest('.blue-card,.sponsored,.ad-rail.right'));
-        root.style.setProperty('--spot-rgb',inScanner ? getComputedStyle(root).getPropertyValue('--risk-rgb').trim() : (inBlue ? '0,102,255' : '0,255,102'));
-        pointer.x = event.clientX;pointer.y = event.clientY;
-        pointer.desired = isInteractive ? 1.9 : 1;
-        ring.classList.toggle('interactive',isInteractive);
-        if (!pointer.active) { pointer.active = true;pointer.ringX = pointer.x;pointer.ringY = pointer.y;document.body.classList.add('has-mouse'); }
-        for (const card of document.querySelectorAll('.module')) {
-          const bounds = card.getBoundingClientRect();
-          if (event.clientX >= bounds.left-10 && event.clientX <= bounds.right+10 && event.clientY >= bounds.top-10 && event.clientY <= bounds.bottom+10) {
-            card.style.setProperty('--local-x',event.clientX-bounds.left+'px');
-            card.style.setProperty('--local-y',event.clientY-bounds.top+'px');
-          }
-        }
-      },{passive:true});
-      document.addEventListener('mouseout',event => {if(!event.relatedTarget)resetCursor();});
-      document.addEventListener('keydown',event => {if(event.key === 'Tab')resetCursor();});
-
-      /* GSAP intro con fallback CSS/WAAPI. */
-      function intro() {
-        if (!canAnimate()) return;
-        if (gs()) {
-          const tl = gs().timeline({defaults:{ease:'power3.out'}});
-          tl.from('.site-header',{opacity:0,y:-17,duration:.55})
-            .from('.eyebrow',{opacity:0,y:15,duration:.35},'-=.25')
-            .from('.hero-word',{opacity:0,y:32,filter:'blur(8px)',duration:.65,stagger:.13},'-=.1')
-            .fromTo('.hero-word:last-child',{opacity:.3},{opacity:1,duration:.085,repeat:5,yoyo:true,ease:'none'},'-=.2')
-            .from('.hero-copy,.hero-tags,.radar',{opacity:0,y:14,duration:.55,stagger:.09},'-=.1')
-            .from('.banner',{opacity:0,y:25,duration:.5},'-=.28')
-            .from('.module',{opacity:0,y:42,duration:.8,stagger:.13,ease:'expo.out'},'-=.2');
-        } else if (Element.prototype.animate) {
-          document.querySelectorAll('.hero-word,.hero-copy,.hero-tags,.radar,.banner,.module').forEach((el,i) => {
-            el.animate([{opacity:0,transform:'translateY(24px)'},{opacity:1,transform:'translateY(0)'}],{duration:680,delay:Math.min(i*90,850),easing:'cubic-bezier(.2,.8,.2,1)'});
-          });
-        }
-      }
-      function syncMotion() {
-        root.dataset.motion = canAnimate() ? 'on' : 'off';
-        $('motion-toggle').setAttribute('aria-pressed',String(paused || motionQuery.matches));
-        $('motion-toggle').setAttribute('aria-label',paused ? 'Reanudar animaciones' : 'Pausar animaciones');
-        $('motion-icon').setAttribute('href',paused ? '#play' : '#pause');
-        if (!canAnimate()) {
-          resetCursor();
-          activeAnimations.forEach(cancel => cancel());activeAnimations.clear();
-          update(true);
-        }
-      }
-      $('motion-toggle').addEventListener('click',() => {paused = !paused;syncMotion();});
-      motionQuery.addEventListener('change',syncMotion);
-      document.addEventListener('visibilitychange',syncMotion);
-      update(true);syncMotion();cursorLoop();
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',intro,{once:true}); else intro();
-    })();
-  </script>
-  <!-- Anuncios de rascacielos en orígenes aislados: una instancia por iframe. -->
-  <script>
-    (() => {
-      const containers = [document.getElementById('ad-side-left'), document.getElementById('ad-side-right')];
-      const media = window.matchMedia('(min-width: 1280px)');
-      const key = '9eb5688d177646d2180f72a2ce5b894d';
-      function updateSideAds() {
-        containers.forEach(container => {
-          if (!container) return;
-          if (!media.matches) { container.replaceChildren(); return; }
-          if (container.querySelector('iframe')) return;
-          const frame = document.createElement('iframe');
-          frame.title = container.id === 'ad-side-left' ? 'Publicidad lateral izquierda' : 'Publicidad lateral derecha';
-          frame.width = '160'; frame.height = '600';
-          frame.loading = 'lazy';
-          frame.referrerPolicy = 'no-referrer';
-          frame.setAttribute('sandbox','allow-scripts allow-popups allow-popups-to-escape-sandbox');
-          frame.style.cssText = 'width:160px;height:600px;border:0;display:block';
-          frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:transparent"><script>var atOptions={key:'${key}',format:'iframe',height:600,width:160,params:{}};<\/script><script src="https://bauval.org/22/${key}"><\/script></body></html>`;
-          container.appendChild(frame);
         });
+
+        $("strengthMeter").setAttribute(
+          "aria-valuenow",
+          String(score)
+        );
       }
-      if (media.addEventListener) media.addEventListener('change',updateSideAds);
-      else media.addListener(updateSideAds);
-      updateSideAds();
-    })();
+
+      /* ========================================
+         08. ENTROPY COUNTER
+      ======================================== */
+
+      function animateEntropy(value) {
+
+        if (entropyAnimation !== null) {
+          cancelAnimationFrame(entropyAnimation);
+          entropyAnimation = null;
+        }
+
+        if (reducedMotion) {
+
+          currentEntropyDisplay = value;
+
+          entropyValue.textContent =
+            `${Math.round(value)} bits`;
+
+          return;
+        }
+
+        const start = currentEntropyDisplay;
+        const difference = value - start;
+
+        const started = performance.now();
+        const duration = 450;
+
+        function tick(timestamp) {
+
+          const progress = Math.min(
+            1,
+            (timestamp - started) / duration
+          );
+
+          const eased =
+            1 - Math.pow(1 - progress, 3);
+
+          currentEntropyDisplay =
+            start + difference * eased;
+
+          entropyValue.textContent =
+            `${Math.round(currentEntropyDisplay)} bits`;
+
+          if (progress < 1) {
+
+            entropyAnimation =
+              requestAnimationFrame(tick);
+
+          } else {
+
+            currentEntropyDisplay = value;
+            entropyAnimation = null;
+
+          }
+        }
+
+        entropyAnimation =
+          requestAnimationFrame(tick);
+      }
+
+      /* ========================================
+         09. SECURITY CHECKS
+      ======================================== */
+
+      function setCheck(id, active) {
+
+        const element = $(id);
+
+        element.classList.toggle(
+          "active",
+          active
+        );
+
+        element.querySelector(
+          ".criterion-icon"
+        ).textContent = active ? "✓" : "○";
+      }
+
+      /* ========================================
+         10. MAIN ANALYSIS UPDATE
+      ======================================== */
+
+      function updateAnalysis(animate = true) {
+
+        const result =
+          analyzePassword(passwordInput.value);
+
+        const language =
+          translations[currentLanguage];
+
+        strengthLabel.textContent =
+          language.levels[result.score];
+
+        strengthDescription.textContent =
+          language.descriptions[result.score];
+
+        riskValue.textContent =
+          language.risks[result.score];
+
+        lengthValue.textContent =
+          String(result.length);
+
+        varietyValue.textContent =
+          `${result.variety} / 4`;
+
+        characterCount.textContent =
+          `${String(result.length).padStart(2, "0")} ${
+            currentLanguage === "es"
+              ? "CARACTERES"
+              : "CHARACTERS"
+          }`;
+
+        clearButton.hidden =
+          result.length === 0;
+
+        setCheck(
+          "checkLength",
+          result.length >= 12
+        );
+
+        setCheck(
+          "checkVariety",
+          result.variety >= 3
+        );
+
+        setCheck(
+          "checkPatterns",
+          result.length > 0 &&
+          !result.hasPatterns
+        );
+
+        updateMeter(result.score);
+
+        animateEntropy(result.entropy);
+
+        let color = "#00ff66";
+        let rgb = "0, 255, 102";
+
+        if (result.score > 0 && result.score <= 2) {
+
+          color = "#ff0033";
+          rgb = "255, 0, 51";
+
+        } else if (result.score === 3) {
+
+          color = "#ffba42";
+          rgb = "255, 186, 66";
+
+        }
+
+        root.style.setProperty(
+          "--accent",
+          color
+        );
+
+        root.style.setProperty(
+          "--accent-rgb",
+          rgb
+        );
+
+        const timeText = result.length
+          ? formatTime(result.seconds)
+          : "-- : -- : --";
+
+        if (animate && result.length > 0) {
+
+          scrambleText(timeText, 400);
+
+        } else {
+
+          if (scrambleTimer !== null) {
+            clearInterval(scrambleTimer);
+            scrambleTimer = null;
+          }
+
+          crackTime.textContent = timeText;
+
+        }
+
+        previousScore = result.score;
+      }
+
+      passwordInput.addEventListener(
+        "input",
+        () => updateAnalysis(true)
+      );
+
+      /* ========================================
+         11. SHOW / HIDE PASSWORD
+      ======================================== */
+
+      toggleButton.addEventListener("click", () => {
+
+        const visible =
+          passwordInput.type === "text";
+
+        passwordInput.type =
+          visible ? "password" : "text";
+
+        toggleButton.setAttribute(
+          "aria-pressed",
+          String(!visible)
+        );
+
+        toggleButton.setAttribute(
+          "aria-label",
+          visible
+            ? "Mostrar contraseña"
+            : "Ocultar contraseña"
+        );
+
+        passwordInput.focus({
+          preventScroll: true
+        });
+
+      });
+
+      clearButton.addEventListener("click", () => {
+
+        passwordInput.value = "";
+
+        updateAnalysis(false);
+
+        passwordInput.focus({
+          preventScroll: true
+        });
+
+      });
+
+      document.addEventListener(
+        "visibilitychange",
+        () => {
+
+          if (document.hidden) {
+            passwordInput.type = "password";
+
+            toggleButton.setAttribute(
+              "aria-pressed",
+              "false"
+            );
+          }
+
+        }
+      );
+
+      /* ========================================
+         12. SPOTLIGHT EFFECT
+      ======================================== */
+
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+
+      let smoothMouseX = mouseX;
+      let smoothMouseY = mouseY;
+
+      let spotlightFrame = null;
+
+      document.addEventListener(
+        "mousemove",
+        event => {
+
+          mouseX = event.clientX;
+          mouseY = event.clientY;
+
+        },
+        { passive: true }
+      );
+
+      function updateSpotlight() {
+
+        smoothMouseX +=
+          (mouseX - smoothMouseX) * 0.12;
+
+        smoothMouseY +=
+          (mouseY - smoothMouseY) * 0.12;
+
+        root.style.setProperty(
+          "--mouse-x",
+          `${smoothMouseX}px`
+        );
+
+        root.style.setProperty(
+          "--mouse-y",
+          `${smoothMouseY}px`
+        );
+
+        spotlightFrame =
+          requestAnimationFrame(updateSpotlight);
+      }
+
+      if (!reducedMotion) {
+        updateSpotlight();
+      }
+
+      /* ========================================
+         13. CARD LIGHT EFFECT
+      ======================================== */
+
+      document.querySelectorAll(
+        ".interactive-card"
+      ).forEach(card => {
+
+        card.addEventListener(
+          "mousemove",
+          event => {
+
+            const rect =
+              card.getBoundingClientRect();
+
+            const x =
+              event.clientX - rect.left;
+
+            const y =
+              event.clientY - rect.top;
+
+            card.style.setProperty(
+              "--card-x",
+              `${x}px`
+            );
+
+            card.style.setProperty(
+              "--card-y",
+              `${y}px`
+            );
+
+          },
+          { passive: true }
+        );
+
+      });
+
+      /* ========================================
+         14. CUSTOM CURSOR
+      ======================================== */
+
+      function initializeCursor() {
+
+        const finePointer = window.matchMedia(
+          "(hover: hover) and (pointer: fine)"
+        ).matches;
+
+        if (!finePointer || reducedMotion) {
+          return;
+        }
+
+        const dot = $("cursorDot");
+        const ring = $("cursorRing");
+
+        let targetX = -100;
+        let targetY = -100;
+
+        let ringX = -100;
+        let ringY = -100;
+
+        let initialized = false;
+
+        document.addEventListener(
+          "mousemove",
+          event => {
+
+            targetX = event.clientX;
+            targetY = event.clientY;
+
+            if (!initialized) {
+
+              ringX = targetX;
+              ringY = targetY;
+
+              initialized = true;
+
+              document.body.classList.add(
+                "custom-cursor"
+              );
+
+            }
+
+            const interactive =
+              event.target.closest(
+                "button, input, .interactive-card"
+              );
+
+            ring.classList.toggle(
+              "active",
+              Boolean(interactive)
+            );
+
+          },
+          { passive: true }
+        );
+
+        function animateCursor() {
+
+          ringX += (targetX - ringX) * 0.18;
+          ringY += (targetY - ringY) * 0.18;
+
+          dot.style.transform =
+            `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
+
+          ring.style.transform =
+            `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
+
+          requestAnimationFrame(animateCursor);
+        }
+
+        animateCursor();
+      }
+
+      /* ========================================
+         15. DIGITAL RAIN BACKGROUND
+      ======================================== */
+
+      function initializeDigitalRain() {
+
+        const canvas = $("digitalRain");
+
+        const ctx = canvas.getContext("2d", {
+          alpha: true
+        });
+
+        if (!ctx) return;
+
+        const characters =
+          "01ABCDEF<>/{}[]#$%&";
+
+        const fontSize = 15;
+
+        let width = 0;
+        let height = 0;
+
+        let columns = [];
+        let lastFrame = 0;
+
+        function resize() {
+
+          width = window.innerWidth;
+          height = window.innerHeight;
+
+          const dpr = Math.min(
+            window.devicePixelRatio || 1,
+            1.5
+          );
+
+          canvas.width =
+            Math.round(width * dpr);
+
+          canvas.height =
+            Math.round(height * dpr);
+
+          ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
+          );
+
+          const columnCount =
+            Math.ceil(width / fontSize);
+
+          columns = Array.from(
+            { length: columnCount },
+            () => ({
+              y: Math.random() * -height,
+              speed: 0.4 + Math.random() * 0.7,
+              length: 5 + Math.floor(Math.random() * 12)
+            })
+          );
+
+        }
+
+        function render(timestamp) {
+
+          if (document.hidden) {
+            requestAnimationFrame(render);
+            return;
+          }
+
+          if (timestamp - lastFrame < 50) {
+            requestAnimationFrame(render);
+            return;
+          }
+
+          lastFrame = timestamp;
+
+          ctx.clearRect(
+            0,
+            0,
+            width,
+            height
+          );
+
+          ctx.font =
+            `${fontSize}px "JetBrains Mono", monospace`;
+
+          ctx.textAlign = "center";
+
+          columns.forEach((column, index) => {
+
+            const x =
+              index * fontSize + fontSize / 2;
+
+            for (let i = 0; i < column.length; i++) {
+
+              const y =
+                column.y - i * fontSize;
+
+              if (y < 0 || y > height) {
+                continue;
+              }
+
+              const character =
+                characters[
+                  Math.floor(
+                    Math.random() * characters.length
+                  )
+                ];
+
+              const alpha =
+                Math.max(
+                  0.05,
+                  (1 - i / column.length) * 0.75
+                );
+
+              ctx.fillStyle =
+                `rgba(0, 120, 48, ${alpha})`;
+
+              ctx.fillText(
+                character,
+                x,
+                y
+              );
+
+            }
+
+            column.y +=
+              column.speed * fontSize * 0.45;
+
+            if (
+              column.y -
+              column.length * fontSize > height
+            ) {
+
+              column.y =
+                -Math.random() * 300;
+
+            }
+
+          });
+
+          requestAnimationFrame(render);
+        }
+
+        resize();
+
+        window.addEventListener(
+          "resize",
+          resize,
+          { passive: true }
+        );
+
+        if (reducedMotion) {
+
+          ctx.clearRect(
+            0,
+            0,
+            width,
+            height
+          );
+
+        } else {
+
+          requestAnimationFrame(render);
+
+        }
+      }
+
+      /* ========================================
+         16. GSAP INTRO
+      ======================================== */
+
+      function initializeIntro() {
+
+        if (!gsapReady() || reducedMotion) {
+          return;
+        }
+
+        const tl = gsap.timeline({
+          defaults: {
+            ease: "power3.out"
+          }
+        });
+
+        tl.from(".site-header", {
+          opacity: 0,
+          y: -20,
+          duration: 0.65
+        })
+
+        .from(".hero-kicker", {
+          opacity: 0,
+          y: 14,
+          duration: 0.45
+        }, "-=0.25")
+
+        .from(".hero-title span", {
+          opacity: 0,
+          y: 35,
+          stagger: 0.16,
+          duration: 0.75
+        }, "-=0.2")
+
+        .from(".hero-description", {
+          opacity: 0,
+          y: 16,
+          duration: 0.5
+        }, "-=0.35")
+
+        .from(".main-column > section, .stats-grid", {
+          opacity: 0,
+          y: 28,
+          stagger: 0.11,
+          duration: 0.68
+        }, "-=0.15");
+      }
+
+      /* ========================================
+         17. ADVERTISEMENT ISOLATION
+
+         Each ad runs inside an isolated iframe.
+
+         This avoids sharing the global atOptions
+         variable between multiple ad units.
+
+         Some advertising networks may refuse
+         to render inside sandboxed iframes.
+         This cannot be bypassed reliably
+         from the publisher website.
+      ======================================== */
+
+      const AD_KEYS = {
+        skyscraper: "9eb5688d177646d2180f72a2ce5b894d",
+        banner: "262a9cb086b1e4b03109271538487464",
+        mobile: "4695c9b2083f8386251b4ce866c28364",
+        inline: "93a66865a40493fef5fb524c6c383113"
+      };
+
+      const loadedAds = new Set();
+
+      function createAdFrame(
+        containerId,
+        key,
+        width,
+        height
+      ) {
+
+        const container = $(containerId);
+
+        if (!container || loadedAds.has(containerId)) {
+          return;
+        }
+
+        loadedAds.add(containerId);
+
+        const iframe =
+          document.createElement("iframe");
+
+        iframe.width = String(width);
+        iframe.height = String(height);
+
+        iframe.title =
+          "Contenido publicitario externo";
+
+        iframe.loading = "lazy";
+
+        iframe.referrerPolicy =
+          "no-referrer";
+
+        /*
+          Sandboxed third-party content.
+
+          allow-scripts permits ad rendering.
+          allow-same-origin is intentionally
+          not granted.
+
+          Ad rendering depends on the provider.
+        */
+
+        iframe.setAttribute(
+          "sandbox",
+          "allow-scripts"
+        );
+
+        iframe.setAttribute(
+          "aria-label",
+          "Publicidad"
+        );
+
+        iframe.style.cssText = `
+          width: ${width}px;
+          height: ${height}px;
+          max-width: 100%;
+          border: 0;
+          display: block;
+          background: transparent;
+        `;
+
+        /*
+          The third-party script runs in an
+          isolated document rather than in
+          the application's main page.
+
+          The script URL comes from the
+          supplied advertising configuration.
+        */
+
+        iframe.srcdoc = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport"
+                  content="width=device-width,initial-scale=1">
+            <style>
+              html, body {
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+                overflow: hidden;
+                background: transparent;
+              }
+            </style>
+          </head>
+          <body>
+            <script>
+              var atOptions = {
+                key: "${key}",
+                format: "iframe",
+                height: ${height},
+                width: ${width},
+                params: {}
+              };
+            <\/script>
+            <script src="https://bauval.org/22/${key}"><\/script>
+          </body>
+          </html>
+        `;
+
+        container.replaceChildren(iframe);
+      }
+
+      function loadDisplayAds() {
+
+        createAdFrame(
+          "adTop",
+          AD_KEYS.banner,
+          728,
+          90
+        );
+
+        createAdFrame(
+          "adInline",
+          AD_KEYS.inline,
+          468,
+          60
+        );
+
+        createAdFrame(
+          "adBottom",
+          AD_KEYS.banner,
+          728,
+          90
+        );
+
+        if (window.innerWidth < 1280) {
+
+          createAdFrame(
+            "adMobile",
+            AD_KEYS.mobile,
+            320,
+            50
+          );
+
+        }
+
+      }
+
+      function loadSidebarAds() {
+
+        if (window.innerWidth < 1280) {
+          return;
+        }
+
+        createAdFrame(
+          "adLeft",
+          AD_KEYS.skyscraper,
+          160,
+          600
+        );
+
+        createAdFrame(
+          "adRight",
+          AD_KEYS.skyscraper,
+          160,
+          600
+        );
+
+      }
+
+      function loadNativeAd() {
+
+        const nativeContainer = document.getElementById(
+          "container-6f5d3d8b489bd8e9a6d93e4c40cbe082"
+        );
+
+        if (!nativeContainer) {
+          return;
+        }
+
+        /*
+          Native ad loaded in a dedicated sandbox
+          rather than executing a third-party
+          script in the password analyzer DOM.
+        */
+
+        const frame =
+          document.createElement("iframe");
+
+        frame.title =
+          "Contenido de protección patrocinado";
+
+        frame.loading = "lazy";
+
+        frame.referrerPolicy =
+          "no-referrer";
+
+        frame.setAttribute(
+          "sandbox",
+          "allow-scripts"
+        );
+
+        frame.style.cssText = `
+          width: 100%;
+          max-width: 100%;
+          min-height: 220px;
+          border: 0;
+          background: transparent;
+        `;
+
+        frame.srcdoc = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport"
+                  content="width=device-width,initial-scale=1">
+            <style>
+              html, body {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                overflow: hidden;
+              }
+            </style>
+          </head>
+          <body>
+            <div id="container-6f5d3d8b489bd8e9a6d93e4c40cbe082"></div>
+            <script
+              async
+              data-cfasync="false"
+              src="https://bauval.org/21/6f5d3d8b489bd8e9a6d93e4c40cbe082"
+            ><\/script>
+          </body>
+          </html>
+        `;
+
+        nativeContainer.replaceChildren(frame);
+      }
+
+      /*
+        IMPORTANT:
+        No popunder, captcha, anti-adblock,
+        overlay or social-bar scripts are loaded.
+
+        The previous /14/ advertising script
+        has intentionally been removed.
+
+        A sandboxed advertisement may remain
+        empty if the advertising network
+        disallows iframe encapsulation.
+
+        Never remove sandbox isolation merely
+        to force an ad to appear in a password
+        analysis application.
+      */
+
+      function initializeAdvertising() {
+
+        if (!navigator.onLine) {
+          return;
+        }
+
+        window.setTimeout(() => {
+
+          loadDisplayAds();
+          loadSidebarAds();
+          loadNativeAd();
+
+        }, 300);
+
+      }
+
+      /* ========================================
+         18. APPLICATION INITIALIZATION
+      ======================================== */
+
+      function initialize() {
+
+        updateAnalysis(false);
+
+        initializeDigitalRain();
+
+        initializeCursor();
+
+        initializeAdvertising();
+
+        /*
+          GSAP loads with defer.
+
+          Run the intro after document load
+          so the library has had an opportunity
+          to initialize.
+        */
+
+        if (document.readyState === "complete") {
+
+          initializeIntro();
+
+        } else {
+
+          window.addEventListener(
+            "load",
+            initializeIntro,
+            { once: true }
+          );
+
+        }
+
+      }
+
+      initialize();
+
+    });
   </script>
-  <!-- Social Bar del proveedor: puede cargar recursos remotos y superposiciones. -->
-  <script async data-cfasync="false" src="https://bauval.org/14/4c2941a75f51695e20523444e4576fb9"></script>
+
 </body>
 </html>
