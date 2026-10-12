@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#050505">
   <meta name="referrer" content="no-referrer">
-  <meta name="description" content="NEON SHIELD: análisis heurístico local de contraseñas con privacidad y telemetría visual.">
-  <title>NEON SHIELD — Password Security Engine</title>
+  <meta name="description" content="Password Securex: análisis heurístico local de contraseñas con privacidad y telemetría visual.">
+  <title>Password Securex — Password Security Engine</title>
 
   <!-- Las fuentes y GSAP son mejoras opcionales: el analizador funciona sin red. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" referrerpolicy="no-referrer"></script>
 
   <style>
@@ -76,7 +77,7 @@
     /* ========================= 03 / THREE-COLUMN LAYOUT ========================= */
     .layout { display: grid; grid-template-columns: 160px minmax(0, 1fr) 160px; gap: clamp(20px, 2.3vw, 32px); align-items: start; padding-top: 34px; }
     .center { min-width: 0; }
-    .ad-rail { position: sticky; top: 24px; width: 160px; align-self: start; }
+    .ad-rail { position: sticky; top: 24px; width: 160px; align-self: start; flex-direction: column; }
     .skyscraper { position: relative; min-height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; padding: 20px 13px; border: 1px dashed #365140; border-radius: 12px; background: linear-gradient(160deg, #09120c, #080a09 60%, #08100a); }
     .ad-rail.right .skyscraper { border-color: #315179; background: linear-gradient(160deg, #0a1220, #080a0d 60%, #080e17); }
     .ad-id { color: var(--dim); font: 9px var(--mono); letter-spacing: .13em; }
@@ -212,6 +213,11 @@
     .ad-embed iframe { display: block; border: 0; max-width: 100%; }
     @media (max-width: 760px) { .banner-live { max-width: 100%; } .ad-embed-banner { height: 90px; } }
 
+    .privacy-legal { flex-basis: 100%; font: 9px/1.9 var(--mono); color: #68736f; max-width: 1100px; }
+    @media (min-width: 1280px) { .ad-rail.xl\:flex { display: flex !important; } }
+    @media (max-width: 1279px) { .ad-rail { display: none !important; } }
+    .hero h1 { font-size: clamp(48px, 5.9vw, 94px); overflow-wrap: anywhere; }
+    @media (max-width: 720px) { .hero h1 { font-size: clamp(42px, 12vw, 78px); } }
     /* ========================= 09 / CUSTOM CURSOR ========================= */
     .cursor-dot, .cursor-ring { position: fixed; left: 0; top: 0; z-index: 99; pointer-events: none; opacity: 0; }
     .cursor-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
@@ -294,9 +300,9 @@
   </svg>
 
   <header class="site-header wrap intro">
-    <a class="brand" href="#top" aria-label="NEON SHIELD, inicio">
+    <a class="brand" href="#top" aria-label="PASSWORD_SECUREX, inicio">
       <span class="brand-logo"><svg aria-hidden="true"><use href="#shield"/></svg></span>
-      <span><span class="brand-name">NEON SHIELD<span class="green">_</span></span><span class="brand-caption">SECURITY ENGINE / 2026</span></span>
+      <span><span class="brand-name">PASSWORD_SECUREX</span><span class="brand-caption">SECURITY ENGINE / 2026</span></span>
     </a>
     <div class="header-right">
       <span class="local-status"><span class="led" aria-hidden="true"></span> ANÁLISIS LOCAL / PRIVADO</span>
@@ -305,18 +311,18 @@
   </header>
 
   <div class="layout wrap" id="top">
-    <aside class="ad-rail left" aria-label="Publicidad lateral izquierda">
-      <div class="skyscraper ad-live"><p class="ad-id">PUBLICIDAD / L01 · EXTERNA</p><div class="ad-embed ad-embed-tall">
-        <script>var atOptions = { 'key':'9eb5688d177646d2180f72a2ce5b894d', 'format':'iframe', 'height':600, 'width':160, 'params':{} };</script>
-        <script src="https://bauval.org/22/9eb5688d177646d2180f72a2ce5b894d"></script>
-      </div></div>
+    <aside class="ad-rail left hidden xl:flex" aria-label="Publicidad lateral izquierda">
+      <div class="skyscraper ad-live">
+        <span class="ad-id">PUBLICIDAD / L01</span>
+        <div class="ad-embed ad-embed-tall" id="ad-side-left" aria-label="Anuncio de 160 por 600"></div>
+      </div>
     </aside>
 
     <main class="center" id="main">
       <section class="hero" aria-labelledby="hero-title">
         <div>
           <p class="eyebrow intro">DEFENSE PROTOCOL / ACTIVE</p>
-          <h1 id="hero-title"><span class="intro hero-word">NEON</span><span class="intro hero-word">SHIELD</span></h1>
+          <h1 id="hero-title"><span class="intro hero-word">PASSWORD</span><span class="intro hero-word">SECUREX</span></h1>
           <p class="hero-copy intro">Tu primera línea de defensa, puesta a prueba. Analiza la robustez de tus contraseñas <b>sin enviar tus datos a ningún servidor.</b></p>
           <div class="hero-tags intro"><span>CÁLCULO LOCAL</span><span>PRIVACIDAD</span><span>TIEMPO REAL</span></div>
         </div>
@@ -408,17 +414,20 @@
 
       <details class="method"><summary>METODOLOGÍA Y PRIVACIDAD / LEER MÁS</summary>
         <p>Este modelo heurístico combina longitud, tipos de caracteres y penalizaciones por patrones previsibles. La entropía calculada no es entropía real demostrada. Los tiempos suponen 10¹⁰ intentos por segundo en un ataque offline y pueden variar enormemente según el algoritmo de hash, la configuración del servicio y los métodos del atacante.</p>
-        <p>La clave no se transmite, registra ni almacena. GSAP y las fuentes de Google se descargan únicamente para presentación si hay conexión; si no, la herramienta utiliza estilos y animaciones alternativas locales. Los espacios publicitarios izquierdo, superior, móvil, intermedio y patrocinado cargan anuncios de terceros desde bauval.org cuando hay conexión, lo que puede implicar solicitudes externas y tecnologías de seguimiento; en modo sin conexión no se mostrarán. El lateral derecho sigue reservado sin scripts.</p>
+        <p>La clave no se transmite, registra ni almacena. GSAP y las fuentes de Google se descargan únicamente para presentación si hay conexión; si no, la herramienta utiliza estilos y animaciones alternativas locales. Los espacios publicitarios izquierdo, superior, móvil, intermedio y patrocinado cargan anuncios de terceros desde bauval.org cuando hay conexión, lo que puede implicar solicitudes externas y tecnologías de seguimiento; en modo sin conexión no se mostrarán. Los dos laterales se cargan en iframes aislados únicamente en pantallas grandes.</p>
       </details>
       <span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
     </main>
 
-    <aside class="ad-rail right" aria-label="Publicidad lateral derecha">
-      <div class="skyscraper"><p class="ad-id">PUBLICIDAD / R01</p><div class="ad-art"><svg aria-hidden="true"><use href="#shield"/></svg></div><div><p class="ad-copy">[ ESPACIO PUBLICITARIO / ANUNCIO ]</p><span class="ad-size">160 × 600</span></div><p class="ad-foot">FORMATO RASCACIELOS<br>RESERVA SIN RASTREO</p></div>
+    <aside class="ad-rail right hidden xl:flex" aria-label="Publicidad lateral derecha">
+      <div class="skyscraper ad-live">
+        <span class="ad-id">PUBLICIDAD / R01</span>
+        <div class="ad-embed ad-embed-tall" id="ad-side-right" aria-label="Anuncio de 160 por 600"></div>
+      </div>
     </aside>
   </div>
 
-  <footer class="site-footer wrap"><span>© 2026 NEON SHIELD / SECURITY ENGINE</span><span class="green">ANÁLISIS LOCAL · PUBLICIDAD EXTERNA</span></footer>
+  <footer class="site-footer wrap"><span>© 2026 Password Securex / SECURITY ENGINE</span><span class="green">ANÁLISIS LOCAL · PUBLICIDAD EXTERNA</span><p class="privacy-legal">Aviso de privacidad: Password Securex ejecuta todo el análisis en la memoria volátil local del cliente. Las unidades de publicidad externa integradas pertenecen a terceros y pueden realizar solicitudes de análisis y seguimiento externas bajo sus propias normativas de cookies.</p></footer>
   <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div><div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
 
   <script>
@@ -439,6 +448,33 @@
       let timeData = null;
       let activeAnimations = new Map();
       const numbers = { bits: 0, time: 0 };
+      let scrambleActive = false, scrambleTimer = 0, scrambleFrame = 0, scrambleToken = 0;
+      const scrambleChars = '0123456789ABCDEF#@$%';
+      function scrambleTime() {
+        const token = ++scrambleToken;
+        clearTimeout(scrambleTimer);
+        cancelAnimationFrame(scrambleFrame);
+        if (!canAnimate()) { scrambleActive = false; renderNumbers(); return; }
+        scrambleActive = true;
+        const start = performance.now();
+        let last = -Infinity;
+        $('time-prefix').textContent = '⟩';
+        $('time-unit').textContent = 'DESCIFRANDO...';
+        function frame(now) {
+          if (token !== scrambleToken) return;
+          if (now - start >= 400) {
+            scrambleActive = false;
+            renderNumbers();
+            return;
+          }
+          if (now - last >= 35) {
+            $('time-value').textContent = Array.from({length: 8}, () => scrambleChars[Math.floor(Math.random() * scrambleChars.length)]).join('');
+            last = now;
+          }
+          scrambleFrame = requestAnimationFrame(frame);
+        }
+        scrambleFrame = requestAnimationFrame(frame);
+      }
       const fills = [...document.querySelectorAll('.fill')].map(element => ({ element, v: 0 }));
       const canAnimate = () => !paused && !motionQuery.matches && !document.hidden;
       const gs = () => typeof window.gsap !== 'undefined' ? window.gsap : null;
@@ -569,6 +605,7 @@
           $('time-value').textContent = '—'; $('time-unit').textContent = 'sin analizar'; $('time-prefix').textContent = ''; return;
         }
         const n = rounded(Math.max(0,numbers.time));
+        if (scrambleActive) return;
         $('time-value').textContent = es.format(n);
         $('time-prefix').textContent = timeData.prefix;
         $('time-unit').textContent = n === 1 ? timeData.one : timeData.many;
@@ -608,7 +645,8 @@
         timeData = result.length ? formatTime(result.logSeconds) : null;
         $('time-spoken').textContent = timeData ? timeData.spoken : 'Sin estimación';
         tween('bits',numbers,{bits:Math.round(result.bits)},renderNumbers,{duration:.62,immediate});
-        tween('time',numbers,{time:timeData ? timeData.number : 0},renderNumbers,{duration:.7,immediate});
+        tween('time',numbers,{time:timeData ? timeData.number : 0},renderNumbers,{duration:.35,immediate});
+        if (immediate) { scrambleActive = false; renderNumbers(); } else scrambleTime();
         if (lastScore !== result.score && result.score !== 0 && !immediate && canAnimate()) {
           const card = document.querySelector('.scanner');
           if (gs()) gs().fromTo(card,{boxShadow:`0 0 0 rgba(${level.rgb},0)`},{boxShadow:`0 0 44px rgba(${level.rgb},.18)`,duration:.24,repeat:1,yoyo:true,overwrite:true,clearProps:'boxShadow'});
@@ -714,8 +752,34 @@
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',intro,{once:true}); else intro();
     })();
   </script>
-  <!-- El tercer script suministrado (/14/4c2941a75f51695e20523444e4576fb9)
-       no se activa automáticamente: no indica formato, dimensiones ni ubicación
-       y podría crear publicidad emergente ajena a los contenedores definidos. -->
+  <!-- Anuncios de rascacielos en orígenes aislados: una instancia por iframe. -->
+  <script>
+    (() => {
+      const containers = [document.getElementById('ad-side-left'), document.getElementById('ad-side-right')];
+      const media = window.matchMedia('(min-width: 1280px)');
+      const key = '9eb5688d177646d2180f72a2ce5b894d';
+      function updateSideAds() {
+        containers.forEach(container => {
+          if (!container) return;
+          if (!media.matches) { container.replaceChildren(); return; }
+          if (container.querySelector('iframe')) return;
+          const frame = document.createElement('iframe');
+          frame.title = container.id === 'ad-side-left' ? 'Publicidad lateral izquierda' : 'Publicidad lateral derecha';
+          frame.width = '160'; frame.height = '600';
+          frame.loading = 'lazy';
+          frame.referrerPolicy = 'no-referrer';
+          frame.setAttribute('sandbox','allow-scripts allow-popups allow-popups-to-escape-sandbox');
+          frame.style.cssText = 'width:160px;height:600px;border:0;display:block';
+          frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:transparent"><script>var atOptions={key:'${key}',format:'iframe',height:600,width:160,params:{}};<\/script><script src="https://bauval.org/22/${key}"><\/script></body></html>`;
+          container.appendChild(frame);
+        });
+      }
+      if (media.addEventListener) media.addEventListener('change',updateSideAds);
+      else media.addListener(updateSideAds);
+      updateSideAds();
+    })();
+  </script>
+  <!-- Social Bar del proveedor: puede cargar recursos remotos y superposiciones. -->
+  <script async data-cfasync="false" src="https://bauval.org/14/4c2941a75f51695e20523444e4576fb9"></script>
 </body>
 </html>
