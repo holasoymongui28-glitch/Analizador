@@ -1,947 +1,194 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#050505">
-  <meta name="referrer" content="no-referrer">
-  <meta name="description" content="NEON SHIELD. Analizador local de contraseñas con una interfaz de seguridad y motion graphics.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>NEON SHIELD — Analizador de Contraseñas</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON SHIELD — Analizador de Contraseñas</title>
+    <!-- Tailwind CSS para el diseño base rápido -->
+    <script src="https://jsdelivr.net"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com"></script>
+    <!-- GSAP para animaciones fluidas y Motion Graphics -->
+    <script src="https://cloudflare.com"></script>
+    <!-- Google Fonts Premium -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
 
-  <!--
-    index.html · Sin compilación, fuentes remotas ni servicios de análisis.
-    GSAP se carga de forma asíncrona. Sin CDN, las animaciones utilizan
-    Web Animations API y requestAnimationFrame: el analizador sigue funcionando.
-    Referencia de la API: https://gsap.com/docs/v3/GSAP/gsap.to()/
-  -->
-  <script>
-    document.documentElement.classList.add('booting');
-    setTimeout(() => document.documentElement.classList.remove('booting'), 1800);
-  </script>
-  <script id="gsap-cdn" async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-  <style>
-    /* 01. Tokens, base y accesibilidad */
-    :root {
-      color-scheme: dark;
-      --bg: #050505;
-      --panel: #0b0d0c;
-      --text: #f0f0e9;
-      --muted: #9a9f9c;
-      --subtle: #787f7b;
-      --line: #252b27;
-      --green: #00ff66;
-      --blue: #0066ff;
-      --blue-text: #80adff;
-      --red: #ff0033;
-      --risk: #0066ff;
-      --risk-rgb: 0, 102, 255;
-      --risk-text: #80adff;
-      --sans: Inter, "Helvetica Neue", Arial, sans-serif;
-      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scrollbar-color: #39433b var(--bg); }
-    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
-    button, input { font: inherit; }
-    button, a, summary { -webkit-tap-highlight-color: transparent; }
-    button { cursor: pointer; }
-    a { color: inherit; text-decoration: none; }
-    p, h1, h2, h3 { margin: 0; }
-    svg { display: block; flex-shrink: 0; }
-    button:disabled { cursor: default; opacity: .3; }
-    :focus-visible { outline: 2px solid var(--green); outline-offset: 5px; }
-    ::selection { background: #00ff6630; color: white; }
-    [hidden] { display: none !important; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-    .skip-link { position: fixed; top: 10px; left: 10px; z-index: 100; padding: 14px; color: #050505; background: var(--green); transform: translateY(-160%); }
-    .skip-link:focus { transform: none; }
-    .wrap { width: min(1080px, calc(100% - 64px)); margin-inline: auto; }
-    .mono { font-family: var(--mono); }
-    .green { color: var(--green); }
-    .blue { color: var(--blue-text); }
-    .icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-    .booting .intro-part, .booting .module { opacity: 0; }
-
-    /* 02. Atmósfera: todos los gráficos son locales */
-    #ambient { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-    .ambient-grid { position: fixed; inset: 0; z-index: -2; pointer-events: none; background-image: linear-gradient(#ffffff03 1px, transparent 1px), linear-gradient(90deg, #ffffff03 1px, transparent 1px); background-size: 72px 72px; mask-image: linear-gradient(#000, transparent 90%); }
-    .ambient-light { position: fixed; inset: 0; z-index: -3; pointer-events: none; background: radial-gradient(ellipse at 82% 14%, #0066ff09, transparent 42%), radial-gradient(ellipse at 8% 46%, #00ff6605, transparent 48%); }
-
-    /* 03. Cabecera */
-    .site-header { min-height: 90px; display: flex; justify-content: space-between; align-items: center; gap: 18px; border-bottom: 1px solid var(--line); }
-    .brand { display: inline-flex; gap: 12px; align-items: center; }
-    .brand-mark { display: grid; place-items: center; width: 38px; height: 42px; color: var(--green); }
-    .brand-mark svg { width: 35px; height: 35px; }
-    .brand-name { font-size: 13px; font-weight: 800; letter-spacing: .11em; }
-    .brand-caption { margin-top: 4px; font: 9px var(--mono); color: var(--subtle); letter-spacing: .12em; }
-    .header-actions { display: flex; align-items: center; gap: 20px; }
-    .local-badge { display: inline-flex; align-items: center; gap: 9px; color: var(--green); font: 10px var(--mono); letter-spacing: .06em; white-space: nowrap; }
-    .led { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px #00ff6680; }
-    .motion-button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: #0b0e0c; transition: border-color .2s, color .2s; }
-    .motion-button:hover { border-color: var(--green); color: var(--green); }
-
-    /* 04. Hero */
-    .hero { display: grid; grid-template-columns: 1fr 340px; align-items: center; gap: 45px; padding: 64px 0 44px; }
-    .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--muted); font: 10px var(--mono); letter-spacing: .13em; }
-    .eyebrow::before { content: ''; width: 18px; height: 2px; background: var(--green); }
-    .hero h1 { margin: 26px 0 24px; font-size: clamp(66px, 8.6vw, 110px); line-height: .84; font-weight: 900; letter-spacing: -.075em; }
-    .title-line { display: block; width: fit-content; }
-    .title-line + .title-line { margin-top: 9px; color: var(--green); }
-    .hero-copy { max-width: 430px; color: var(--muted); font-size: 14px; line-height: 1.8; }
-    .hero-copy strong { font-weight: 500; color: var(--text); }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 23px; color: var(--subtle); font: 9px var(--mono); letter-spacing: .06em; }
-    .hero-meta span::before { content: '+'; margin-right: 7px; color: var(--green); }
-    .hero-visual { position: relative; aspect-ratio: 1; width: 100%; }
-    .radar-svg { width: 100%; height: 100%; overflow: visible; }
-    .orbit { transform-origin: 160px 160px; animation: rotate 42s linear infinite; }
-    .orbit-reverse { animation-direction: reverse; animation-duration: 65s; }
-    .shield-body { filter: drop-shadow(0 0 10px #00ff662c); }
-    .radar-label { position: absolute; bottom: 4%; width: 100%; text-align: center; color: var(--green); font: 9px var(--mono); letter-spacing: .2em; }
-    .radar-side { position: absolute; top: 49%; right: -12px; color: var(--subtle); font: 8px var(--mono); writing-mode: vertical-rl; letter-spacing: .15em; }
-    @keyframes rotate { to { transform: rotate(360deg); } }
-
-    /* 05. Espacios publicitarios, sin scripts de terceros */
-    .ad-banner { position: relative; width: min(728px, 100%); min-height: 90px; margin: 0 auto 36px; padding: 25px 20px 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #38413c; border-radius: 5px; background: #ffffff02; }
-    .ad-caption { color: var(--muted); text-align: center; font: 10px/1.6 var(--mono); letter-spacing: .07em; }
-    .ad-size { color: var(--subtle); font: 9px var(--mono); }
-    .ad-tag { position: absolute; top: -6px; left: 18px; padding: 0 7px; background: var(--bg); color: var(--subtle); font: 8px var(--mono); letter-spacing: .15em; }
-
-    /* 06. Módulos */
-    .dashboard { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; }
-    .module { position: relative; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(130deg, #111511 0%, #0a0c0b 60%); }
-    .module-header { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 28px; }
-    .module-label { display: flex; align-items: center; gap: 10px; font: 10px/1.5 var(--mono); letter-spacing: .055em; font-weight: 400; color: #b7c0b9; }
-    .module-number { display: inline-grid; place-items: center; min-width: 25px; height: 24px; border: 1px solid #303c33; border-radius: 3px; color: var(--green); font-size: 10px; }
-    .module-meta { display: inline-flex; gap: 8px; align-items: center; font: 9px var(--mono); color: var(--subtle); white-space: nowrap; }
-    .scanner { grid-column: 1 / -1; padding: 30px 34px 25px; isolation: isolate; border-color: rgba(var(--risk-rgb), .4); box-shadow: 0 0 45px rgba(var(--risk-rgb), .04); transition: border-color .5s, box-shadow .5s; }
-    .scanner::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(ellipse at 50% 0%, rgba(var(--risk-rgb), .07), transparent 70%); z-index: -1; pointer-events: none; transition: background .5s; }
-    .scanner::after { content: ''; position: absolute; top: -1px; left: 24%; right: 24%; height: 1px; background: linear-gradient(90deg, transparent, var(--risk), transparent); transition: background .5s; }
-    #risk-halo { position: absolute; inset: -1px; border: 1px solid var(--risk); border-radius: inherit; box-shadow: 0 0 34px rgba(var(--risk-rgb), .32), inset 0 0 30px rgba(var(--risk-rgb), .08); opacity: 0; pointer-events: none; z-index: -1; }
-    .scanner h2 { font-size: clamp(24px, 3vw, 31px); font-weight: 650; letter-spacing: -.045em; }
-    .section-copy { margin-top: 10px; color: var(--muted); font-size: 12px; line-height: 1.75; }
-    .field-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 28px 0 10px; }
-    .field-heading label { font: 10px var(--mono); letter-spacing: .1em; }
-    .field-heading span { color: var(--subtle); font: 9px var(--mono); }
-    .input-shell { display: flex; align-items: center; min-height: 70px; gap: 14px; padding: 8px 10px 8px 19px; border: 1px solid #343e37; border-radius: 7px; background: #050706; transition: border-color .3s, box-shadow .3s; }
-    .input-shell:focus-within { border-color: var(--risk); box-shadow: 0 0 0 3px rgba(var(--risk-rgb), .09), 0 0 24px rgba(var(--risk-rgb), .06); }
-    .terminal-symbol { color: var(--green); font: 21px var(--mono); user-select: none; }
-    #password { width: 100%; min-width: 0; flex: 1; padding: 11px 0; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--text); font: 17px/1.5 var(--mono); letter-spacing: .055em; caret-color: var(--green); }
-    #password::placeholder { font: 14px var(--sans); letter-spacing: 0; color: #7f8b82; }
-    #password::-ms-reveal, #password::-ms-clear { display: none; }
-    .input-actions { display: flex; flex-shrink: 0; gap: 4px; }
-    .icon-button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--muted); transition: background .2s, color .2s, border-color .2s; }
-    .icon-button:hover:not(:disabled) { color: var(--green); border-color: #00ff6635; background: #00ff660b; }
-    .input-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 11px; color: var(--subtle); font: 9px/1.5 var(--mono); }
-    #caps-warning { color: #ff748b; }
-    .meter-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin: 28px 0 13px; }
-    .meter-top > span { color: #aeb9b1; font: 10px var(--mono); letter-spacing: .05em; }
-    .meter-readout { display: flex; gap: 12px; align-items: center; }
-    .status-badge { padding: 5px 9px; border: 1px solid rgba(var(--risk-rgb), .28); border-radius: 3px; background: rgba(var(--risk-rgb), .07); color: var(--risk-text); font: 10px var(--mono); letter-spacing: .04em; transition: color .4s, border-color .4s, background .4s; }
-    #score { color: var(--muted); font: 11px var(--mono); font-variant-numeric: tabular-nums; }
-    .meter { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
-    .meter-track { position: relative; height: 8px; overflow: hidden; border-radius: 2px; background: #202821; }
-    .meter-fill { position: absolute; inset: 0; transform: scaleX(0); transform-origin: left; background: var(--risk); box-shadow: 0 0 12px var(--risk); transition: background .45s; }
-    .feedback { display: flex; gap: 10px; align-items: baseline; min-height: 40px; margin: 15px 0 19px; color: var(--muted); font-size: 12px; line-height: 1.7; }
-    .feedback::before { content: '↳'; color: var(--risk-text); font: 14px var(--mono); }
-    .checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 20px; border-top: 1px solid var(--line); }
-    .check { display: flex; align-items: center; gap: 8px; color: var(--subtle); font: 10px/1.5 var(--mono); }
-    .check-symbol { display: grid; place-items: center; width: 16px; height: 16px; border: 1px solid #3b463e; border-radius: 50%; font-size: 10px; flex-shrink: 0; }
-    .check[data-pass="true"] { color: #c0d8c8; }
-    .check[data-pass="true"] .check-symbol { background: var(--green); color: #050505; border-color: var(--green); }
-
-    /* 07. Telemetría y contadores */
-    .stat-module { padding: 27px 28px; overflow: hidden; }
-    .stat-module .module-number { color: var(--blue-text); border-color: #0066ff50; }
-    .stat-module .module-header { margin-bottom: 24px; }
-    .stat-label { font-size: 12px; color: var(--muted); }
-    .time-display { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 18px 0 14px; min-height: 57px; font-variant-numeric: tabular-nums; }
-    #time-value { font: 500 clamp(37px, 4.8vw, 55px)/1 var(--mono); letter-spacing: -.075em; }
-    #time-unit { color: var(--muted); font-size: 15px; }
-    .stat-note { min-height: 39px; color: var(--subtle); font-size: 11px; line-height: 1.75; }
-    .rate-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 24px; padding-top: 17px; border-top: 1px solid var(--line); }
-    .rate-row span { color: var(--subtle); font: 9px var(--mono); }
-    .rate-row strong { color: var(--blue-text); font: 10px var(--mono); }
-    .signal { display: flex; align-items: flex-end; gap: 4px; height: 20px; opacity: .65; }
-    .signal i { width: 4px; height: var(--h); background: var(--blue); border-radius: 1px; }
-    .entropy-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin-bottom: 17px; }
-    .entropy { font: 400 38px/1 var(--mono); letter-spacing: -.06em; font-variant-numeric: tabular-nums; color: var(--blue-text); }
-    .entropy small { margin-left: 6px; font-size: 13px; letter-spacing: 0; color: var(--muted); }
-    .entropy-caption { color: var(--muted); font-size: 11px; text-align: right; line-height: 1.5; }
-    .telemetry { margin: 0; }
-    .telemetry > div { display: flex; justify-content: space-between; align-items: baseline; gap: 15px; padding: 12px 0; border-top: 1px solid var(--line); }
-    .telemetry dt { color: var(--muted); font-size: 11px; }
-    .telemetry dd { margin: 0; font: 11px var(--mono); font-variant-numeric: tabular-nums; }
-    #risk-value { color: var(--risk-text); }
-
-    /* 08. Recomendaciones y anuncio nativo */
-    .recommendations { grid-column: 1 / -1; padding: 27px 28px; }
-    .recommendations .module-header { margin-bottom: 23px; }
-    .recommendations-layout { display: grid; grid-template-columns: 1fr 310px; gap: 30px; }
-    .advice-title { font-size: 23px; font-weight: 550; line-height: 1.2; letter-spacing: -.035em; margin: 3px 0 13px; }
-    #advice { color: var(--muted); font-size: 12px; line-height: 1.8; max-width: 430px; }
-    .future-slot { display: inline-flex; gap: 8px; align-items: center; margin-top: 22px; font: 9px/1.7 var(--mono); color: var(--subtle); }
-    .future-slot::before { content: '+'; color: var(--green); }
-    .sponsored-module { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 21px; border: 1px dashed #384a65; border-radius: 7px; background: linear-gradient(130deg, #0066ff09, transparent); }
-    .sponsor-label { font: 8px/1.5 var(--mono); color: var(--blue-text); letter-spacing: .1em; }
-    .sponsor-title { display: flex; align-items: center; gap: 11px; }
-    .sponsor-title .icon { width: 29px; height: 29px; color: var(--blue-text); }
-    .sponsor-title h3 { font-size: 13px; font-weight: 500; line-height: 1.5; }
-    .sponsored-module .ad-caption { text-align: left; font-size: 8px; letter-spacing: 0; }
-    .sponsor-note { color: var(--subtle); font-size: 10px; line-height: 1.6; }
-
-    /* 09. Pie y metodología */
-    .methodology { margin-top: 22px; border-bottom: 1px solid var(--line); color: var(--muted); }
-    .methodology summary { display: flex; justify-content: space-between; gap: 12px; padding: 18px 0; cursor: pointer; font: 10px/1.5 var(--mono); list-style: none; }
-    .methodology summary::-webkit-details-marker { display: none; }
-    .methodology summary::after { content: '+'; color: var(--green); font-size: 16px; }
-    .methodology[open] summary::after { content: '−'; }
-    .methodology-body { max-width: 850px; padding: 0 0 23px; font-size: 12px; line-height: 1.9; }
-    .methodology-body p + p { margin-top: 12px; }
-    .methodology-body code { color: var(--blue-text); font-size: 11px; }
-    .site-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 29px 0 35px; color: var(--subtle); font: 9px/1.6 var(--mono); letter-spacing: .035em; }
-    .footer-status { display: flex; align-items: center; gap: 8px; }
-    .footer-status .led { width: 4px; height: 4px; }
-    .noscript { margin: 20px 0; padding: 15px; border: 1px solid var(--red); font-size: 13px; line-height: 1.8; }
-
-    /* 10. Cursor: solo ratón, nunca táctil o movimiento reducido */
-    .cursor-dot, .cursor-ring { position: fixed; top: 0; left: 0; pointer-events: none; opacity: 0; z-index: 1000; }
-    .cursor-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
-    .cursor-ring { width: 34px; height: 34px; border: 1px solid #00ff6660; border-radius: 50%; background: #00ff6605; box-shadow: 0 0 14px #00ff6616, inset 0 0 10px #00ff660a; transition: border-color .25s, background .25s, box-shadow .25s; }
-    .cursor-ring[data-mode="button"] { border-color: var(--green); background: #00ff6612; box-shadow: 0 0 22px #00ff6630; }
-    .cursor-ring[data-mode="input"] { border-color: var(--blue); background: #0066ff14; box-shadow: 0 0 24px #0066ff35; }
-    .cursor-active, .cursor-active button, .cursor-active input, .cursor-active a, .cursor-active summary { cursor: none; }
-    .cursor-active .cursor-dot, .cursor-active .cursor-ring { opacity: 1; }
-    [data-motion="off"] .orbit, .page-hidden .orbit { animation-play-state: paused; }
-    [data-motion="off"] *, [data-motion="off"] *::before, [data-motion="off"] *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
-    [data-motion="off"] .cursor-dot, [data-motion="off"] .cursor-ring { display: none; }
-
-    /* 11. Responsive */
-    @media (max-width: 850px) {
-      .hero { grid-template-columns: 1fr 260px; gap: 20px; }
-      .hero h1 { font-size: 85px; }
-      .module-header { align-items: flex-start; }
-      .module-meta.optional { display: none; }
-      .module-label { font-size: 9px; }
-      .recommendations-layout { grid-template-columns: 1fr 270px; gap: 23px; }
-    }
-    @media (max-width: 680px) {
-      .wrap { width: calc(100% - 32px); }
-      .site-header { min-height: 78px; }
-      .header-actions { gap: 12px; }
-      .brand-name { font-size: 11px; }
-      .brand-caption { font-size: 7px; }
-      .local-badge { font-size: 8px; gap: 6px; }
-      .hero { position: relative; display: block; padding: 43px 0 31px; overflow: hidden; }
-      .hero-content { position: relative; z-index: 1; }
-      .hero h1 { font-size: clamp(66px, 15vw, 96px); }
-      .hero-visual { position: absolute; width: 190px; right: -74px; top: 34px; opacity: .18; }
-      .radar-label, .radar-side { display: none; }
-      .hero-copy { font-size: 13px; max-width: 330px; }
-      .hero-meta { gap: 14px; font-size: 8px; }
-      .eyebrow { font-size: 8px; }
-      .ad-banner { min-height: 90px; margin-bottom: 25px; }
-      .ad-caption { font-size: 9px; }
-      .dashboard { grid-template-columns: 1fr; gap: 14px; }
-      .scanner, .stat-module, .recommendations { padding: 24px 20px; }
-      .module-header { margin-bottom: 23px; }
-      .module-label { font-size: 9px; gap: 8px; }
-      .input-shell { gap: 8px; padding-left: 13px; }
-      #password { font-size: 16px; }
-      #password::placeholder { font-size: 12px; }
-      .terminal-symbol { font-size: 18px; }
-      .input-actions { gap: 0; }
-      .icon-button { width: 40px; }
-      .checks { grid-template-columns: 1fr; gap: 12px; }
-      .check { font-size: 10px; }
-      .recommendations-layout { grid-template-columns: 1fr; }
-      .sponsored-module { min-height: 172px; }
-      .site-footer { align-items: flex-start; flex-direction: column; gap: 11px; }
-      .entropy-caption { font-size: 11px; }
-    }
-    @media (max-width: 360px) {
-      .brand { gap: 6px; }
-      .brand-caption { display: none; }
-      .header-actions { gap: 7px; }
-      .local-badge { font-size: 7px; }
-      .field-heading span { font-size: 8px; }
-      .scanner, .stat-module, .recommendations { padding-inline: 16px; }
-      .terminal-symbol { display: none; }
-    }
-    @media (pointer: coarse), (hover: none) {
-      .cursor-dot, .cursor-ring { display: none !important; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-      .cursor-dot, .cursor-ring { display: none !important; }
-    }
-  </style>
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            background-color: #050505;
+        }
+        .font-mono-tech {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Efecto Foco de Luz Interactiva (Spotlight) */
+        .spotlight-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: radial-gradient(
+                600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(0, 102, 255, 0.08),
+                transparent 80%
+            );
+            transition: background 0.1s ease;
+        }
+        /* Efecto de Brillo Neón en Tarjetas */
+        .tech-card {
+            position: relative;
+            background: rgba(13, 13, 13, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            z-index: 2;
+        }
+        .tech-card:hover {
+            border-color: rgba(0, 255, 102, 0.3);
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.1);
+            transform: translateY(-4px) scale(1.01);
+        }
+        /* Cursor personalizado */
+        .custom-cursor {
+            width: 8px;
+            height: 8px;
+            background: #00ff66;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        .custom-cursor-outline {
+            width: 24px;
+            height: 24px;
+            border: 1px solid rgba(0, 255, 102, 0.4);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
+        }
+        .expand-cursor {
+            width: 16px;
+            height: 16px;
+            background-color: #0066ff;
+        }
+        .expand-cursor-outline {
+            width: 40px;
+            height: 40px;
+            border-color: rgba(0, 102, 255, 0.6);
+        }
+    </style>
 </head>
-<body>
-  <a class="skip-link" href="#password">Ir al analizador</a>
-  <div class="ambient-light" aria-hidden="true"></div>
-  <div class="ambient-grid" aria-hidden="true"></div>
-  <canvas id="ambient" aria-hidden="true"></canvas>
-  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
-  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+<body class="text-slate-200 min-h-screen flex flex-col justify-between antialiased selection:bg-emerald-500 selection:text-black">
 
-  <!-- Símbolos SVG integrados: sin imágenes ni paquetes externos. -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 8 3v6c0 5-4 8.5-8 11-4-2.5-8-6-8-11V5z"/><path d="m8 12 2.5 2.5L16 9"/></symbol>
-      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
-      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="m3 3 18 18M10 6a13 13 0 0 1 2-.2c6.5 0 10 6.2 10 6.2a17 17 0 0 1-3 3.5M6.4 7.2A18 18 0 0 0 2 12s3.5 6 10 6a12 12 0 0 0 4.4-.8M10 10a3 3 0 0 0 4 4"/></symbol>
-      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
-      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
-      <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z"/></symbol>
-    </defs>
-  </svg>
+    <!-- Elementos del Cursor Personalizado e Interactivo -->
+    <div class="custom-cursor hidden md:block" id="cDot"></div>
+    <div class="custom-cursor-outline hidden md:block" id="cOutline"></div>
 
-  <header class="site-header wrap intro-part">
-    <a class="brand" href="#main" aria-label="NEON SHIELD, inicio">
-      <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg></span>
-      <span><span class="brand-name">NEON SHIELD<span class="green">_</span></span><span class="brand-caption" style="display:block">PERSONAL SECURITY SYSTEM</span></span>
-    </a>
-    <div class="header-actions">
-      <span class="local-badge"><span class="led" aria-hidden="true"></span>ANÁLISIS 100% LOCAL</span>
-      <button class="motion-button" id="motion-toggle" type="button" aria-label="Pausar animaciones" aria-pressed="false" title="Pausar animaciones">
-        <svg class="icon" aria-hidden="true"><use id="motion-icon" href="#i-pause"/></svg>
-      </button>
-    </div>
-  </header>
+    <!-- Capa del Foco de Luz de Fondo -->
+    <div class="spotlight-bg" id="spotlight"></div>
 
-  <main id="main" class="wrap">
-    <noscript><p class="noscript">Activa JavaScript para analizar contraseñas. La interfaz no realiza cálculos sin JavaScript.</p></noscript>
-
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-content">
-        <p class="eyebrow intro-part">TU CLAVE. TU CONTROL.</p>
-        <h1 id="hero-title" class="intro-part" aria-label="NEON SHIELD"><span class="title-line" aria-hidden="true">NEON</span><span class="title-line" aria-hidden="true">SHIELD</span></h1>
-        <p class="hero-copy intro-part">Tu primera línea de defensa, puesta a prueba.<br>Analiza tu contraseña. <strong>Sin ceder el control.</strong></p>
-        <div class="hero-meta intro-part"><span>PROCESAMIENTO LOCAL</span><span>SIN REGISTRO</span><span>TIEMPO REAL</span></div>
-      </div>
-      <div class="hero-visual intro-part" aria-hidden="true">
-        <svg class="radar-svg" viewBox="0 0 320 320" fill="none">
-          <defs><radialGradient id="core-glow"><stop stop-color="#00ff66" stop-opacity=".07"/><stop offset="1" stop-color="#00ff66" stop-opacity="0"/></radialGradient></defs>
-          <circle cx="160" cy="160" r="145" fill="url(#core-glow)"/>
-          <path d="M160 5v310M5 160h310M51 51l218 218M269 51 51 269" stroke="#202a23" stroke-width=".6"/>
-          <circle cx="160" cy="160" r="141" stroke="#23342a" stroke-dasharray="1 7"/>
-          <g class="orbit"><circle cx="160" cy="160" r="124" stroke="#00ff66" stroke-opacity=".3" stroke-dasharray="112 148 48 472"/><circle cx="284" cy="160" r="3" fill="#00ff66"/></g>
-          <g class="orbit orbit-reverse"><circle cx="160" cy="160" r="103" stroke="#0066ff" stroke-opacity=".55" stroke-dasharray="70 190"/><circle cx="57" cy="160" r="2" fill="#0066ff"/></g>
-          <circle cx="160" cy="160" r="85" stroke="#00ff66" stroke-opacity=".11"/>
-          <g class="shield-body"><path d="m160 89 53 20v44c0 35-25 60-53 77-28-17-53-42-53-77v-44z" fill="#081a0f" stroke="#00ff66" stroke-width="1.5"/><path d="m160 99 44 17v38c0 28-20 50-44 65-24-15-44-37-44-65v-38z" stroke="#00ff66" stroke-opacity=".25"/><rect x="141" y="146" width="38" height="31" rx="4" stroke="#00ff66" stroke-width="2"/><path d="M149 146v-10a11 11 0 0 1 22 0v10M160 157v8" stroke="#00ff66" stroke-width="2"/></g>
-          <path d="M29 113v-9h9M282 104h9v9M29 207v9h9M282 216h9v-9" stroke="#42614c"/>
-          <text x="28" y="94" fill="#748a7b" font-size="7" font-family="monospace">01.04</text>
-          <text x="261" y="237" fill="#748a7b" font-size="7" font-family="monospace">LOCAL</text>
-        </svg>
-        <span class="radar-label">[ LOCAL CORE · ACTIVE ]</span><span class="radar-side">NS / SECURITY ENGINE</span>
-      </div>
-    </section>
-
-    <!-- PUBLICIDAD 01: reserva de 728 × 90, adaptable a pantallas pequeñas. -->
-    <aside class="ad-banner intro-part" aria-label="Espacio publicitario de cabecera, sin anuncio conectado">
-      <span class="ad-tag">PUBLICIDAD / 01</span>
-      <p class="ad-caption">[ ESPACIO PUBLICITARIO / ANUNCIO ]</p>
-      <span class="ad-size">728 × 90 · RESPONSIVO</span>
-    </aside>
-
-    <div class="dashboard">
-      <!-- MÓDULO 01 -->
-      <section class="module scanner" id="scanner" aria-labelledby="scanner-title">
-        <div id="risk-halo" aria-hidden="true"></div>
-        <div class="module-header">
-          <p class="module-label"><span class="module-number">01</span> / VERIFICACIÓN DE CREDENCIALES</p>
-          <span class="module-meta optional"><span class="led" aria-hidden="true"></span>MOTOR LOCAL ACTIVO</span>
+    <!-- Encabezado de la Aplicación -->
+    <header class="border-b border-slate-900 bg-black/60 backdrop-blur-md px-6 py-4 flex justify-between items-center z-10 relative">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-lg tracking-widest font-mono-tech">
+            <i data-lucide="shield-alert" class="animate-pulse"></i> NEON_SHIELD
         </div>
-        <h2 id="scanner-title">Tu contraseña, bajo análisis.</h2>
-        <p class="section-copy">Un diagnóstico instantáneo de robustez. Por precaución, prueba una variante, no una clave en uso.</p>
-        <div class="field-heading"><label for="password">CLAVE DE ACCESO</label><span>[ NO SE GUARDA ]</span></div>
-        <div class="input-shell">
-          <span class="terminal-symbol" aria-hidden="true">&gt;_</span>
-          <input id="password" type="password" placeholder="Introduce una contraseña…" maxlength="128" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" aria-describedby="input-help feedback">
-          <div class="input-actions">
-            <button class="icon-button" id="toggle-password" type="button" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"><svg class="icon" aria-hidden="true"><use id="eye-icon" href="#i-eye"/></svg></button>
-            <button class="icon-button" id="clear-password" type="button" aria-label="Borrar contraseña" title="Borrar contraseña (Escape)" disabled><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
-          </div>
+        <div class="flex items-center gap-2 text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 font-mono-tech">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> PROCESAMIENTO 100% LOCAL
         </div>
-        <div class="input-foot"><span id="input-help">SOLO EN ESTE NAVEGADOR · ESC PARA BORRAR</span><span id="character-count">00 CARACTERES</span><span id="caps-warning" hidden>Bloq Mayús activado</span></div>
-        <div class="meter-top"><span>NIVEL DE ROBUSTEZ</span><div class="meter-readout"><span id="strength-label" class="status-badge">EN ESPERA</span><span id="score">00 / 05</span></div></div>
-        <div class="meter" id="strength-meter" role="meter" aria-label="Robustez heurística" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="Sin analizar">
-          <div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div>
-        </div>
-        <p id="feedback" class="feedback">Sistema preparado. Introduce una clave para iniciar el análisis.</p>
-        <div class="checks" aria-label="Comprobaciones orientativas">
-          <div class="check" id="check-length" data-pass="false"><span class="check-symbol" aria-hidden="true">·</span><span>12+ caracteres</span></div>
-          <div class="check" id="check-variety" data-pass="false"><span class="check-symbol" aria-hidden="true">·</span><span>3 tipos de caracteres</span></div>
-          <div class="check" id="check-patterns" data-pass="false"><span class="check-symbol" aria-hidden="true">·</span><span>Sin patrones detectados</span></div>
-        </div>
-      </section>
+    </header>
 
-      <!-- MÓDULO 02 -->
-      <section class="module stat-module" aria-labelledby="bruteforce-title">
-        <div class="module-header"><h2 class="module-label" id="bruteforce-title"><span class="module-number">02</span> / RESISTENCIA A FUERZA BRUTA</h2></div>
-        <p class="stat-label">Tiempo medio estimado de descubrimiento</p>
-        <div class="time-display" aria-hidden="true"><span id="time-value">—</span><span id="time-unit">sin analizar</span></div>
-        <span class="sr-only" id="time-accessible">Sin estimación.</span>
-        <p class="stat-note">Escenario hipotético de ataque offline.<br>Una estimación, no una garantía de seguridad.</p>
-        <div class="rate-row"><div><span>VELOCIDAD DEL MODELO</span><br><strong>10¹⁰ intentos / segundo</strong></div><div class="signal" aria-hidden="true"><i style="--h:5px"></i><i style="--h:10px"></i><i style="--h:7px"></i><i style="--h:16px"></i><i style="--h:11px"></i><i style="--h:20px"></i><i style="--h:13px"></i><i style="--h:18px"></i></div></div>
-      </section>
+    <!-- Contenedor de Tres Columnas de la Aplicación -->
+    <div class="max-w-[1400px] w-full mx-auto flex-grow flex flex-col lg:flex-row gap-6 p-4 lg:p-6 justify-center items-stretch relative z-20">
+        
+        <!-- COLUMNA IZQUIERDA: Anuncio Rascacielos 160x600 -->
+        <aside class="w-full lg:w-[160px] flex flex-col items-center justify-start lg:shrink-0 order-2 lg:order-1 mt-4 lg:mt-0">
+            <div class="sticky top-24 bg-neutral-950 p-1 border border-neutral-900 rounded-xl overflow-hidden shadow-2xl max-w-[160px] w-full min-h-[600px] flex items-center justify-center">
+                <!-- ADSTERRA: Script Banner 160x600 Izquierdo -->
+                <script>
+                  atOptions = {
+                    'key' : '9eb5688d177646d2180f72a2ce5b894d',
+                    'format' : 'iframe',
+                    'height' : 600,
+                    'width' : 160,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://bauval.org"></script>
+            </div>
+        </aside>
 
-      <!-- MÓDULO 03 -->
-      <section class="module stat-module" aria-labelledby="telemetry-title">
-        <div class="module-header"><h2 class="module-label" id="telemetry-title"><span class="module-number">03</span> / TELEMETRÍA DE SEGURIDAD</h2></div>
-        <div class="entropy-heading"><div class="entropy" aria-hidden="true"><span id="entropy-value">0</span><small>bits</small></div><p class="entropy-caption">Entropía estimada<br><span class="blue">MODELO HEURÍSTICO</span></p><span class="sr-only" id="entropy-accessible">Entropía estimada: 0 bits.</span></div>
-        <dl class="telemetry"><div><dt>Longitud de clave</dt><dd id="length-value">0 caracteres</dd></div><div><dt>Tipos de caracteres</dt><dd id="variety-value">0 / 4</dd></div><div><dt>Nivel de riesgo orientativo</dt><dd id="risk-value">SIN DATOS</dd></div></dl>
-      </section>
+        <!-- COLUMNA CENTRAL: Núcleo del Analizador e Interfaz Gráfica -->
+        <main class="flex-grow max-w-[800px] flex flex-col gap-6 order-1 lg:order-2">
+            
+            <!-- ANUNCIO HORIZONTAL SUPERIOR 728x90 -->
+            <div class="w-full bg-neutral-950 p-1 border border-neutral-900 rounded-xl overflow-hidden shadow-xl flex justify-center items-center min-h-[90px]">
+                <!-- ADSTERRA: Script Banner Horizontal 728x90 -->
+                <script>
+                  atOptions = {
+                    'key' : '262a9cb086b1e4b03109271538487464',
+                    'format' : 'iframe',
+                    'height' : 90,
+                    'width' : 728,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://bauval.org"></script>
+            </div>
 
-      <!-- MÓDULO 04 -->
-      <section class="module recommendations" aria-labelledby="recommendations-title">
-        <div class="module-header"><h2 class="module-label" id="recommendations-title"><span class="module-number">04</span> / RECOMENDACIONES DE SEGURIDAD</h2><span class="module-meta optional">DEFENSA EN PROFUNDIDAD</span></div>
-        <div class="recommendations-layout">
-          <div><h3 class="advice-title">Tu siguiente capa de defensa.</h3><p id="advice">Aquí aparecerá una orientación básica según el análisis. Ninguna puntuación comprueba si una contraseña se ha filtrado o se utiliza en otro servicio.</p><p class="future-slot">ESPACIO RESERVADO PARA FUTURAS RECOMENDACIONES</p></div>
-          <!-- PUBLICIDAD 02: claramente identificada; nunca inyectar scripts de anuncios junto al input. -->
-          <aside class="sponsored-module" aria-label="Módulo publicitario patrocinado de demostración">
-            <span class="sponsor-label">PUBLICIDAD / CONTENIDO PATROCINADO</span>
-            <div class="sponsor-title"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><h3>Módulo de protección<br>patrocinado</h3></div>
-            <p class="ad-caption">[ ESPACIO PUBLICITARIO / ANUNCIO ]</p>
-            <p class="sponsor-note">Reserva visual. Sin proveedor ni rastreadores conectados.</p>
-          </aside>
-        </div>
-      </section>
-    </div>
+            <!-- CARD PRINCIPAL: MÓDULO 01 / ESCÁNER -->
+            <section class="tech-card rounded-2xl p-6 lg:p-8" id="mod1">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-800/60 pb-4">
+                    <div>
+                        <span class="text-xs font-mono-tech text-blue-500 uppercase tracking-widest">01 / VERIFICACIÓN DE CREDENCIALES</span>
+                        <h2 class="text-2xl font-bold tracking-tight mt-1 text-white">Tu contraseña, bajo análisis</h2>
+                    </div>
+                    <i data-lucide="terminal" class="text-slate-600 w-6 h-6"></i>
+                </div>
 
-    <details class="methodology">
-      <summary>METODOLOGÍA, PRIVACIDAD Y MODO SIN CONEXIÓN</summary>
-      <div class="methodology-body">
-        <p><strong>Estimación orientativa.</strong> El punto de partida es <code>L × log₂(R)</code>, donde L es la longitud y R un tamaño aproximado de alfabeto. Se aplican descuentos heurísticos por palabras de una lista pequeña, secuencias, repeticiones, frases y otras estructuras previsibles. El resultado no mide la entropía real ni sustituye un estimador especializado. El contador usa <code>2^(bits − 1) / 10¹⁰</code> segundos; la velocidad es un supuesto ilustrativo, no una medición de hardware.</p>
-        <p>Los resultados pueden ser demasiado optimistas, especialmente con frases conocidas o patrones no incluidos. No se consultan filtraciones, datos personales, reutilización, algoritmos de hash ni límites de intentos del servicio. El riesgo mostrado se refiere únicamente a este modelo. La longitud se cuenta por puntos de código Unicode; el campo admite hasta 128 unidades UTF-16.</p>
-        <p><strong>Procesamiento local.</strong> Esta aplicación no envía la contraseña, no usa cookies y no la guarda en almacenamiento persistente. La clave permanece temporalmente en el campo y en la memoria del navegador. No se puede garantizar su borrado físico de memoria ni controlar extensiones o gestores de contraseñas instalados.</p>
-        <p><strong>GSAP y offline.</strong> La única dependencia remota es GSAP, solicitada mediante CDN sin incluir la contraseña. Esa descarga necesita conexión y comunica al CDN los datos habituales de una petición web. Si falla, el análisis, el diseño, los contadores y las transiciones funcionan con código nativo incluido en este archivo. Los dos espacios publicitarios son placeholders locales, no anuncios reales.</p>
-      </div>
-    </details>
-    <div id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-  </main>
+                <div class="space-y-4">
+                    <label class="text-xs font-mono-tech text-slate-400 uppercase tracking-wider">Introduce una clave de acceso (Prueba variantes por precaución)</label>
+                    <div class="relative">
+                        <input type="password" id="passInput" placeholder="> Esperando secuencia..." 
+                            class="interactive-element w-full bg-neutral-950 border border-slate-800 rounded-xl px-5 py-4 pr-14 text-emerald-400 focus:outline-none focus:border-blue-500 transition-colors font-mono-tech text-lg tracking-wide shadow-inner">
+                        <button id="btnToggle" class="interactive-element absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-1">
+                            <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
 
-  <footer class="site-footer wrap"><span>NEON SHIELD © 2026 <span class="green">/</span> TU SEGURIDAD, EN TUS MANOS.</span><span class="footer-status"><span class="led" aria-hidden="true"></span><span id="engine-status">MOTOR VISUAL NATIVO · ANÁLISIS LOCAL</span></span></footer>
+                <!-- Barra de Robustez con Animación GSAP -->
+                <div class="mt-6 space-y-2">
+                    <div class="flex justify-between text-xs font-mono-tech">
+                        <span class="text-slate-500">Nivel de Seguridad:</span>
+                        <span id="lblStrength" class="font-bold uppercase tracking-wider text-slate-400 text-shadow-glow">En Espera</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden flex gap-1.5 p-0.5 border border-slate-900">
+                        <div id="meter" class="h-full w-0 bg-neutral-800 rounded-full transition-all duration-300"></div>
+                    </div>
+                </div>
+            </section>
 
-  <script>
-  (() => {
-    'use strict';
-
-    /* 01. Estado y referencias. Nunca se persisten contraseñas. */
-    const $ = id => document.getElementById(id);
-    const root = document.documentElement;
-    const input = $('password');
-    const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
-    const pointerPreference = matchMedia('(hover: hover) and (pointer: fine)');
-    const RATE = 1e10;
-    const MAX_LENGTH = 128;
-    const formatter = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
-    const integerFormatter = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 });
-    const animations = new Map();
-    const bars = [...document.querySelectorAll('.meter-fill')].map(element => ({ element, value: 0 }));
-    const counters = { bits: 0, logSeconds: -12 };
-    let gsapEngine = window.gsap || null;
-    let userPaused = false;
-    let introStarted = false;
-    let introTimeline = null;
-    let introTimer = 0;
-    let announcementTimer = 0;
-    let inputFrame = 0;
-    let composing = false;
-    let previousLevel = 0;
-    let currentResult = null;
-    const nativeIntros = [];
-    const motionAllowed = () => !userPaused && !motionPreference.matches && !document.hidden;
-
-    const levels = [
-      { label: 'EN ESPERA', risk: 'SIN DATOS', color: '#0066ff', rgb: '0, 102, 255', text: '#80adff' },
-      { label: 'CRÍTICA', risk: 'MUY ALTO', color: '#ff0033', rgb: '255, 0, 51', text: '#ff748b' },
-      { label: 'VULNERABLE', risk: 'ALTO', color: '#ff0033', rgb: '255, 0, 51', text: '#ff748b' },
-      { label: 'INTERMEDIA', risk: 'MEDIO', color: '#0066ff', rgb: '0, 102, 255', text: '#80adff' },
-      { label: 'SÓLIDA', risk: 'BAJO', color: '#00ff66', rgb: '0, 255, 102', text: '#00ff66' },
-      { label: 'MUY SÓLIDA', risk: 'MÁS BAJO', color: '#00ff66', rgb: '0, 255, 102', text: '#00ff66' }
-    ];
-
-    /* 02. Animación numérica: GSAP cuando está disponible; alternativa nativa real. */
-    function stopAnimation(key) {
-      const cancel = animations.get(key);
-      if (cancel) cancel();
-      animations.delete(key);
-    }
-
-    function tween(key, state, target, render, { duration = .6, delay = 0, elastic = false, immediate = false } = {}) {
-      stopAnimation(key);
-      if (immediate || !motionAllowed()) {
-        Object.assign(state, target);
-        render();
-        return;
-      }
-      if (gsapEngine) {
-        const animation = gsapEngine.to(state, {
-          ...target, duration, delay,
-          ease: elastic ? 'elastic.out(1, 0.62)' : 'power3.out',
-          overwrite: true, onUpdate: render,
-          onComplete: () => { Object.assign(state, target); render(); animations.delete(key); }
-        });
-        animations.set(key, () => animation.kill());
-        return;
-      }
-      const from = Object.fromEntries(Object.keys(target).map(key => [key, state[key]]));
-      const start = performance.now() + delay * 1000;
-      let frame = 0;
-      function step(now) {
-        const t = Math.max(0, Math.min(1, (now - start) / (duration * 1000)));
-        const ease = elastic
-          ? (t === 0 || t === 1 ? t : Math.pow(2, -10 * t) * Math.sin((t * 10 - .75) * (2 * Math.PI / 3)) + 1)
-          : 1 - Math.pow(1 - t, 3);
-        for (const key of Object.keys(target)) state[key] = from[key] + (target[key] - from[key]) * ease;
-        render();
-        if (t < 1) frame = requestAnimationFrame(step);
-        else { Object.assign(state, target); render(); animations.delete(key); }
-      }
-      frame = requestAnimationFrame(step);
-      animations.set(key, () => cancelAnimationFrame(frame));
-    }
-
-    /* 03. Heurística acotada: no diccionarios remotos, hashes ni solicitudes de red. */
-    const commonWords = [
-      'password', 'contrasena', 'qwerty', 'admin', 'administrator', 'welcome',
-      'letmein', 'iloveyou', 'tequiero', 'dragon', 'monkey', 'football',
-      'baseball', 'usuario', 'secret', 'security', 'login', 'abc123',
-      'clave123', 'hola123', 'asdfgh', 'zxcvbn', 'trustno1', 'changeme',
-      'correcthorsebatterystaple', 'thisisatest', 'mysecretpassword'
-    ];
-    const sequences = ['0123456789', 'abcdefghijklmnopqrstuvwxyz', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm', 'qazwsxedcrfvtgbyhnujmikolp'];
-    const commonTokens = new Set('a an the this that is are my your little test hello world love correct horse battery staple una uno un el la los las es son mi tu hola mundo casa perro gato clave segura secreto'.split(' '));
-    const keyboardRows = sequences.flatMap(row => [row, [...row].reverse().join('')]);
-    const normalise = value => value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-    const unleet = value => value.replace(/[@430$57!1]/g, char => ({ '@':'a', '4':'a', '3':'e', '0':'o', '$':'s', '5':'s', '7':'t', '!':'i', '1':'i' })[char]);
-
-    function analyse(password) {
-      const chars = Array.from(password);
-      const length = chars.length;
-      if (!length) return { length: 0, bits: 0, score: 0, variety: 0, patterns: false, logSeconds: -12 };
-
-      const lower = /\p{Ll}/u.test(password);
-      const upper = /\p{Lu}/u.test(password);
-      const numeric = /\p{N}/u.test(password);
-      const otherLetters = /\p{Lo}|\p{Lt}|\p{Lm}/u.test(password);
-      const special = /[^\p{L}\p{N}]/u.test(password);
-      const symbols = /[^\p{L}\p{N}\s]/u.test(password);
-      const whitespace = /\s/u.test(password);
-      const variety = [lower || otherLetters, upper, numeric, special].filter(Boolean).length;
-      // Aproximación deliberadamente limitada, también para caracteres Unicode.
-      const pool = Math.max(2, (lower || otherLetters ? 26 : 0) + (upper ? 26 : 0) + (numeric ? 10 : 0) + (symbols ? 32 : 0) + (whitespace ? 1 : 0));
-      let bits = length * Math.log2(pool);
-      let patterns = false;
-      const normalized = normalise(password);
-      const compact = normalized.replace(/[^a-z0-9@!$]/g, '');
-      const leet = unleet(compact);
-      const common = commonWords.find(word => compact.includes(word) || leet.includes(unleet(word)));
-
-      if (common) {
-        patterns = true;
-        bits = Math.min(bits, 12 + Math.max(0, length - common.length) * 2.6);
-      }
-      if (length >= 4 && keyboardRows.some(row => row.includes(normalized))) {
-        patterns = true;
-        bits = Math.min(bits, 8 + Math.log2(length));
-      } else {
-        for (let i = 0; i <= normalized.length - 4; i++) {
-          if (keyboardRows.some(row => row.includes(normalized.slice(i, i + 4)))) {
-            patterns = true;
-            bits -= 16;
-            break;
-          }
-        }
-      }
-      // Periodicidad: bucle acotado en lugar de expresiones regulares costosas.
-      for (let period = 1; period <= Math.floor(length / 2); period++) {
-        if (chars.every((char, index) => char === chars[index % period])) {
-          patterns = true;
-          bits = Math.min(bits, period * Math.log2(pool) + Math.log2(length / period + 1));
-          break;
-        }
-      }
-      if (/(.)\1{2,}/u.test(password)) { patterns = true; bits -= 10; }
-      if (/(?:19|20)\d{2}/.test(password)) { patterns = true; bits -= 8; }
-      if (/^(?:\d{6}|\d{8})$/.test(password)) { patterns = true; bits = Math.min(bits, 22); }
-      if (/^\p{Lu}\p{Ll}{3,}\d{1,4}[^\p{L}\p{N}]{0,2}$/u.test(password)) {
-        patterns = true;
-        bits = Math.min(bits, 30 + Math.log2(length));
-      }
-      // Las palabras de una frase no se modelan como letras aleatorias independientes.
-      const words = normalized.match(/\p{L}+/gu) || [];
-      if (whitespace && words.length >= 2) {
-        const phraseBits = words.reduce((total, word) => total + (commonTokens.has(word) ? 5 : Math.min(12, Array.from(word).length * Math.log2(26))), 0);
-        bits = Math.min(bits, phraseBits + Math.min(8, words.length + 1));
-        if (words.some(word => commonTokens.has(word))) patterns = true;
-      }
-      if (length >= 8 && new Set(chars).size / length < .35) { patterns = true; bits *= .6; }
-
-      bits = Math.max(1, Math.min(256, bits));
-      let score = bits < 28 ? 1 : bits < 44 ? 2 : bits < 64 ? 3 : bits < 86 ? 4 : 5;
-      if (length < 8) score = Math.min(score, 1);
-      else if (length < 12) score = Math.min(score, 3);
-      else if (length < 16) score = Math.min(score, 4);
-      if (common && length < 16) score = Math.min(score, 2);
-      return { length, bits, score, variety, patterns, logSeconds: bits - 1 - Math.log2(RATE) };
-    }
-
-    /* 04. Formato temporal: cálculo logarítmico para evitar desbordamientos. */
-    function formatTime(logSeconds) {
-      const seconds = Math.pow(2, logSeconds);
-      const year = 31557600;
-      if (seconds < .001) return { value: '< 0,001', unit: 'segundos' };
-      if (seconds < 1) return { value: formatter.format(seconds * 1000), unit: 'milisegundos' };
-      const units = [
-        [1, 'segundo', 'segundos'], [60, 'minuto', 'minutos'],
-        [3600, 'hora', 'horas'], [86400, 'día', 'días'],
-        [year, 'año', 'años'], [year * 1e3, 'mil años', 'mil años'],
-        [year * 1e6, 'millón de años', 'millones de años'],
-        [year * 1e9, 'mil millones de años', 'mil millones de años']
-      ];
-      if (seconds >= year * 1e12) {
-        const power = Math.floor(Math.log10(seconds / year));
-        return { value: '10^' + power, unit: 'años (orden de magnitud)' };
-      }
-      let chosen = units[0];
-      for (const unit of units) if (seconds >= unit[0]) chosen = unit;
-      const number = Math.round((seconds / chosen[0]) * 10) / 10;
-      return { value: formatter.format(number), unit: number === 1 ? chosen[1] : chosen[2] };
-    }
-
-    function renderCounters() {
-      $('entropy-value').textContent = integerFormatter.format(counters.bits);
-      if (!currentResult || !currentResult.length) {
-        $('time-value').textContent = '—';
-        $('time-unit').textContent = 'sin analizar';
-        return;
-      }
-      const time = formatTime(counters.logSeconds);
-      $('time-value').textContent = time.value;
-      $('time-unit').textContent = time.unit;
-    }
-
-    function feedbackFor(result) {
-      if (!result.length) return 'Sistema preparado. Introduce una clave para iniciar el análisis.';
-      if (result.patterns) return 'Se han detectado patrones previsibles. Aumenta la longitud y evita palabras, fechas o secuencias obvias.';
-      if (result.length < 12) return 'La clave es corta. Añadir longitud mejora la resistencia estimada más que un cambio cosmético.';
-      if (result.score < 4) return 'Resistencia intermedia. Una combinación más larga y menos predecible mejoraría este resultado.';
-      return 'Buena resistencia dentro de este modelo. No implica que la contraseña sea única o que no se haya filtrado.';
-    }
-
-    function setCheck(id, pass, active) {
-      const element = $(id);
-      element.dataset.pass = String(pass);
-      element.querySelector('.check-symbol').textContent = pass ? '✓' : '·';
-      element.setAttribute('aria-label', element.lastElementChild.textContent + ': ' + (!active ? 'sin analizar' : pass ? 'cumple esta comprobación' : 'no cumple esta comprobación'));
-    }
-
-    function pulseRisk() {
-      stopAnimation('halo');
-      const element = $('risk-halo');
-      element.style.opacity = '0';
-      if (!motionAllowed()) return;
-      if (gsapEngine) {
-        const animation = gsapEngine.fromTo(element, { opacity: 0 }, { opacity: .65, duration: .5, yoyo: true, repeat: 1, ease: 'sine.inOut', onComplete: () => { element.style.opacity = '0'; animations.delete('halo'); } });
-        animations.set('halo', () => { animation.kill(); element.style.opacity = '0'; });
-      } else if (element.animate) {
-        const animation = element.animate([{ opacity: 0 }, { opacity: .65 }, { opacity: 0 }], { duration: 1000, easing: 'ease-in-out' });
-        animation.onfinish = () => animations.delete('halo');
-        animations.set('halo', () => animation.cancel());
-      }
-    }
-
-    /* 05. Actualización reactiva. Ningún contenido del input se refleja como HTML. */
-    function update({ immediate = false, announce = true } = {}) {
-      if (input.value.length > MAX_LENGTH) input.value = input.value.slice(0, MAX_LENGTH);
-      const result = analyse(input.value);
-      currentResult = result;
-      const level = levels[result.score];
-      root.style.setProperty('--risk', level.color);
-      root.style.setProperty('--risk-rgb', level.rgb);
-      root.style.setProperty('--risk-text', level.text);
-      $('strength-label').textContent = level.label;
-      $('score').textContent = String(result.score).padStart(2, '0') + ' / 05';
-      $('strength-meter').setAttribute('aria-valuenow', String(result.score));
-      $('strength-meter').setAttribute('aria-valuetext', result.length ? level.label + ', ' + result.score + ' de 5' : 'Sin analizar');
-      $('character-count').textContent = String(result.length).padStart(2, '0') + ' CARACTERES';
-      $('length-value').textContent = result.length + (result.length === 1 ? ' carácter' : ' caracteres');
-      $('variety-value').textContent = result.variety + ' / 4';
-      $('risk-value').textContent = level.risk;
-      $('clear-password').disabled = !result.length;
-      $('feedback').textContent = feedbackFor(result);
-      $('advice').textContent = !result.length
-        ? 'Aquí aparecerá una orientación básica según el análisis. Ninguna puntuación comprueba si una contraseña se ha filtrado o se utiliza en otro servicio.'
-        : result.score < 4
-          ? 'Prioriza una clave larga y poco predecible. Este diagnóstico solo examina su estructura: añadir un símbolo a una palabra conocida no la convierte automáticamente en segura.'
-          : 'No reutilices la misma contraseña en otros servicios. Este resultado no mide filtraciones, phishing ni la protección del servicio donde la utilices.';
-      setCheck('check-length', result.length >= 12, result.length > 0);
-      setCheck('check-variety', result.variety >= 3, result.length > 0);
-      setCheck('check-patterns', result.length > 0 && !result.patterns, result.length > 0);
-      bars.forEach((bar, index) => {
-        tween('bar-' + index, bar, { value: index < result.score ? 1 : 0 }, () => {
-          bar.element.style.transform = 'scaleX(' + Math.max(0, bar.value) + ')';
-        }, { duration: .85, delay: index * .035, elastic: true, immediate });
-      });
-      tween('counters', counters, { bits: result.bits, logSeconds: result.logSeconds }, renderCounters, { immediate: immediate || !result.length });
-      const finalTime = result.length ? formatTime(result.logSeconds) : null;
-      const timeText = finalTime ? finalTime.value + ' ' + finalTime.unit : 'sin estimación';
-      $('time-accessible').textContent = 'Tiempo teórico: ' + timeText + '.';
-      $('entropy-accessible').textContent = 'Entropía estimada: ' + Math.round(result.bits) + ' bits.';
-      if (!immediate && result.score !== previousLevel && result.score !== 0) pulseRisk();
-      previousLevel = result.score;
-      clearTimeout(announcementTimer);
-      if (announce) announcementTimer = setTimeout(() => {
-        $('announcement').textContent = result.length
-          ? 'Robustez ' + level.label.toLowerCase() + ', ' + result.score + ' de 5. Tiempo teórico: ' + timeText + '.'
-          : 'Contraseña borrada. Sin análisis.';
-      }, 650);
-    }
-
-    function setVisibility(visible) {
-      input.type = visible ? 'text' : 'password';
-      $('toggle-password').setAttribute('aria-pressed', String(visible));
-      $('toggle-password').setAttribute('aria-label', visible ? 'Ocultar contraseña' : 'Mostrar contraseña');
-      $('toggle-password').title = visible ? 'Ocultar contraseña' : 'Mostrar contraseña';
-      $('eye-icon').setAttribute('href', visible ? '#i-eye-off' : '#i-eye');
-    }
-    function clearPassword(focus = true) {
-      cancelAnimationFrame(inputFrame);
-      composing = false;
-      input.value = '';
-      setVisibility(false);
-      $('caps-warning').hidden = true;
-      update({ immediate: true, announce: focus });
-      if (focus) input.focus({ preventScroll: true });
-    }
-    input.addEventListener('input', () => {
-      if (composing) return;
-      cancelAnimationFrame(inputFrame);
-      inputFrame = requestAnimationFrame(() => update());
-    });
-    input.addEventListener('change', () => { if (!composing) update(); });
-    input.addEventListener('compositionstart', () => { composing = true; cancelAnimationFrame(inputFrame); });
-    input.addEventListener('compositionend', () => { composing = false; update(); });
-    input.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && !event.isComposing) { event.preventDefault(); clearPassword(); }
-      $('caps-warning').hidden = !event.getModifierState('CapsLock');
-    });
-    input.addEventListener('keyup', event => { $('caps-warning').hidden = !event.getModifierState('CapsLock'); });
-    input.addEventListener('blur', () => { $('caps-warning').hidden = true; });
-    $('toggle-password').addEventListener('click', () => {
-      const start = input.selectionStart, end = input.selectionEnd;
-      setVisibility(input.type === 'password');
-      input.focus({ preventScroll: true });
-      if (start !== null && end !== null) input.setSelectionRange(start, end);
-    });
-    $('clear-password').addEventListener('click', () => clearPassword());
-
-    /* 06. Intro secuencial, sin bloquear el input ni depender de la red. */
-    function finishIntro() {
-      clearTimeout(introTimer);
-      root.classList.remove('booting');
-      if (introTimeline) { introTimeline.progress(1).kill(); introTimeline = null; }
-      nativeIntros.forEach(animation => animation.cancel());
-      nativeIntros.length = 0;
-      introStarted = true;
-    }
-    function startIntro() {
-      if (introStarted) return;
-      introStarted = true;
-      clearTimeout(introTimer);
-      root.classList.remove('booting');
-      if (!motionAllowed()) return;
-      if (gsapEngine) {
-        const radarOpacity = Number(getComputedStyle(document.querySelector('.hero-visual')).opacity);
-        introTimeline = gsapEngine.timeline({ defaults: { ease: 'power3.out' } });
-        introTimeline
-          .fromTo('.site-header', { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: .55, clearProps: 'opacity,transform' }, 0)
-          .fromTo('.hero .eyebrow, .hero-copy, .hero-meta', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .7, stagger: .09, clearProps: 'opacity,transform' }, .1)
-          .fromTo('.title-line', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: .65, stagger: .09 }, .12)
-          .to('.title-line', { opacity: .5, duration: .18, yoyo: true, repeat: 3, ease: 'steps(1)', clearProps: 'opacity,transform' }, .55)
-          .fromTo('.hero-visual', { opacity: 0, scale: .9 }, { opacity: radarOpacity, scale: 1, duration: 1, clearProps: 'opacity,transform' }, .1)
-          .fromTo('.ad-banner', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .6, clearProps: 'opacity,transform' }, .35)
-          .fromTo('.module', { opacity: 0, y: 32 }, { opacity: 1, y: 0, duration: .8, stagger: .12, clearProps: 'opacity,transform' }, .48);
-      } else {
-        const targets = [...document.querySelectorAll('.site-header, .hero .intro-part, .ad-banner, .module')];
-        targets.forEach((element, index) => {
-          if (!element.animate) return;
-          // No se sobrescribe la opacidad de diseño del radar móvil.
-          const opacity = getComputedStyle(element).opacity;
-          nativeIntros.push(element.animate([
-            { opacity: 0, transform: 'translateY(22px)' },
-            { opacity, transform: 'translateY(0)' }
-          ], { duration: 650, delay: index * 65, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' }));
-        });
-        const title = $('hero-title');
-        if (title.animate) nativeIntros.push(title.animate([
-          { opacity: 1 }, { opacity: .5 }, { opacity: 1 }, { opacity: .65 }, { opacity: 1 }
-        ], { duration: 800, delay: 300, easing: 'steps(1)' }));
-      }
-    }
-    function registerGSAP() {
-      gsapEngine = window.gsap || null;
-      $('engine-status').textContent = gsapEngine ? 'MOTION: GSAP · ANÁLISIS LOCAL' : 'MOTOR VISUAL NATIVO · ANÁLISIS LOCAL';
-      startIntro();
-    }
-    $('gsap-cdn').addEventListener('load', registerGSAP);
-    $('gsap-cdn').addEventListener('error', startIntro);
-    input.addEventListener('focus', finishIntro, { once: true });
-
-    /* 07. Canvas y cursor comparten un solo ciclo, suspendido al ocultar la página. */
-    const canvas = $('ambient');
-    const context = canvas.getContext('2d');
-    const ring = $('cursor-ring');
-    const dot = $('cursor-dot');
-    const pointer = { x: -500, y: -500, ringX: -500, ringY: -500, targetX: -500, targetY: -500, scale: 1, targetScale: 1, visible: false };
-    let width = 0, height = 0, particles = [], visualFrame = 0, lastCanvasFrame = 0;
-
-    function hideCursor() {
-      pointer.visible = false;
-      document.body.classList.remove('cursor-active');
-    }
-    function resizeCanvas() {
-      width = innerWidth;
-      height = innerHeight;
-      const ratio = Math.min(devicePixelRatio || 1, 1.5);
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
-      if (context) context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      const count = width < 680 ? 22 : 44;
-      particles = Array.from({ length: count }, () => ({ x: Math.random() * width, y: Math.random() * height, phase: Math.random() * 6.28, radius: .6 + Math.random() * .7 }));
-      drawAmbient(0);
-    }
-    function drawAmbient(time) {
-      if (!context) return;
-      context.clearRect(0, 0, width, height);
-      const positions = particles.map(particle => {
-        let x = particle.x + Math.sin(time * .00016 + particle.phase) * 9;
-        let y = particle.y + Math.cos(time * .00013 + particle.phase) * 9;
-        if (pointer.visible && motionAllowed()) {
-          const dx = pointer.x - x, dy = pointer.y - y;
-          const distance = Math.hypot(dx, dy);
-          const force = Math.max(0, 1 - distance / 180) * .035;
-          x += dx * force; y += dy * force;
-        }
-        context.beginPath();
-        context.arc(x, y, particle.radius, 0, Math.PI * 2);
-        context.fillStyle = 'rgba(0,255,102,.22)';
-        context.fill();
-        return { x, y };
-      });
-      for (let i = 0; i < positions.length; i++) {
-        for (let j = i + 1; j < positions.length; j++) {
-          const a = positions[i], b = positions[j];
-          const distance = Math.hypot(a.x - b.x, a.y - b.y);
-          if (distance > 125) continue;
-          context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y);
-          context.strokeStyle = 'rgba(0,102,255,' + ((1 - distance / 125) * .12) + ')';
-          context.lineWidth = .7; context.stroke();
-        }
-      }
-    }
-    function visualLoop(time) {
-      visualFrame = 0;
-      if (!motionAllowed()) return;
-      if (time - lastCanvasFrame >= 33) { drawAmbient(time); lastCanvasFrame = time; }
-      if (pointer.visible) {
-        pointer.ringX += (pointer.targetX - pointer.ringX) * .2;
-        pointer.ringY += (pointer.targetY - pointer.ringY) * .2;
-        pointer.scale += (pointer.targetScale - pointer.scale) * .14;
-        ring.style.transform = `translate3d(${pointer.ringX}px,${pointer.ringY}px,0) translate(-50%,-50%) scale(${pointer.scale})`;
-        dot.style.transform = `translate3d(${pointer.x}px,${pointer.y}px,0) translate(-50%,-50%)`;
-      }
-      visualFrame = requestAnimationFrame(visualLoop);
-    }
-    function syncVisualLoop() {
-      cancelAnimationFrame(visualFrame);
-      visualFrame = 0;
-      if (motionAllowed()) visualFrame = requestAnimationFrame(visualLoop);
-      else { hideCursor(); drawAmbient(0); }
-    }
-    window.addEventListener('pointermove', event => {
-      if (event.pointerType !== 'mouse' || !pointerPreference.matches || !motionAllowed()) { hideCursor(); return; }
-      pointer.x = event.clientX; pointer.y = event.clientY;
-      const target = event.target instanceof Element ? event.target.closest('button:not(:disabled), input, a, summary') : null;
-      const isInput = target instanceof HTMLInputElement;
-      pointer.targetX = pointer.x; pointer.targetY = pointer.y;
-      pointer.targetScale = target ? (isInput ? 1.65 : 1.5) : 1;
-      ring.dataset.mode = target ? (isInput ? 'input' : 'button') : 'default';
-      if (target) {
-        const bounds = target.getBoundingClientRect();
-        const attraction = isInput ? .025 : .16;
-        pointer.targetX += (bounds.left + bounds.width / 2 - pointer.x) * attraction;
-        pointer.targetY += (bounds.top + bounds.height / 2 - pointer.y) * attraction;
-      }
-      if (!pointer.visible) {
-        pointer.ringX = pointer.x; pointer.ringY = pointer.y;
-        ring.style.transform = `translate(${pointer.x}px,${pointer.y}px) translate(-50%,-50%)`;
-        dot.style.transform = ring.style.transform;
-        pointer.visible = true;
-        document.body.classList.add('cursor-active');
-      }
-    }, { passive: true });
-    document.addEventListener('pointerout', event => { if (!event.relatedTarget) hideCursor(); }, { passive: true });
-    document.addEventListener('keydown', event => { if (event.key === 'Tab') hideCursor(); });
-    window.addEventListener('blur', () => { hideCursor(); setVisibility(false); });
-    let resizeTimer = 0;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { hideCursor(); resizeCanvas(); }, 120);
-    }, { passive: true });
-
-    /* 08. Preferencias accesibles y ciclo de vida. */
-    function syncMotion() {
-      const paused = userPaused || motionPreference.matches;
-      root.dataset.motion = paused ? 'off' : 'on';
-      $('motion-toggle').setAttribute('aria-pressed', String(paused));
-      $('motion-toggle').disabled = motionPreference.matches;
-      const label = motionPreference.matches ? 'Movimiento reducido por preferencia del sistema' : paused ? 'Activar animaciones' : 'Pausar animaciones';
-      $('motion-toggle').setAttribute('aria-label', label);
-      $('motion-toggle').title = label;
-      $('motion-icon').setAttribute('href', paused ? '#i-play' : '#i-pause');
-      if (paused) {
-        finishIntro();
-        for (const key of [...animations.keys()]) stopAnimation(key);
-        $('risk-halo').style.opacity = '0';
-        update({ immediate: true, announce: false });
-      }
-      syncVisualLoop();
-    }
-    $('motion-toggle').addEventListener('click', () => { userPaused = !userPaused; syncMotion(); });
-    motionPreference.addEventListener('change', syncMotion);
-    pointerPreference.addEventListener('change', hideCursor);
-    document.addEventListener('visibilitychange', () => {
-      root.classList.toggle('page-hidden', document.hidden);
-      if (document.hidden) {
-        setVisibility(false);
-        finishIntro();
-        for (const key of [...animations.keys()]) stopAnimation(key);
-        update({ immediate: true, announce: false });
-      }
-      syncVisualLoop();
-    });
-    window.addEventListener('pagehide', () => {
-      clearPassword(false);
-      finishIntro();
-      hideCursor();
-      cancelAnimationFrame(visualFrame);
-      clearTimeout(announcementTimer);
-      clearTimeout(resizeTimer);
-      for (const key of [...animations.keys()]) stopAnimation(key);
-    });
-    window.addEventListener('pageshow', syncVisualLoop);
-
-    update({ immediate: true, announce: false });
-    resizeCanvas();
-    syncMotion();
-    if (gsapEngine) registerGSAP();
-    else introTimer = setTimeout(startIntro, 550);
-  })();
-  </script>
-</body>
-</html>
+            <!-- CARD RECTÁNGULO: MÓDULO 02 / FUERZA BRUTA -->
+            <section class="tech-card rounded-2xl p-6" id="mod2">
+                <div class="flex justify-between items-center mb-4 border-b border-slate-800/60 pb-3">
+                    <div>
+                        <span class="text-xs font-mono-tech text-blue-500 uppercase tracking-widest">02 / RESISTENCIA A FUERZA BRUTA</span>
+                        <h3 class="text-lg font-bold text-white mt-0.5">Tiempo estimado de descubrimiento</h3>
+                    </div>
+                    <i data-lucide="cpu" class="text-slate-600 w-5 h-5"></i>
+                </div>
+                <div class="bg-neutral-950/80 rounded-xl p-5 border border-slate-900 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="text-3xl lg:text-4xl font-bold tracking-tight text-white font-mono-tech text-shadow-glow" id="lblCrackTime">—</div>
+                        <p class="text-xs text-slate-500 mt-1">Escenario matemático hipotético frente a ataques simultáneos por IA.</p>
+                    </div>
