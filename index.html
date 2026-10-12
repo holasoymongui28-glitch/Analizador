@@ -1,194 +1,721 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON SHIELD — Analizador de Contraseñas</title>
-    <!-- Tailwind CSS para el diseño base rápido -->
-    <script src="https://jsdelivr.net"></script>
-    <!-- Iconos Lucide -->
-    <script src="https://unpkg.com"></script>
-    <!-- GSAP para animaciones fluidas y Motion Graphics -->
-    <script src="https://cloudflare.com"></script>
-    <!-- Google Fonts Premium -->
-    <link rel="preconnect" href="https://googleapis.com">
-    <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050505">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="NEON SHIELD: análisis heurístico local de contraseñas con privacidad y telemetría visual.">
+  <title>NEON SHIELD — Password Security Engine</title>
 
-    <style>
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            overflow-x: hidden;
-            background-color: #050505;
-        }
-        .font-mono-tech {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        /* Efecto Foco de Luz Interactiva (Spotlight) */
-        .spotlight-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-            background: radial-gradient(
-                600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                rgba(0, 102, 255, 0.08),
-                transparent 80%
-            );
-            transition: background 0.1s ease;
-        }
-        /* Efecto de Brillo Neón en Tarjetas */
-        .tech-card {
-            position: relative;
-            background: rgba(13, 13, 13, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-            z-index: 2;
-        }
-        .tech-card:hover {
-            border-color: rgba(0, 255, 102, 0.3);
-            box-shadow: 0 0 25px rgba(0, 255, 102, 0.1);
-            transform: translateY(-4px) scale(1.01);
-        }
-        /* Cursor personalizado */
-        .custom-cursor {
-            width: 8px;
-            height: 8px;
-            background: #00ff66;
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: width 0.2s, height 0.2s, background-color 0.2s;
-        }
-        .custom-cursor-outline {
-            width: 24px;
-            height: 24px;
-            border: 1px solid rgba(0, 255, 102, 0.4);
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9998;
-            transform: translate(-50%, -50%);
-            transition: transform 0.1s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
-        }
-        .expand-cursor {
-            width: 16px;
-            height: 16px;
-            background-color: #0066ff;
-        }
-        .expand-cursor-outline {
-            width: 40px;
-            height: 40px;
-            border-color: rgba(0, 102, 255, 0.6);
-        }
-    </style>
+  <!-- Las fuentes y GSAP son mejoras opcionales: el analizador funciona sin red. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" referrerpolicy="no-referrer"></script>
+
+  <style>
+    /* ========================= 01 / SYSTEM ========================= */
+    :root {
+      color-scheme: dark;
+      --bg: #050505;
+      --surface: #0b0e0d;
+      --surface-alt: #0d1214;
+      --text: #f0f4ef;
+      --muted: #a0aca8;
+      --dim: #64766e;
+      --line: #243129;
+      --green: #00ff66;
+      --blue: #0066ff;
+      --blue-soft: #88b3ff;
+      --red: #ff0033;
+      --risk: #0066ff;
+      --risk-rgb: 0, 102, 255;
+      --mouse-x: 50vw;
+      --mouse-y: 40vh;
+      --spot-rgb: 0, 102, 255;
+      --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+      --mono: "JetBrains Mono", Consolas, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-height: 100vh; color: var(--text); background: var(--bg); font: 400 14px/1.6 var(--display); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: radial-gradient(550px circle at var(--mouse-x) var(--mouse-y), rgba(var(--spot-rgb), .115) 0%, rgba(var(--spot-rgb), .045) 30%, transparent 70%); transition: opacity .3s; }
+    body.has-mouse::before { opacity: 1; }
+    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .4; background: linear-gradient(#ffffff05 1px, transparent 1px), linear-gradient(90deg, #ffffff04 1px, transparent 1px); background-size: 78px 78px; mask-image: linear-gradient(to bottom, #0007, transparent 95%); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+    [hidden] { display: none !important; }
+    a { color: inherit; text-decoration: none; }
+    h1, h2, h3, p { margin: 0; }
+    svg { display: block; }
+    .mono { font-family: var(--mono); }
+    .green { color: var(--green); }
+    .blue { color: var(--blue-soft); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .skip-link { position: fixed; top: 10px; left: 10px; z-index: 999; padding: 10px 14px; background: var(--green); color: #050505; transform: translateY(-150%); }
+    .skip-link:focus { transform: translateY(0); }
+    .site-header, .layout, .site-footer { position: relative; z-index: 1; }
+    .wrap { width: min(1500px, calc(100% - 48px)); margin-inline: auto; }
+
+    /* ========================= 02 / HEADER ========================= */
+    .site-header { min-height: 88px; display: flex; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid #243028; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-logo { width: 39px; height: 43px; display: grid; place-items: center; color: var(--green); border: 1px solid #00ff663c; background: #00ff6607; clip-path: polygon(15% 0,85% 0,100% 15%,100% 85%,85% 100%,15% 100%,0 85%,0 15%); }
+    .brand-logo svg { width: 25px; height: 25px; }
+    .brand-name { font-size: 15px; font-weight: 700; line-height: 1.15; letter-spacing: .10em; }
+    .brand-caption { display: block; margin-top: 5px; color: var(--dim); font: 9px var(--mono); letter-spacing: .08em; }
+    .header-right { display: flex; align-items: center; gap: 18px; }
+    .local-status { display: flex; align-items: center; gap: 10px; color: var(--green); font: 10px var(--mono); white-space: nowrap; }
+    .led { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px #00ff6688; flex-shrink: 0; }
+    .motion-toggle { width: 41px; height: 41px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: #0a0d0b; color: #a8c6b5; transition: color .25s,border-color .25s,background .25s; }
+    .motion-toggle:hover { border-color: var(--green); color: var(--green); background: #00ff6610; }
+    .motion-toggle svg { width: 17px; height: 17px; }
+
+    /* ========================= 03 / THREE-COLUMN LAYOUT ========================= */
+    .layout { display: grid; grid-template-columns: 160px minmax(0, 1fr) 160px; gap: clamp(20px, 2.3vw, 32px); align-items: start; padding-top: 34px; }
+    .center { min-width: 0; }
+    .ad-rail { position: sticky; top: 24px; width: 160px; align-self: start; }
+    .skyscraper { position: relative; min-height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; padding: 20px 13px; border: 1px dashed #365140; border-radius: 12px; background: linear-gradient(160deg, #09120c, #080a09 60%, #08100a); }
+    .ad-rail.right .skyscraper { border-color: #315179; background: linear-gradient(160deg, #0a1220, #080a0d 60%, #080e17); }
+    .ad-id { color: var(--dim); font: 9px var(--mono); letter-spacing: .13em; }
+    .ad-art { display: grid; place-items: center; position: relative; width: 76px; height: 76px; border-radius: 50%; border: 1px dashed #00ff6675; color: var(--green); box-shadow: 0 0 44px #00ff6612; }
+    .ad-art::after { content: ""; position: absolute; inset: -13px; border: 1px solid #00ff6625; border-radius: 50%; }
+    .right .ad-art { color: var(--blue-soft); border-color: #0066ff80; box-shadow: 0 0 44px #0066ff18; }
+    .right .ad-art::after { border-color: #0066ff35; }
+    .ad-art svg { width: 32px; height: 32px; }
+    .ad-copy { font: 10px/1.9 var(--mono); color: #a5b5aa; overflow-wrap: anywhere; }
+    .ad-size { display: block; color: var(--dim); font: 10px var(--mono); margin-top: 14px; }
+    .ad-foot { width: 100%; padding-top: 17px; border-top: 1px solid #ffffff14; font: 8px/1.8 var(--mono); color: var(--dim); }
+
+    /* ========================= 04 / HERO & BANNER ========================= */
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 240px); align-items: center; gap: 14px; padding: 20px 0 34px; }
+    .eyebrow { color: var(--green); font: 10px var(--mono); letter-spacing: .18em; }
+    .eyebrow::before { content: "// "; opacity: .5; }
+    .hero h1 { margin: 19px 0 20px; font-size: clamp(65px, 7.5vw, 111px); font-weight: 700; line-height: .86; letter-spacing: -.085em; }
+    .hero h1 span { display: block; width: max-content; max-width: 100%; }
+    .hero h1 span:last-child { color: var(--green); text-shadow: 0 0 38px #00ff6616; }
+    .hero-copy { max-width: 470px; font-size: 15px; line-height: 1.8; color: var(--muted); }
+    .hero-copy b { color: var(--text); font-weight: 600; }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 18px; color: var(--dim); font: 9px var(--mono); }
+    .hero-tags span::before { content: "+"; color: var(--green); margin-right: 6px; }
+    .radar { justify-self: center; width: min(100%, 235px); aspect-ratio: 1; border-radius: 50%; position: relative; display: grid; place-items: center; background: radial-gradient(circle, #00ff660b, transparent 65%); }
+    .radar::before, .radar::after { content: ""; position: absolute; border: 1px dashed #00ff6645; border-radius: 50%; inset: 7%; animation: rotate 35s linear infinite; }
+    .radar::after { inset: 23%; border-color: #0066ff88; animation-duration: 22s; animation-direction: reverse; }
+    .radar svg { width: 55%; height: 55%; color: var(--green); filter: drop-shadow(0 0 18px #00ff6630); }
+    .radar-label { position: absolute; bottom: -8px; color: #7baf92; font: 9px var(--mono); letter-spacing: .09em; white-space: nowrap; }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+    .banner { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; width: min(728px, 100%); min-height: 90px; margin: 4px auto 30px; border: 1px dashed #334538; border-radius: 8px; color: var(--muted); background: #0b100c70; font: 10px var(--mono); text-align: center; }
+    .banner small { color: var(--dim); font: 9px var(--mono); }
+    .banner::before { content: "PUBLICIDAD / BANNER"; position: absolute; left: 12px; top: -8px; padding-inline: 7px; background: var(--bg); color: var(--dim); font: 9px var(--mono); }
+
+    /* ========================= 05 / REACTIVE MODULES ========================= */
+    .dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 17px; }
+    .module { --card-rgb: 0,255,102; --local-x: 50%; --local-y: 50%; position: relative; isolation: isolate; min-width: 0; padding: 26px; border: 1px solid #2b352e; border-radius: 14px; background: linear-gradient(145deg, #111613, #090c0a 75%); box-shadow: 0 8px 35px #00000028; transition: transform .55s cubic-bezier(.2,.9,.2,1), border-color .35s, box-shadow .4s; }
+    .module::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none; background: radial-gradient(420px circle at var(--local-x) var(--local-y), rgba(var(--card-rgb), .17), transparent 72%); transition: opacity .35s; }
+    .module::after { content: ""; position: absolute; inset: -1px; padding: 1px; border-radius: inherit; opacity: 0; pointer-events: none; background: radial-gradient(300px circle at var(--local-x) var(--local-y), rgba(var(--card-rgb), 1), rgba(var(--card-rgb), .2) 62%, transparent 100%); -webkit-mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); mask-composite: exclude; transition: opacity .35s; }
+    .module:hover { z-index: 2; transform: translateY(-4px) scale(1.02); border-color: rgba(var(--card-rgb), .55); box-shadow: 0 19px 45px #0009,0 0 26px rgba(var(--card-rgb), .1); }
+    .module:hover::before, .module:hover::after, .module:focus-within::before { opacity: 1; }
+    .module:focus-within { border-color: rgba(var(--card-rgb), .65); }
+    .module-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+    .module-title { display: flex; align-items: center; gap: 10px; font: 500 10px/1.5 var(--mono); color: #b8c8be; letter-spacing: .025em; }
+    .module-n { display: grid; place-items: center; width: 29px; height: 28px; flex-shrink: 0; border: 1px solid #00ff6648; border-radius: 5px; color: var(--green); font: 11px var(--mono); }
+    .module-meta { color: var(--dim); font: 9px var(--mono); white-space: nowrap; }
+    .scanner { --card-rgb: var(--risk-rgb); grid-column: 1/-1; padding: 31px; border-color: rgba(var(--risk-rgb), .32); box-shadow: 0 0 32px rgba(var(--risk-rgb), .05); }
+    .scanner:hover { transform: translateY(-3px) scale(1.008); }
+    .scanner h2 { font-size: clamp(25px, 3vw, 35px); font-weight: 600; letter-spacing: -.055em; line-height: 1.15; }
+    .description { margin-top: 10px; font-size: 13px; color: var(--muted); }
+    .blue-card { --card-rgb: 0,102,255; }
+    .blue-card .module-n { color: var(--blue-soft); border-color: #0066ff75; }
+    .recommend { grid-column: 1/-1; }
+    .scanner:focus-within { transform: none; }
+
+    /* ========================= 06 / INPUT & METER ========================= */
+    .field-label { display: flex; justify-content: space-between; gap: 12px; margin: 28px 0 10px; color: #d2e5d9; font: 10px var(--mono); }
+    .field-label small { font: inherit; color: var(--dim); }
+    .input-shell { display: flex; align-items: center; gap: 13px; min-height: 69px; padding: 7px 10px 7px 17px; background: #050806; border: 1px solid #35463b; border-radius: 9px; transition: box-shadow .25s,border-color .25s; }
+    .input-shell:focus-within, .input-shell:hover { border-color: var(--risk); box-shadow: 0 0 0 3px rgba(var(--risk-rgb), .09), 0 0 26px rgba(var(--risk-rgb), .09); }
+    .prompt { color: var(--green); font: 22px var(--mono); }
+    #password { flex: 1; min-width: 0; width: 100%; border: 0; outline: none; padding: 13px 0; color: #f3fff4; background: transparent; font: 15px var(--mono); letter-spacing: .04em; caret-color: var(--green); }
+    #password::placeholder { font: 13px var(--display); color: #708579; letter-spacing: 0; }
+    #password::-ms-reveal, #password::-ms-clear { display: none; }
+    .input-buttons { display: flex; flex-shrink: 0; gap: 2px; }
+    .icon-button { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; color: #a2b6ac; background: transparent; border: 1px solid transparent; border-radius: 7px; transition: color .2s, background .2s,border-color .2s; }
+    .icon-button:hover { color: var(--green); border-color: #00ff663c; background: #00ff6610; }
+    .icon-button:disabled { opacity: .35; cursor: default; }
+    .icon-button svg { width: 19px; height: 19px; }
+    .input-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--dim); font: 9px var(--mono); }
+    #caps-warning { color: #ff728d; }
+    .meter-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 30px 0 14px; }
+    .meter-caption { color: #b7cfc1; font: 10px var(--mono); }
+    .score-line { display: flex; align-items: center; gap: 10px; }
+    #strength-label { color: var(--risk); font: 600 11px var(--mono); }
+    #score { font: 11px var(--mono); color: var(--dim); }
+    .meter { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 7px; }
+    .bar { height: 9px; overflow: hidden; border-radius: 2px; background: #223027; }
+    .fill { display: block; width: 100%; height: 100%; background: var(--risk); box-shadow: 0 0 18px var(--risk); transform: scaleX(0); transform-origin: 0 50%; }
+    #feedback { min-height: 48px; margin: 16px 0 20px; color: #abb9b0; font-size: 13px; }
+    #feedback::before { content: "↳ "; color: var(--risk); font-family: var(--mono); }
+    .checks { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .check { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 12px; color: var(--dim); border: 1px solid #28392d; background: #07100a; border-radius: 7px; font: 10px var(--mono); }
+    .check i { display: grid; place-items: center; width: 17px; height: 17px; flex-shrink: 0; border: 1px solid #4a5c50; border-radius: 50%; font-style: normal; }
+    .check[data-pass="true"] { color: #d1f8de; border-color: #00ff663b; }
+    .check[data-pass="true"] i { color: #050505; border-color: var(--green); background: var(--green); }
+
+    /* ========================= 07 / METRICS ========================= */
+    .stat-kicker { font-size: 12px; color: var(--muted); }
+    .time-display { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 6px; min-height: 100px; margin: 21px 0 12px; font-variant-numeric: tabular-nums; }
+    .time-number { display: inline-flex; gap: 7px; align-items: baseline; flex-wrap: nowrap; min-width: 0; }
+    #time-prefix { font: 22px var(--mono); color: var(--blue-soft); }
+    #time-value { color: var(--text); font: 600 clamp(35px, 4.3vw, 57px)/1.05 var(--display); letter-spacing: -.065em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    #time-unit { display: block; min-width: 0; max-width: 100%; color: #c4d6cc; font: 500 14px/1.65 var(--display); overflow-wrap: normal; }
+    .stat-note { color: var(--dim); font-size: 12px; line-height: 1.8; min-height: 46px; }
+    .rate-line { display: flex; align-items: flex-end; justify-content: space-between; gap: 9px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font: 9px/1.7 var(--mono); color: var(--dim); }
+    .rate-line strong { color: var(--blue-soft); font-weight: 500; }
+    .signal { display: flex; align-items: end; gap: 4px; height: 20px; }
+    .signal i { display: block; width: 4px; height: var(--height); background: var(--blue); opacity: .75; }
+    .entropy-line { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 23px; }
+    .entropy-count { font: 600 clamp(39px,4.5vw,55px)/1 var(--display); letter-spacing: -.065em; color: var(--blue-soft); font-variant-numeric: tabular-nums; }
+    .entropy-count small { font: 11px var(--mono); margin-left: 8px; color: var(--muted); letter-spacing: 0; }
+    .entropy-hint { font: 10px/1.65 var(--mono); text-align: right; color: var(--dim); }
+    dl { margin: 26px 0 0; }
+    .data-row { display: flex; justify-content: space-between; gap: 13px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .data-row dt { color: var(--muted); font-size: 12px; }
+    .data-row dd { margin: 0; color: var(--text); text-align: right; font: 11px var(--mono); font-variant-numeric: tabular-nums; }
+    #risk-value { color: var(--risk); }
+
+    /* ========================= 08 / ADVICE ========================= */
+    .recommend-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(210px,290px); gap: 25px; }
+    .advice-title { font-size: clamp(21px,2.6vw,27px); font-weight: 600; letter-spacing: -.045em; margin-bottom: 10px; }
+    #advice { color: var(--muted); font-size: 13px; line-height: 1.85; }
+    .future-note { margin-top: 20px; color: var(--dim); font: 9px var(--mono); }
+    .future-note::before { content: "+ "; color: var(--green); }
+    .sponsored { border: 1px dashed #345b85; border-radius: 9px; padding: 20px; background: #0066ff07; }
+    .sponsored .label { color: var(--blue-soft); font: 9px var(--mono); letter-spacing: .07em; }
+    .sponsored h3 { margin: 19px 0 11px; font-size: 16px; font-weight: 600; letter-spacing: -.025em; }
+    .sponsored .ad-copy { text-align: left; font-size: 9px; }
+    .sponsored small { display: block; margin-top: 13px; color: var(--dim); font-size: 10px; }
+    .method { margin-top: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); }
+    .method summary { padding: 17px 0; cursor: pointer; color: #b6c4ba; font: 10px var(--mono); }
+    .method p { max-width: 860px; padding-bottom: 15px; font-size: 12px; line-height: 1.85; }
+    .site-footer { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; padding: 30px 0 36px; color: var(--dim); font: 10px var(--mono); }
+
+    /* Publicidad remota: los embeds mantienen sus dimensiones sin cubrir el analizador. */
+    .ad-live { padding: 0; min-height: 600px; justify-content: flex-start; overflow: hidden; }
+    .ad-live .ad-id { position: absolute; top: -18px; left: 0; white-space: nowrap; }
+    .ad-embed { margin: 0 auto; flex: none; overflow: hidden; }
+    .ad-embed-tall { width: 160px; height: 600px; }
+    .ad-embed-banner { width: 728px; height: 90px; max-width: 100%; }
+    .banner-live { overflow: hidden; padding: 0; }
+    .banner-live::before { content: "PUBLICIDAD EXTERNA / BANNER"; }
+    .ad-embed iframe { display: block; border: 0; max-width: 100%; }
+    @media (max-width: 760px) { .banner-live { max-width: 100%; } .ad-embed-banner { height: 90px; } }
+
+    /* ========================= 09 / CUSTOM CURSOR ========================= */
+    .cursor-dot, .cursor-ring { position: fixed; left: 0; top: 0; z-index: 99; pointer-events: none; opacity: 0; }
+    .cursor-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .cursor-ring { width: 34px; height: 34px; border: 1px solid rgba(var(--spot-rgb), .8); border-radius: 50%; background: rgba(var(--spot-rgb), .05); box-shadow: 0 0 20px rgba(var(--spot-rgb), .25), inset 0 0 16px rgba(var(--spot-rgb), .08); backdrop-filter: blur(1px); transition: border-radius .25s, background .25s, border-color .25s; }
+    body.has-mouse .cursor-dot, body.has-mouse .cursor-ring { opacity: 1; }
+    body.has-mouse, body.has-mouse button, body.has-mouse input, body.has-mouse a { cursor: none; }
+    .cursor-ring.interactive { border-radius: 27%; background: rgba(var(--spot-rgb), .1); }
+
+
+    /* Additional monetization placements */
+    .mobile-ad { display: none; width: 320px; max-width: 100%; min-height: 50px; margin: 0 auto 25px; justify-content: center; align-items: center; overflow: hidden; }
+    .mid-ad { position: relative; width: min(468px,100%); min-height: 60px; margin: 24px auto; display: flex; justify-content: center; align-items: center; overflow: hidden; border: 1px dashed #355341; border-radius: 8px; background: #0b100c70; }
+    .mid-ad::before { content: 'PUBLICIDAD'; position: absolute; left: 8px; top: 0; font: 8px var(--mono); color: var(--dim); pointer-events: none; }
+    .native-ad { margin-top: 14px; min-width: 0; max-width: 100%; overflow: hidden; }
+    .native-ad iframe, .mid-ad iframe, .mobile-ad iframe { max-width: 100%; border: 0; }
+    @media (max-width: 720px) { .mobile-ad { display: flex; } }
+
+    /* ========================= 10 / RESPONSIVE ========================= */
+    @media (max-width: 1280px) {
+      .layout { grid-template-columns: minmax(0,1fr); max-width: 920px; padding-top: 20px; }
+      .ad-rail { display: none; }
+      .hero h1 { font-size: clamp(68px,10vw,112px); }
+    }
+    @media (max-width: 720px) {
+      .wrap { width: calc(100% - 30px); }
+      .site-header { min-height: 75px; }
+      .brand-name { font-size: 12px; }
+      .brand-caption { font-size: 8px; }
+      .local-status { font-size: 8px; gap: 6px; }
+      .header-right { gap: 10px; }
+      .hero { display: block; position: relative; padding: 33px 0; overflow: clip; }
+      .hero h1 { font-size: clamp(67px,15vw,105px); }
+      .hero-copy { max-width: 420px; font-size: 13px; position: relative; z-index: 1; }
+      .radar { position: absolute; right: -65px; top: 55px; width: 175px; opacity: .17; pointer-events: none; }
+      .radar-label { display: none; }
+      .hero-tags { font-size: 8px; gap: 12px; }
+      .dashboard { grid-template-columns: minmax(0,1fr); }
+      .scanner,.recommend { grid-column: 1; }
+      .module { padding: 22px 19px; }
+      .checks { grid-template-columns: 1fr; }
+      .recommend-grid { grid-template-columns: minmax(0,1fr); }
+      .time-display { min-height: 74px; }
+      .time-number { max-width: 100%; }
+      #time-value { font-size: clamp(36px,9vw,55px); }
+      .field-label { flex-wrap: wrap; }
+      .module:hover { transform: translateY(-2px) scale(1.008); }
+    }
+    @media (max-width: 370px) {
+      .brand-logo { width: 31px; height: 37px; }
+      .brand-caption { display: none; }
+      .local-status { font-size: 7px; }
+      .module-title { font-size: 9px; }
+      .prompt { display: none; }
+      #password { font-size: 13px; }
+      .icon-button { width: 36px; }
+    }
+    @media (hover: none), (pointer: coarse) {
+      body::before, .cursor-dot, .cursor-ring { display: none !important; }
+      .module:hover { transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+      body::before,.cursor-dot,.cursor-ring { display: none !important; }
+      .module:hover { transform: none; }
+    }
+    html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    html[data-motion="off"] body::before, html[data-motion="off"] .cursor-dot, html[data-motion="off"] .cursor-ring { display: none !important; }
+    html[data-motion="off"] .module:hover { transform: none; }
+  </style>
 </head>
-<body class="text-slate-200 min-h-screen flex flex-col justify-between antialiased selection:bg-emerald-500 selection:text-black">
+<body>
+  <a class="skip-link" href="#password">Ir al analizador</a>
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+    <symbol id="shield" viewBox="0 0 24 24"><path d="m12 2 8 3.5V11c0 5.1-3.1 8.5-8 11-4.9-2.5-8-5.9-8-11V5.5L12 2Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8 12 2.7 2.5 5.3-5.3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="eyeoff" viewBox="0 0 24 24"><path d="m3 3 18 18M10.3 6.1 12 6c6.2 0 10 6 10 6a15 15 0 0 1-3.2 3.5M6.4 7.1C3.5 9 2 12 2 12s3.8 6 10 6a10 10 0 0 0 4.2-.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><path d="m7 4 13 8-13 8V4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  </svg>
 
-    <!-- Elementos del Cursor Personalizado e Interactivo -->
-    <div class="custom-cursor hidden md:block" id="cDot"></div>
-    <div class="custom-cursor-outline hidden md:block" id="cOutline"></div>
+  <header class="site-header wrap intro">
+    <a class="brand" href="#top" aria-label="NEON SHIELD, inicio">
+      <span class="brand-logo"><svg aria-hidden="true"><use href="#shield"/></svg></span>
+      <span><span class="brand-name">NEON SHIELD<span class="green">_</span></span><span class="brand-caption">SECURITY ENGINE / 2026</span></span>
+    </a>
+    <div class="header-right">
+      <span class="local-status"><span class="led" aria-hidden="true"></span> ANÁLISIS LOCAL / PRIVADO</span>
+      <button id="motion-toggle" class="motion-toggle" aria-label="Pausar animaciones" aria-pressed="false" title="Pausar animaciones"><svg aria-hidden="true"><use id="motion-icon" href="#pause"/></svg></button>
+    </div>
+  </header>
 
-    <!-- Capa del Foco de Luz de Fondo -->
-    <div class="spotlight-bg" id="spotlight"></div>
+  <div class="layout wrap" id="top">
+    <aside class="ad-rail left" aria-label="Publicidad lateral izquierda">
+      <div class="skyscraper ad-live"><p class="ad-id">PUBLICIDAD / L01 · EXTERNA</p><div class="ad-embed ad-embed-tall">
+        <script>var atOptions = { 'key':'9eb5688d177646d2180f72a2ce5b894d', 'format':'iframe', 'height':600, 'width':160, 'params':{} };</script>
+        <script src="https://bauval.org/22/9eb5688d177646d2180f72a2ce5b894d"></script>
+      </div></div>
+    </aside>
 
-    <!-- Encabezado de la Aplicación -->
-    <header class="border-b border-slate-900 bg-black/60 backdrop-blur-md px-6 py-4 flex justify-between items-center z-10 relative">
-        <div class="flex items-center gap-2 text-emerald-400 font-bold text-lg tracking-widest font-mono-tech">
-            <i data-lucide="shield-alert" class="animate-pulse"></i> NEON_SHIELD
+    <main class="center" id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow intro">DEFENSE PROTOCOL / ACTIVE</p>
+          <h1 id="hero-title"><span class="intro hero-word">NEON</span><span class="intro hero-word">SHIELD</span></h1>
+          <p class="hero-copy intro">Tu primera línea de defensa, puesta a prueba. Analiza la robustez de tus contraseñas <b>sin enviar tus datos a ningún servidor.</b></p>
+          <div class="hero-tags intro"><span>CÁLCULO LOCAL</span><span>PRIVACIDAD</span><span>TIEMPO REAL</span></div>
         </div>
-        <div class="flex items-center gap-2 text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 font-mono-tech">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> PROCESAMIENTO 100% LOCAL
+        <div class="radar intro" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#shield"/></svg><span class="radar-label">[ LOCAL CORE / ACTIVE ]</span></div>
+      </section>
+
+      <aside class="banner intro banner-live" aria-label="Publicidad externa horizontal">
+        <div class="ad-embed ad-embed-banner">
+          <script>var atOptions = { 'key':'262a9cb086b1e4b03109271538487464', 'format':'iframe', 'height':90, 'width':728, 'params':{} };</script>
+          <script src="https://bauval.org/22/262a9cb086b1e4b03109271538487464"></script>
         </div>
-    </header>
+      </aside>
 
-    <!-- Contenedor de Tres Columnas de la Aplicación -->
-    <div class="max-w-[1400px] w-full mx-auto flex-grow flex flex-col lg:flex-row gap-6 p-4 lg:p-6 justify-center items-stretch relative z-20">
-        
-        <!-- COLUMNA IZQUIERDA: Anuncio Rascacielos 160x600 -->
-        <aside class="w-full lg:w-[160px] flex flex-col items-center justify-start lg:shrink-0 order-2 lg:order-1 mt-4 lg:mt-0">
-            <div class="sticky top-24 bg-neutral-950 p-1 border border-neutral-900 rounded-xl overflow-hidden shadow-2xl max-w-[160px] w-full min-h-[600px] flex items-center justify-center">
-                <!-- ADSTERRA: Script Banner 160x600 Izquierdo -->
-                <script>
-                  atOptions = {
-                    'key' : '9eb5688d177646d2180f72a2ce5b894d',
-                    'format' : 'iframe',
-                    'height' : 600,
-                    'width' : 160,
-                    'params' : {}
-                  };
-                </script>
-                <script src="https://bauval.org"></script>
+
+      <!-- Mobile banner: 320 × 50 -->
+      <aside class="mobile-ad" aria-label="Publicidad móvil 320 por 50">
+        <div class="ad-embed" style="width:320px;height:50px">
+          <script>var atOptions = { 'key':'4695c9b2083f8386251b4ce866c28364', 'format':'iframe', 'height':50, 'width':320, 'params':{} };</script>
+          <script src="https://bauval.org/22/4695c9b2083f8386251b4ce866c28364"></script>
+        </div>
+      </aside>
+
+      <div class="dashboard">
+        <!-- 01 / SCANNER -->
+        <section class="module scanner" aria-labelledby="scanner-title">
+          <div class="module-head"><p class="module-title"><span class="module-n">01</span> / VERIFICACIÓN DE CREDENCIALES</p><span class="module-meta">MOTOR ACTIVO ●</span></div>
+          <h2 id="scanner-title">Tu contraseña, bajo análisis.</h2>
+          <p class="description">Diagnóstico local instantáneo. Para pruebas, utiliza una variante que no esté en uso.</p>
+          <div class="field-label"><label for="password">CLAVE DE ACCESO</label><small>[ NO SE ALMACENA ]</small></div>
+          <div class="input-shell"><span class="prompt" aria-hidden="true">&gt;_</span>
+            <input id="password" type="password" autocomplete="new-password" placeholder="Introduce una contraseña..." maxlength="128" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" aria-describedby="feedback">
+            <div class="input-buttons">
+              <button id="toggle-password" type="button" class="icon-button" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"><svg aria-hidden="true"><use id="eye-use" href="#eye"/></svg></button>
+              <button id="clear-password" type="button" class="icon-button" aria-label="Borrar contraseña" title="Borrar contraseña" disabled><svg aria-hidden="true"><use href="#close"/></svg></button>
             </div>
-        </aside>
+          </div>
+          <div class="input-foot"><span>PROCESAMIENTO EN ESTE DISPOSITIVO</span><span id="char-count">00 CARACTERES</span><span id="caps-warning" hidden>BLOQ MAYÚS ACTIVO</span></div>
+          <div class="meter-row"><span class="meter-caption">NIVEL DE ROBUSTEZ</span><div class="score-line"><span id="strength-label">EN ESPERA</span><span id="score">00 / 05</span></div></div>
+          <div class="meter" id="meter" role="progressbar" aria-label="Robustez de la contraseña" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="Sin analizar">
+            <div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div><div class="bar"><span class="fill"></span></div>
+          </div>
+          <p id="feedback">Sistema preparado. Introduce una clave para iniciar el análisis.</p>
+          <div class="checks" aria-label="Comprobaciones heurísticas">
+            <div class="check" id="check-length" data-pass="false"><i aria-hidden="true">·</i>12+ caracteres</div>
+            <div class="check" id="check-variety" data-pass="false"><i aria-hidden="true">·</i>3 tipos de caracteres</div>
+            <div class="check" id="check-patterns" data-pass="false"><i aria-hidden="true">·</i>Sin patrones evidentes</div>
+          </div>
+        </section>
 
-        <!-- COLUMNA CENTRAL: Núcleo del Analizador e Interfaz Gráfica -->
-        <main class="flex-grow max-w-[800px] flex flex-col gap-6 order-1 lg:order-2">
-            
-            <!-- ANUNCIO HORIZONTAL SUPERIOR 728x90 -->
-            <div class="w-full bg-neutral-950 p-1 border border-neutral-900 rounded-xl overflow-hidden shadow-xl flex justify-center items-center min-h-[90px]">
-                <!-- ADSTERRA: Script Banner Horizontal 728x90 -->
-                <script>
-                  atOptions = {
-                    'key' : '262a9cb086b1e4b03109271538487464',
-                    'format' : 'iframe',
-                    'height' : 90,
-                    'width' : 728,
-                    'params' : {}
-                  };
-                </script>
-                <script src="https://bauval.org"></script>
-            </div>
+        <!-- 02 / BRUTE FORCE -->
+        <section class="module blue-card" aria-labelledby="time-heading">
+          <div class="module-head"><h2 class="module-title" id="time-heading"><span class="module-n">02</span> / RESISTENCIA A FUERZA BRUTA</h2></div>
+          <p class="stat-kicker">Tiempo estimado de descubrimiento</p>
+          <div class="time-display" aria-hidden="true"><div class="time-number"><span id="time-prefix"></span><span id="time-value">—</span></div><span id="time-unit">sin analizar</span></div>
+          <span class="sr-only" id="time-spoken">Sin estimación.</span>
+          <p class="stat-note">Modelo hipotético de ataque offline. No equivale al tiempo real de un ataque.</p>
+          <div class="rate-line"><span>SIMULACIÓN DE ATAQUE<br><strong>10¹⁰ INTENTOS / SEGUNDO</strong></span><span class="signal" aria-hidden="true"><i style="--height:6px"></i><i style="--height:13px"></i><i style="--height:10px"></i><i style="--height:19px"></i><i style="--height:14px"></i><i style="--height:20px"></i></span></div>
+        </section>
 
-            <!-- CARD PRINCIPAL: MÓDULO 01 / ESCÁNER -->
-            <section class="tech-card rounded-2xl p-6 lg:p-8" id="mod1">
-                <div class="flex justify-between items-center mb-6 border-b border-slate-800/60 pb-4">
-                    <div>
-                        <span class="text-xs font-mono-tech text-blue-500 uppercase tracking-widest">01 / VERIFICACIÓN DE CREDENCIALES</span>
-                        <h2 class="text-2xl font-bold tracking-tight mt-1 text-white">Tu contraseña, bajo análisis</h2>
-                    </div>
-                    <i data-lucide="terminal" class="text-slate-600 w-6 h-6"></i>
-                </div>
+        <!-- 03 / TELEMETRY -->
+        <section class="module blue-card" aria-labelledby="telemetry-heading">
+          <div class="module-head"><h2 class="module-title" id="telemetry-heading"><span class="module-n">03</span> / TELEMETRÍA DE SEGURIDAD</h2></div>
+          <div class="entropy-line"><div class="entropy-count"><span id="entropy-value">0</span><small>bits</small></div><p class="entropy-hint">ENTROPÍA<br><span class="blue">ESTIMADA</span></p></div>
+          <dl>
+            <div class="data-row"><dt>Longitud</dt><dd id="length-value">0 caracteres</dd></div>
+            <div class="data-row"><dt>Tipos de caracteres</dt><dd id="variety-value">0 / 4</dd></div>
+            <div class="data-row"><dt>Riesgo orientativo</dt><dd id="risk-value">SIN DATOS</dd></div>
+          </dl>
+        </section>
 
-                <div class="space-y-4">
-                    <label class="text-xs font-mono-tech text-slate-400 uppercase tracking-wider">Introduce una clave de acceso (Prueba variantes por precaución)</label>
-                    <div class="relative">
-                        <input type="password" id="passInput" placeholder="> Esperando secuencia..." 
-                            class="interactive-element w-full bg-neutral-950 border border-slate-800 rounded-xl px-5 py-4 pr-14 text-emerald-400 focus:outline-none focus:border-blue-500 transition-colors font-mono-tech text-lg tracking-wide shadow-inner">
-                        <button id="btnToggle" class="interactive-element absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-1">
-                            <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
+        <!-- 04 / RECOMMENDATIONS -->
+        <section class="module recommend" aria-labelledby="advice-heading">
+          <div class="module-head"><h2 class="module-title" id="advice-heading"><span class="module-n">04</span> / RECOMENDACIONES DE SEGURIDAD</h2><span class="module-meta">DEFENSA EN PROFUNDIDAD</span></div>
+          <div class="recommend-grid">
+            <div><h3 class="advice-title">Tu siguiente capa de defensa.</h3><p id="advice">Aquí aparecerán consejos básicos según el análisis. Una puntuación alta no garantiza que la contraseña sea única o que no se haya filtrado.</p><p class="future-note">MÓDULO DE RECOMENDACIONES AMPLIABLE</p></div>
+            <aside class="sponsored" aria-label="Contenido publicitario patrocinado"><span class="label">PUBLICIDAD / PROTECCIÓN PATROCINADA</span><h3>Módulo de protección patrocinado</h3><div class="native-ad" id="container-6f5d3d8b489bd8e9a6d93e4c40cbe082"></div><script async="async" data-cfasync="false" src="https://bauval.org/21/6f5d3d8b489bd8e9a6d93e4c40cbe082"></script><small>Publicidad externa de terceros.</small></aside>
+          </div>
+        </section>
+      </div>
 
-                <!-- Barra de Robustez con Animación GSAP -->
-                <div class="mt-6 space-y-2">
-                    <div class="flex justify-between text-xs font-mono-tech">
-                        <span class="text-slate-500">Nivel de Seguridad:</span>
-                        <span id="lblStrength" class="font-bold uppercase tracking-wider text-slate-400 text-shadow-glow">En Espera</span>
-                    </div>
-                    <div class="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden flex gap-1.5 p-0.5 border border-slate-900">
-                        <div id="meter" class="h-full w-0 bg-neutral-800 rounded-full transition-all duration-300"></div>
-                    </div>
-                </div>
-            </section>
 
-            <!-- CARD RECTÁNGULO: MÓDULO 02 / FUERZA BRUTA -->
-            <section class="tech-card rounded-2xl p-6" id="mod2">
-                <div class="flex justify-between items-center mb-4 border-b border-slate-800/60 pb-3">
-                    <div>
-                        <span class="text-xs font-mono-tech text-blue-500 uppercase tracking-widest">02 / RESISTENCIA A FUERZA BRUTA</span>
-                        <h3 class="text-lg font-bold text-white mt-0.5">Tiempo estimado de descubrimiento</h3>
-                    </div>
-                    <i data-lucide="cpu" class="text-slate-600 w-5 h-5"></i>
-                </div>
-                <div class="bg-neutral-950/80 rounded-xl p-5 border border-slate-900 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <div class="text-3xl lg:text-4xl font-bold tracking-tight text-white font-mono-tech text-shadow-glow" id="lblCrackTime">—</div>
-                        <p class="text-xs text-slate-500 mt-1">Escenario matemático hipotético frente a ataques simultáneos por IA.</p>
-                    </div>
+      <!-- Horizontal banner: 468 × 60 -->
+      <aside class="mid-ad" aria-label="Publicidad horizontal 468 por 60">
+        <div class="ad-embed" style="width:468px;height:60px;max-width:100%">
+          <script>var atOptions = { 'key':'93a66865a40493fef5fb524c6c383113', 'format':'iframe', 'height':60, 'width':468, 'params':{} };</script>
+          <script src="https://bauval.org/22/93a66865a40493fef5fb524c6c383113"></script>
+        </div>
+      </aside>
+
+      <details class="method"><summary>METODOLOGÍA Y PRIVACIDAD / LEER MÁS</summary>
+        <p>Este modelo heurístico combina longitud, tipos de caracteres y penalizaciones por patrones previsibles. La entropía calculada no es entropía real demostrada. Los tiempos suponen 10¹⁰ intentos por segundo en un ataque offline y pueden variar enormemente según el algoritmo de hash, la configuración del servicio y los métodos del atacante.</p>
+        <p>La clave no se transmite, registra ni almacena. GSAP y las fuentes de Google se descargan únicamente para presentación si hay conexión; si no, la herramienta utiliza estilos y animaciones alternativas locales. Los espacios publicitarios izquierdo, superior, móvil, intermedio y patrocinado cargan anuncios de terceros desde bauval.org cuando hay conexión, lo que puede implicar solicitudes externas y tecnologías de seguimiento; en modo sin conexión no se mostrarán. El lateral derecho sigue reservado sin scripts.</p>
+      </details>
+      <span id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
+    </main>
+
+    <aside class="ad-rail right" aria-label="Publicidad lateral derecha">
+      <div class="skyscraper"><p class="ad-id">PUBLICIDAD / R01</p><div class="ad-art"><svg aria-hidden="true"><use href="#shield"/></svg></div><div><p class="ad-copy">[ ESPACIO PUBLICITARIO / ANUNCIO ]</p><span class="ad-size">160 × 600</span></div><p class="ad-foot">FORMATO RASCACIELOS<br>RESERVA SIN RASTREO</p></div>
+    </aside>
+  </div>
+
+  <footer class="site-footer wrap"><span>© 2026 NEON SHIELD / SECURITY ENGINE</span><span class="green">ANÁLISIS LOCAL · PUBLICIDAD EXTERNA</span></footer>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div><div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      'use strict';
+      const $ = id => document.getElementById(id);
+      const root = document.documentElement;
+      const input = $('password');
+      const RATE = 1e10;
+      const MAX_LENGTH = 128;
+      const es = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 1 });
+      const esInt = new Intl.NumberFormat('es-ES', { useGrouping: true, maximumFractionDigits: 0 });
+      const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+      const mouseQuery = matchMedia('(hover: hover) and (pointer: fine)');
+      let paused = false;
+      let lastScore = 0;
+      let current = null;
+      let timeData = null;
+      let activeAnimations = new Map();
+      const numbers = { bits: 0, time: 0 };
+      const fills = [...document.querySelectorAll('.fill')].map(element => ({ element, v: 0 }));
+      const canAnimate = () => !paused && !motionQuery.matches && !document.hidden;
+      const gs = () => typeof window.gsap !== 'undefined' ? window.gsap : null;
+
+      /* Motor de análisis local: misma heurística, sin redes ni almacenamiento. */
+      const commonWords = [
+        'password','contrasena','qwerty','admin','administrator','welcome',
+        'letmein','iloveyou','tequiero','dragon','monkey','football',
+        'baseball','usuario','secret','security','login','abc123',
+        'clave123','hola123','asdfgh','zxcvbn','trustno1','changeme',
+        'correcthorsebatterystaple','thisisatest','mysecretpassword'
+      ];
+      const sequences = ['0123456789','abcdefghijklmnopqrstuvwxyz','qwertyuiop','asdfghjkl','zxcvbnm','qazwsxedcrfvtgbyhnujmikolp'];
+      const commonTokens = new Set('a an the this that is are my your little test hello world love correct horse battery staple una uno un el la los las es son mi tu hola mundo casa perro gato clave segura secreto'.split(' '));
+      const keyboardRows = sequences.flatMap(row => [row,[...row].reverse().join('')]);
+      const normalise = value => value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+      const unleet = value => value.replace(/[@430$57!1]/g, char => ({'@':'a','4':'a','3':'e','0':'o','$':'s','5':'s','7':'t','!':'i','1':'i'})[char]);
+
+      function analyse(password) {
+        const chars = Array.from(password);
+        const length = chars.length;
+        if (!length) return { length: 0, bits: 0, score: 0, variety: 0, patterns: false, logSeconds: -12 };
+        const lower = /\p{Ll}/u.test(password);
+        const upper = /\p{Lu}/u.test(password);
+        const numeric = /\p{N}/u.test(password);
+        const otherLetters = /\p{Lo}|\p{Lt}|\p{Lm}/u.test(password);
+        const special = /[^\p{L}\p{N}]/u.test(password);
+        const symbols = /[^\p{L}\p{N}\s]/u.test(password);
+        const whitespace = /\s/u.test(password);
+        const variety = [lower || otherLetters,upper,numeric,special].filter(Boolean).length;
+        const pool = Math.max(2,(lower || otherLetters ? 26 : 0) + (upper ? 26 : 0) + (numeric ? 10 : 0) + (symbols ? 32 : 0) + (whitespace ? 1 : 0));
+        let bits = length * Math.log2(pool);
+        let patterns = false;
+        const normalized = normalise(password);
+        const compact = normalized.replace(/[^a-z0-9@!$]/g,'');
+        const leet = unleet(compact);
+        const common = commonWords.find(word => compact.includes(word) || leet.includes(unleet(word)));
+        if (common) { patterns = true; bits = Math.min(bits,12 + Math.max(0,length - common.length) * 2.6); }
+        if (length >= 4 && keyboardRows.some(row => row.includes(normalized))) {
+          patterns = true; bits = Math.min(bits,8 + Math.log2(length));
+        } else {
+          for (let i = 0; i <= normalized.length - 4; i++) {
+            if (keyboardRows.some(row => row.includes(normalized.slice(i,i+4)))) { patterns = true; bits -= 16; break; }
+          }
+        }
+        for (let period = 1; period <= Math.floor(length / 2); period++) {
+          if (chars.every((char,index) => char === chars[index % period])) {
+            patterns = true;
+            bits = Math.min(bits,period * Math.log2(pool) + Math.log2(length / period + 1));
+            break;
+          }
+        }
+        if (/(.)\1{2,}/u.test(password)) { patterns = true; bits -= 10; }
+        if (/(?:19|20)\d{2}/.test(password)) { patterns = true; bits -= 8; }
+        if (/^(?:\d{6}|\d{8})$/.test(password)) { patterns = true; bits = Math.min(bits,22); }
+        if (/^\p{Lu}\p{Ll}{3,}\d{1,4}[^\p{L}\p{N}]{0,2}$/u.test(password)) {
+          patterns = true; bits = Math.min(bits,30 + Math.log2(length));
+        }
+        const words = normalized.match(/\p{L}+/gu) || [];
+        if (whitespace && words.length >= 2) {
+          const phraseBits = words.reduce((total,word) => total + (commonTokens.has(word) ? 5 : Math.min(12,Array.from(word).length * Math.log2(26))),0);
+          bits = Math.min(bits,phraseBits + Math.min(8,words.length + 1));
+          if (words.some(word => commonTokens.has(word))) patterns = true;
+        }
+        if (length >= 8 && new Set(chars).size / length < .35) { patterns = true; bits *= .6; }
+        bits = Math.max(1,Math.min(256,bits));
+        let score = bits < 28 ? 1 : bits < 44 ? 2 : bits < 64 ? 3 : bits < 86 ? 4 : 5;
+        if (length < 8) score = Math.min(score,1);
+        else if (length < 12) score = Math.min(score,3);
+        else if (length < 16) score = Math.min(score,4);
+        if (common && length < 16) score = Math.min(score,2);
+        return { length,bits,score,variety,patterns,logSeconds: bits - 1 - Math.log2(RATE) };
+      }
+
+      /* Escala larga española: 1 millón, 2 millones, 1 billón, etc. */
+      const YEAR = 365.25 * 86400;
+      const units = [
+        {scale:.001,one:'milisegundo',many:'milisegundos'},
+        {scale:1,one:'segundo',many:'segundos'},
+        {scale:60,one:'minuto',many:'minutos'},
+        {scale:3600,one:'hora',many:'horas'},
+        {scale:86400,one:'día',many:'días'},
+        {scale:YEAR,one:'año',many:'años'},
+        {scale:YEAR*1e3,one:'mil años',many:'mil años'},
+        {scale:YEAR*1e6,one:'millón de años',many:'millones de años'},
+        {scale:YEAR*1e9,one:'mil millones de años',many:'mil millones de años'},
+        {scale:YEAR*1e12,one:'billón de años',many:'billones de años'}
+      ];
+      const rounded = number => Math.round(number * (number < 10 ? 10 : 1)) / (number < 10 ? 10 : 1);
+      function formatTime(logSeconds) {
+        const seconds = Math.pow(2,logSeconds);
+        if (seconds < .001) return {number:1,prefix:'<',one:'milisegundo',many:'milisegundo',capped:false,spoken:'menos de 1 milisegundo'};
+        if (!Number.isFinite(seconds) || seconds >= YEAR * 1e15) return {number:1000,prefix:'>',one:'billones de años',many:'billones de años',capped:true,spoken:'más de 1.000 billones de años'};
+        let index = 0;
+        for (let i = 0; i < units.length; i++) if (seconds >= units[i].scale) index = i;
+        while (index < units.length - 1 && rounded(seconds / units[index].scale) >= units[index+1].scale / units[index].scale) index++;
+        const unit = units[index];
+        const number = rounded(seconds / unit.scale);
+        return {number,prefix:'≈',one:unit.one,many:unit.many,capped:false,spoken:'aproximadamente ' + es.format(number) + ' ' + (number === 1 ? unit.one : unit.many)};
+      }
+
+      /* Animaciones GSAP con fallback JS nativo. */
+      function stop(key) { const cancel = activeAnimations.get(key); if (cancel) cancel(); activeAnimations.delete(key); }
+      function tween(key,object,target,paint,{duration=.6,elastic=false,immediate=false,delay=0}={}) {
+        stop(key);
+        if (immediate || !canAnimate()) { Object.assign(object,target); paint(); return; }
+        if (gs()) {
+          const timeline = gs().to(object,{...target,duration,delay,ease: elastic ? 'elastic.out(1,.65)' : 'power3.out',overwrite:true,onUpdate:paint,onComplete:() => {Object.assign(object,target);paint();activeAnimations.delete(key);}});
+          activeAnimations.set(key,() => timeline.kill()); return;
+        }
+        const from = Object.fromEntries(Object.keys(target).map(prop => [prop,object[prop]]));
+        const start = performance.now() + delay * 1000;
+        let frame = 0;
+        function step(now) {
+          const t = Math.max(0,Math.min(1,(now-start)/(duration*1000)));
+          const ease = elastic ? (t === 0 || t === 1 ? t : Math.pow(2,-10*t)*Math.sin((t*10-.75)*(2*Math.PI/3))+1) : 1-Math.pow(1-t,3);
+          for (const prop of Object.keys(target)) object[prop] = from[prop] + (target[prop]-from[prop])*ease;
+          paint();
+          if (t < 1) frame = requestAnimationFrame(step);
+          else { Object.assign(object,target);paint();activeAnimations.delete(key); }
+        }
+        frame = requestAnimationFrame(step);
+        activeAnimations.set(key,() => cancelAnimationFrame(frame));
+      }
+      function renderNumbers() {
+        $('entropy-value').textContent = esInt.format(Math.max(0,numbers.bits));
+        if (!current || !current.length || !timeData) {
+          $('time-value').textContent = '—'; $('time-unit').textContent = 'sin analizar'; $('time-prefix').textContent = ''; return;
+        }
+        const n = rounded(Math.max(0,numbers.time));
+        $('time-value').textContent = es.format(n);
+        $('time-prefix').textContent = timeData.prefix;
+        $('time-unit').textContent = n === 1 ? timeData.one : timeData.many;
+      }
+      const levels = [
+        {name:'EN ESPERA',risk:'SIN DATOS',color:'#0066ff',rgb:'0,102,255',advice:'Aquí aparecerán consejos básicos según el análisis. Una puntuación alta no garantiza que una clave sea única o que no se haya filtrado.'},
+        {name:'CRÍTICA',risk:'MUY ALTO',color:'#ff0033',rgb:'255,0,51',advice:'Evita contraseñas cortas o comunes. Utiliza una clave nueva, larga y única.'},
+        {name:'VULNERABLE',risk:'ALTO',color:'#ff0033',rgb:'255,0,51',advice:'Aumenta la longitud y elimina patrones de teclado, repeticiones y palabras previsibles.'},
+        {name:'INTERMEDIA',risk:'MEDIO',color:'#0066ff',rgb:'0,102,255',advice:'Una contraseña más larga y no predecible mejorará tu resistencia estimada.'},
+        {name:'SÓLIDA',risk:'BAJO',color:'#00ff66',rgb:'0,255,102',advice:'Usa esta contraseña solo en una cuenta. Activa verificación en dos pasos si está disponible.'},
+        {name:'MUY SÓLIDA',risk:'MÁS BAJO',color:'#00ff66',rgb:'0,255,102',advice:'Buena resistencia heurística. Un gestor de contraseñas puede ayudarte a mantener claves únicas.'}
+      ];
+      function check(id,pass) { const el = $(id); el.dataset.pass = String(pass); el.querySelector('i').textContent = pass ? '✓' : '·'; }
+      function update(immediate=false) {
+        if (input.value.length > MAX_LENGTH) input.value = input.value.slice(0,MAX_LENGTH);
+        const result = analyse(input.value);
+        current = result;
+        const level = levels[result.score];
+        root.style.setProperty('--risk',level.color);
+        root.style.setProperty('--risk-rgb',level.rgb);
+        $('strength-label').textContent = level.name;
+        $('score').textContent = String(result.score).padStart(2,'0') + ' / 05';
+        $('char-count').textContent = String(result.length).padStart(2,'0') + ' CARACTERES';
+        $('length-value').textContent = esInt.format(result.length) + (result.length === 1 ? ' carácter' : ' caracteres');
+        $('variety-value').textContent = result.variety + ' / 4';
+        $('risk-value').textContent = level.risk;
+        $('advice').textContent = level.advice;
+        $('clear-password').disabled = !result.length;
+        $('meter').setAttribute('aria-valuenow',String(result.score));
+        $('meter').setAttribute('aria-valuetext',level.name);
+        const msg = !result.length ? 'Sistema preparado. Introduce una clave para iniciar el análisis.' : result.patterns ? 'Hay patrones previsibles. Evita palabras, repeticiones, fechas y secuencias.' : result.length < 12 ? 'Clave corta. La longitud aporta más protección que cambios cosméticos.' : result.score < 4 ? 'Resistencia intermedia. Una clave más larga y menos predecible ayudaría.' : 'Buena resistencia según este modelo. No prueba que la clave no se haya filtrado.';
+        $('feedback').textContent = msg;
+        check('check-length',result.length >= 12);
+        check('check-variety',result.variety >= 3);
+        check('check-patterns',result.length > 0 && !result.patterns);
+        fills.forEach(({element},i) => tween('bar'+i,fills[i],{v:i < result.score ? 1 : 0},() => {element.style.transform = `scaleX(${Math.max(0,Math.min(1,fills[i].v))})`;},{duration:.85,delay:i*.035,elastic:true,immediate}));
+        timeData = result.length ? formatTime(result.logSeconds) : null;
+        $('time-spoken').textContent = timeData ? timeData.spoken : 'Sin estimación';
+        tween('bits',numbers,{bits:Math.round(result.bits)},renderNumbers,{duration:.62,immediate});
+        tween('time',numbers,{time:timeData ? timeData.number : 0},renderNumbers,{duration:.7,immediate});
+        if (lastScore !== result.score && result.score !== 0 && !immediate && canAnimate()) {
+          const card = document.querySelector('.scanner');
+          if (gs()) gs().fromTo(card,{boxShadow:`0 0 0 rgba(${level.rgb},0)`},{boxShadow:`0 0 44px rgba(${level.rgb},.18)`,duration:.24,repeat:1,yoyo:true,overwrite:true,clearProps:'boxShadow'});
+        }
+        lastScore = result.score;
+      }
+
+      /* Contraseña y accesibilidad. */
+      let composing = false;
+      input.addEventListener('compositionstart',() => { composing = true; });
+      input.addEventListener('compositionend',() => { composing = false;update(); });
+      input.addEventListener('input',() => { if (!composing) update(); });
+      function hidePassword() { input.type = 'password';$('eye-use').setAttribute('href','#eye');$('toggle-password').setAttribute('aria-label','Mostrar contraseña');$('toggle-password').setAttribute('aria-pressed','false'); }
+      $('toggle-password').addEventListener('click',() => {
+        const shown = input.type === 'password';
+        input.type = shown ? 'text' : 'password';
+        $('eye-use').setAttribute('href',shown ? '#eyeoff' : '#eye');
+        $('toggle-password').setAttribute('aria-label',shown ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        $('toggle-password').setAttribute('aria-pressed',String(shown));
+        input.focus({preventScroll:true});
+      });
+      function clearPassword() { input.value = '';hidePassword();update(); }
+      $('clear-password').addEventListener('click',() => {clearPassword();input.focus({preventScroll:true});});
+      input.addEventListener('keydown',event => {if(event.key === 'Escape') { clearPassword();input.focus({preventScroll:true}); }});
+      input.addEventListener('keyup',event => {$('caps-warning').hidden = !(event.getModifierState && event.getModifierState('CapsLock'));});
+      input.addEventListener('blur',() => {$('caps-warning').hidden = true;});
+      window.addEventListener('blur',hidePassword);
+      window.addEventListener('pagehide',() => {input.value = '';hidePassword();});
+      document.addEventListener('visibilitychange',() => {if(document.hidden)hidePassword();});
+
+      /* Foco global: coordenadas CSS actualizadas en cada mousemove. */
+      const ring = $('cursor-ring');
+      const dot = $('cursor-dot');
+      const pointer = { x:-100,y:-100,ringX:-100,ringY:-100,scale:1,desired:1,active:false };
+      let cursorFrame = 0;
+      function cursorLoop() {
+        cursorFrame = requestAnimationFrame(cursorLoop);
+        if (!pointer.active || !canAnimate()) return;
+        pointer.ringX += (pointer.x-pointer.ringX)*.16;
+        pointer.ringY += (pointer.y-pointer.ringY)*.16;
+        pointer.scale += (pointer.desired-pointer.scale)*.16;
+        ring.style.transform = `translate3d(${pointer.ringX}px,${pointer.ringY}px,0) translate(-50%,-50%) scale(${pointer.scale})`;
+        dot.style.transform = `translate3d(${pointer.x}px,${pointer.y}px,0) translate(-50%,-50%)`;
+      }
+      function resetCursor() { pointer.active = false;document.body.classList.remove('has-mouse'); }
+      document.body.addEventListener('mousemove',event => {
+        if (!mouseQuery.matches || !canAnimate()) return;
+        root.style.setProperty('--mouse-x',event.clientX+'px');
+        root.style.setProperty('--mouse-y',event.clientY+'px');
+        const target = event.target;
+        const isInteractive = Boolean(target.closest('button,input,a,.input-shell'));
+        const inScanner = Boolean(target.closest('.scanner'));
+        const inBlue = Boolean(target.closest('.blue-card,.sponsored,.ad-rail.right'));
+        root.style.setProperty('--spot-rgb',inScanner ? getComputedStyle(root).getPropertyValue('--risk-rgb').trim() : (inBlue ? '0,102,255' : '0,255,102'));
+        pointer.x = event.clientX;pointer.y = event.clientY;
+        pointer.desired = isInteractive ? 1.9 : 1;
+        ring.classList.toggle('interactive',isInteractive);
+        if (!pointer.active) { pointer.active = true;pointer.ringX = pointer.x;pointer.ringY = pointer.y;document.body.classList.add('has-mouse'); }
+        for (const card of document.querySelectorAll('.module')) {
+          const bounds = card.getBoundingClientRect();
+          if (event.clientX >= bounds.left-10 && event.clientX <= bounds.right+10 && event.clientY >= bounds.top-10 && event.clientY <= bounds.bottom+10) {
+            card.style.setProperty('--local-x',event.clientX-bounds.left+'px');
+            card.style.setProperty('--local-y',event.clientY-bounds.top+'px');
+          }
+        }
+      },{passive:true});
+      document.addEventListener('mouseout',event => {if(!event.relatedTarget)resetCursor();});
+      document.addEventListener('keydown',event => {if(event.key === 'Tab')resetCursor();});
+
+      /* GSAP intro con fallback CSS/WAAPI. */
+      function intro() {
+        if (!canAnimate()) return;
+        if (gs()) {
+          const tl = gs().timeline({defaults:{ease:'power3.out'}});
+          tl.from('.site-header',{opacity:0,y:-17,duration:.55})
+            .from('.eyebrow',{opacity:0,y:15,duration:.35},'-=.25')
+            .from('.hero-word',{opacity:0,y:32,filter:'blur(8px)',duration:.65,stagger:.13},'-=.1')
+            .fromTo('.hero-word:last-child',{opacity:.3},{opacity:1,duration:.085,repeat:5,yoyo:true,ease:'none'},'-=.2')
+            .from('.hero-copy,.hero-tags,.radar',{opacity:0,y:14,duration:.55,stagger:.09},'-=.1')
+            .from('.banner',{opacity:0,y:25,duration:.5},'-=.28')
+            .from('.module',{opacity:0,y:42,duration:.8,stagger:.13,ease:'expo.out'},'-=.2');
+        } else if (Element.prototype.animate) {
+          document.querySelectorAll('.hero-word,.hero-copy,.hero-tags,.radar,.banner,.module').forEach((el,i) => {
+            el.animate([{opacity:0,transform:'translateY(24px)'},{opacity:1,transform:'translateY(0)'}],{duration:680,delay:Math.min(i*90,850),easing:'cubic-bezier(.2,.8,.2,1)'});
+          });
+        }
+      }
+      function syncMotion() {
+        root.dataset.motion = canAnimate() ? 'on' : 'off';
+        $('motion-toggle').setAttribute('aria-pressed',String(paused || motionQuery.matches));
+        $('motion-toggle').setAttribute('aria-label',paused ? 'Reanudar animaciones' : 'Pausar animaciones');
+        $('motion-icon').setAttribute('href',paused ? '#play' : '#pause');
+        if (!canAnimate()) {
+          resetCursor();
+          activeAnimations.forEach(cancel => cancel());activeAnimations.clear();
+          update(true);
+        }
+      }
+      $('motion-toggle').addEventListener('click',() => {paused = !paused;syncMotion();});
+      motionQuery.addEventListener('change',syncMotion);
+      document.addEventListener('visibilitychange',syncMotion);
+      update(true);syncMotion();cursorLoop();
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',intro,{once:true}); else intro();
+    })();
+  </script>
+  <!-- El tercer script suministrado (/14/4c2941a75f51695e20523444e4576fb9)
+       no se activa automáticamente: no indica formato, dimensiones ni ubicación
+       y podría crear publicidad emergente ajena a los contenedores definidos. -->
+</body>
+</html>
