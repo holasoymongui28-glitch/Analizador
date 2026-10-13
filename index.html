@@ -2,2478 +2,1037 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#050505">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-
-<title>Password Securex | Analizador de contraseñas y generador de frases seguras</title>
-
-<meta name="description" content="Comprueba patrones, longitud y robustez estimada de contraseñas. Genera claves y frases aleatorias desde tu navegador. Incluye modo privado sin anuncios.">
-
+<title>Password Securex 4.0 | Analizador local y generador de contraseñas</title>
+<meta name="description" content="Analiza patrones y crea contraseñas o frases aleatorias en tu navegador. Modo privado sin scripts publicitarios, diagnóstico local y sin historial.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Password Securex 2.0">
-<meta property="og:description" content="Analizador local y generador criptográfico con frases aleatorias. Modo privado sin anuncios.">
-
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/securex-192.png">
-<script>if(new URLSearchParams(location.search).get('private')==='1')document.documentElement.classList.add('private-mode');</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Password Securex",
-  "applicationCategory": "SecurityApplication",
-  "operatingSystem": "Web Browser",
-  "description": "Analizador y generador de contraseñas que funciona localmente en el navegador.",
-  "isAccessibleForFree": true,
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "EUR"
-  }
-}
-</script>
-
-<style>
-
-/* =========================================
-   DESIGN SYSTEM
-========================================= */
-
-:root {
-  color-scheme: dark;
-
-  --bg: #050505;
-  --surface: #0b100d;
-  --surface2: #101914;
-
-  --green: #00ff66;
-  --blue: #0066ff;
-  --red: #ff0033;
-  --yellow: #ffbb44;
-
-  --text: #edf5ee;
-  --muted: #91a597;
-  --border: rgba(0,255,102,.18);
-
-  --accent: #00ff66;
-  --accent-rgb: 0,255,102;
-
-  --mouse-x: 50vw;
-  --mouse-y: 50vh;
-
-  --font: "Space Grotesk", sans-serif;
-  --mono: "JetBrains Mono", monospace;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  overflow-x: hidden;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:focus-visible,
-input:focus-visible,
-a:focus-visible,
-summary:focus-visible {
-  outline: 2px solid var(--green);
-  outline-offset: 3px;
-}
-
-[hidden] {
-  display: none !important;
-}
-
-::selection {
-  background: var(--green);
-  color: black;
-}
-
-.mono {
-  font-family: var(--mono);
-}
-
-/* =========================================
-   STATIC BACKGROUND + LIGHTWEIGHT SPOTLIGHT
-========================================= */
-.spotlight-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(450px circle at var(--mouse-x) var(--mouse-y), rgba(0,255,102,.065), transparent 78%);
-}
-
-/* =========================================
-   HEADER
-========================================= */
-
-header {
-  position: relative;
-  z-index: 10;
-
-  max-width: 1500px;
-  margin: auto;
-
-  padding: 25px 30px;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.brand-icon {
-  width: 45px;
-  height: 45px;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid var(--green);
-  border-radius: 12px;
-
-  color: var(--green);
-  background: rgba(0,255,102,.04);
-
-  box-shadow: 0 0 25px rgba(0,255,102,.12);
-}
-
-.brand-title {
-  font-weight: 700;
-  font-size: clamp(14px, 2vw, 22px);
-  letter-spacing: -.06em;
-  white-space: nowrap;
-}
-
-.brand-title {
-  font-family: var(--mono);
-  color: #00ff66;
-  text-shadow: 0 0 13px rgba(0,255,102,.38);
-  letter-spacing: -.065em;
-}
-
-.brand-sub {
-  margin-top: 4px;
-  color: #617c68;
-  font: 9px var(--mono);
-  letter-spacing: .1em;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.offline-badge {
-  padding: 10px 14px;
-  border-radius: 50px;
-  border: 1px solid rgba(0,255,102,.25);
-  background: rgba(0,255,102,.04);
-  color: var(--green);
-  font: 10px var(--mono);
-  white-space: nowrap;
-}
-
-.offline-badge::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 10px var(--green);
-}
-
-.language-button {
-  background: #0e1710;
-  border: 1px solid #31523a;
-  border-radius: 9px;
-  padding: 10px 13px;
-  color: var(--green);
-  font: 11px var(--mono);
-}
-
-/* =========================================
-   HERO
-========================================= */
-
-.hero {
-  position: relative;
-  z-index: 2;
-  max-width: 950px;
-  margin: 40px auto;
-  padding: 0 20px;
-  text-align: center;
-}
-
-.hero-kicker {
-  color: var(--green);
-  font: 11px var(--mono);
-  letter-spacing: .18em;
-}
-
-.hero h1 {
-  font-size: clamp(40px, 7vw, 85px);
-  letter-spacing: -.075em;
-  line-height: 1.05;
-  margin: 22px 0;
-}
-
-.hero h1 span {
-  display: block;
-}
-
-.hero h1 .highlight {
-  color: var(--green);
-  text-shadow: 0 0 35px rgba(0,255,102,.2);
-}
-
-.hero p {
-  max-width: 650px;
-  margin: auto;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.9;
-}
-
-/* =========================================
-   TAILWIND-COMPATIBLE LOCAL UTILITIES
-   (no Tailwind CDN, compiler or external CSS needed)
-========================================= */
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.text-center { text-align: center; }
-.w-full { width: 100%; }
-.mx-auto { margin-inline: auto; }
-.overflow-hidden { overflow: hidden; }
-.gap-8 { gap: 2rem; }
-.my-8 { margin-block: 2rem; }
-.py-6 { padding-block: 1.5rem; }
-
-/* =========================================
-   THREE-COLUMN GRID — CENTER NEVER OVERLAPS ADS
-========================================= */
-.layout {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 1640px;
-  margin-inline: auto;
-  padding: 0 clamp(16px, 2.5vw, 40px) 72px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  gap: 2rem;
-}
-.main-content {
-  width: 100%;
-  max-width: 980px;
-  min-width: 0;
-  margin-inline: auto;
-}
-.sidebar {
-  display: none;
-  min-width: 0;
-  width: 160px;
-  position: sticky;
-  top: 24px;
-  justify-self: center;
-}
-@media (min-width: 1280px) {
-  .layout {
-    /* Fixed ad columns + minmax(0, 1fr): central content never pushes into sidebars. */
-    grid-template-columns: 160px minmax(0, 1fr) 160px;
-    gap: 2rem;
-  }
-  .sidebar { display: block; }
-}
-@media (min-width: 1440px) {
-  .xl\:gap-12 { gap: 3rem; }
-}
-
-/* =========================================
-   ADSTERRA — RESPONSIVE SLOTS, FIXED CREATIVE SIZES
-   All third-party scripts come from the existing codes.
-========================================= */
-.ad-label {
-  margin: 0 0 10px;
-  text-align: center;
-  color: #718574;
-  font: 9px var(--mono);
-  letter-spacing: .1em;
-}
-.ad-slot {
-  --ad-width: 728px;
-  --ad-height: 90px;
-  isolation: isolate;
-  position: relative;
-  flex-shrink: 0;
-  flex-wrap: nowrap;
-  width: 100%;
-  height: var(--ad-height);
-  min-width: 0;
-  max-width: var(--ad-width);
-  margin-inline: auto;
-  overflow: hidden;
-  background: #000000;
-  border: 0; /* Keep the full 728x90 / 160x600 inner viewport intact. */
-  box-shadow: 0 0 0 1px #18291d;
-  border-radius: 12px;
-  text-align: center;
-  /* Normalize the host's line box, while leaving the 3rd-party creative unmodified. */
-  line-height: 0;
-}
-.ad-slot > iframe,
-.ad-slot > ins,
-.ad-slot > object,
-.ad-slot > embed,
-.ad-slot > div:not(.ad-label) {
-  box-sizing: border-box;
-  display: block;
-  flex: 0 0 auto;
-  max-width: 100%;
-  margin-inline: auto;
-}
-.ad-slot iframe {
-  display: block;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  border: 0;
-}
-.ad-sky { --ad-width: 160px; --ad-height: 600px; }
-.ad-banner { --ad-width: 728px; --ad-height: 90px; }
-.ad-inline { --ad-width: 468px; --ad-height: 60px; }
-.ad-mobile { --ad-width: 320px; --ad-height: 50px; }
-.ad-banner-wrapper {
-  width: min(100%, 728px);
-  margin-inline: auto;
-  margin-bottom: 30px;
-}
-.ad-bottom-wrapper {
-  /* immediately follows recommendations on desktop, with symmetric spacing */
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-}
-.ad-inline-wrapper {
-  width: min(100%, 468px);
-  margin: 25px auto;
-}
-.ad-mobile-wrapper { display: none; width: min(100%, 320px); margin: 2rem auto; }
-.ad-native {
-  width: 100%;
-  min-height: 220px;
-  margin: 18px auto 0;
-  padding: 12px;
-  background: #000000;
-  border: 1px solid #18291d;
-  border-radius: 12px;
-  overflow: hidden;
-  line-height: normal;
-}
-.ad-native > div, .ad-native iframe {
-  max-width: 100% !important;
-  margin-inline: auto;
-}
-.ad-native iframe { border: 0; }
-/* Fixed-size ad units are intentionally hidden below their safe viewport width.
-   Hiding a larger creative is preferable to clipping it or scaling it unreadably. */
-@media (max-width: 799px) {
-  .ad-banner-wrapper { display: none; }
-  .ad-mobile-wrapper { display: block; }
-}
-@media (max-width: 519px) {
-  .ad-inline-wrapper { display: none; }
-}
-@media (max-width: 359px) {
-  /* At exactly 320px, let a 320x50 mobile banner occupy the viewport
-     without clipping 28px because of the page's side padding. */
-  .ad-mobile-wrapper {
-    position: relative;
-    left: 50%;
-    width: 320px;
-    max-width: 100vw;
-    margin-left: 0;
-    margin-right: 0;
-    transform: translateX(-50%);
-  }
-}
-
-/* =========================================
-   CARDS
-========================================= */
-
-.card {
-  position: relative;
-  min-width: 0;
-  border-radius: 18px;
-  border: 1px solid rgba(0,255,102,.22);
-  background: linear-gradient(145deg,#101914,#080b09);
-  box-shadow: 0 16px 40px rgba(0,0,0,.24);
-}
-
-.card-content {
-  padding: clamp(22px,3vw,36px);
-}
-
-.module-id {
-  color: #91aa97;
-  font: 10px var(--mono);
-  letter-spacing: .12em;
-}
-
-.module-id strong {
-  color: var(--green);
-}
-
-.module-title {
-  margin: 23px 0 9px;
-  font-size: clamp(23px,3vw,32px);
-  letter-spacing: -.045em;
-}
-
-.module-description {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.8;
-}
-
-/* =========================================
-   PASSWORD INPUT
-========================================= */
-
-.input-heading {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-
-  margin: 30px 0 12px;
-
-  color: #b6d4bd;
-  font: 10px var(--mono);
-}
-
-.input-shell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  min-height: 69px;
-  padding: 0 13px;
-
-  background: #06100a;
-  border: 1px solid #34563d;
-  border-radius: 11px;
-
-  transition: border-color .25s, box-shadow .25s;
-}
-
-.input-shell:focus-within {
-  border-color: var(--green);
-  box-shadow: 0 0 25px rgba(0,255,102,.1);
-}
-
-.prompt {
-  color: var(--green);
-  font: 23px var(--mono);
-}
-
-.password-input {
-  flex: 1;
-  width: 100%;
-  min-width: 0;
-
-  padding: 20px 0;
-  background: transparent;
-  border: 0;
-  outline: none !important;
-
-  color: #f3fff5;
-  caret-color: var(--green);
-  font: 14px var(--mono);
-}
-
-.password-input::placeholder {
-  color: #526d59;
-}
-
-.password-input::-ms-reveal {
-  display: none;
-}
-
-.icon-button {
-  flex: none;
-  width: 34px;
-  height: 36px;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: #9bad9d;
-}
-
-.icon-button:hover {
-  border-color: var(--green);
-  color: var(--green);
-  background: rgba(0,255,102,.06);
-}
-
-.input-meta {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-  color: #698370;
-  font: 9px var(--mono);
-}
-
-/* =========================================
-   STRENGTH METER
-========================================= */
-
-.meter-heading {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 31px 0 14px;
-  font: 10px var(--mono);
-}
-
-#strengthLabel {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.meter {
-  display: grid;
-  grid-template-columns: repeat(5,minmax(0,1fr));
-  gap: 8px;
-}
-
-.meter-track {
-  height: 10px;
-  border-radius: 4px;
-  background: #1b3021;
-  overflow: hidden;
-}
-
-.meter-fill {
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: var(--accent);
-}
-
-.feedback {
-  min-height: 35px;
-  margin: 15px 0;
-  color: #9bafa0;
-  font-size: 12px;
-  line-height: 1.8;
-}
-
-.divider {
-  height: 1px;
-  margin: 28px 0;
-  background: linear-gradient(90deg,transparent,#3c5942,transparent);
-}
-
-.checks {
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.check {
-  padding: 13px 10px;
-  border-radius: 8px;
-  border: 1px solid #2b4030;
-  background: #08110b;
-  color: #849d89;
-  font: 10px/1.6 var(--mono);
-}
-
-.check::before {
-  content: "○";
-  margin-right: 7px;
-}
-
-.check.passed {
-  color: #c1ffd7;
-  border-color: rgba(0,255,102,.4);
-  background: rgba(0,255,102,.045);
-}
-
-.check.passed::before {
-  content: "✓";
-  color: var(--green);
-}
-
-/* =========================================
-   STATS
-========================================= */
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 17px;
-  margin-top: 18px;
-}
-
-.stats-grid .card-content {
-  padding: 27px;
-}
-
-.crack-time {
-  display: block;
-  min-height: 75px;
-  margin-top: 27px;
-
-  color: #f2fff4;
-  font: 700 clamp(23px,3vw,38px)/1.35 var(--mono);
-  letter-spacing: -.055em;
-  overflow-wrap: anywhere;
-}
-
-.stat-description {
-  color: #829a87;
-  font-size: 11px;
-  line-height: 1.8;
-}
-
-.stat-chip {
-  display: inline-block;
-  margin-top: 15px;
-  padding: 8px;
-  border: 1px solid #294b32;
-  border-radius: 6px;
-  color: #83a08a;
-  font: 9px var(--mono);
-}
-
-.data-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid #223629;
-}
-
-.data-row:last-child {
-  border-bottom: 0;
-}
-
-.data-label {
-  color: #93a698;
-  font-size: 11px;
-}
-
-.data-value {
-  color: #e6f5e9;
-  text-align: right;
-  font: 600 11px var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-
-#riskValue {
-  color: var(--accent);
-}
-
-/* =========================================
-   GENERATOR
-========================================= */
-
-.generator {
-  margin-top: 18px;
-}
-
-.generator-options {
-  margin-top: 24px;
-}
-
-.range-heading {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  font: 11px var(--mono);
-}
-
-input[type="range"] {
-  width: 100%;
-  accent-color: var(--green);
-}
-
-.option-grid {
-  display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 12px;
-  margin: 23px 0;
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px;
-
-  border: 1px solid #294332;
-  border-radius: 8px;
-  background: #08110b;
-
-  color: #bed0c1;
-  font-size: 12px;
-}
-
-.option input {
-  accent-color: var(--green);
-}
-
-.action-button {
-  border: 1px solid var(--green);
-  border-radius: 10px;
-  padding: 13px 20px;
-  background: var(--green);
-  color: #041007;
-  font: 700 12px var(--mono);
-}
-.action-button:hover { filter: brightness(1.08); }
-
-.secondary-button {
-  background: transparent;
-  color: var(--green);
-}
-
-.action-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.generator-result {
-  margin-top: 20px;
-  padding: 17px;
-
-  border: 1px solid #31533b;
-  border-radius: 10px;
-  background: #060e08;
-
-  color: var(--green);
-  font: 12px/1.8 var(--mono);
-
-  overflow-wrap: anywhere;
-  user-select: all;
-}
-
-.generator-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.generator-feedback {
-  min-height: 22px;
-  margin: 12px 0 0;
-  color: #8bac92;
-  font-size: 11px;
-}
-
-/* =========================================
-   RECOMMENDATIONS
-========================================= */
-
-.recommendations {
-  margin-top: 18px;
-}
-
-.recommendation-box {
-  padding: 20px;
-  margin-top: 20px;
-  border: 1px dashed #35563f;
-  border-radius: 10px;
-  background: #09140c;
-}
-
-.recommendation-box h3 {
-  margin: 0 0 9px;
-  font-size: 15px;
-}
-
-.recommendation-box p {
-  margin: 0;
-  color: #99b09c;
-  font-size: 12px;
-  line-height: 1.8;
-}
-
-/* =========================================
-   FULL-WIDTH FOOTER + 3-COLUMN STATUS STRIP
-========================================= */
-footer {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  margin: 0;
-  padding-block: 1.5rem;
-  padding-inline: clamp(16px, 3vw, 48px);
-  background: #050805;
-  border-top: 1px solid #253d2a;
-  text-align: center;
-}
-.footer-inner { width: 100%; max-width: 1160px; margin-inline: auto; }
-footer p { color: #718575; font-size: 11px; line-height: 1.9; }
-.legal {
-  max-width: 1000px;
-  margin: 25px auto 0;
-  color: #667569;
-  font-size: 10px;
-}
-details {
-  margin-top: 18px;
-  color: #93a997;
-  font-size: 12px;
-  line-height: 1.8;
-}
-summary { cursor: pointer; color: var(--green); }
-.footer-status {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  align-items: center;
-  width: 100%;
-  max-width: 1000px;
-  margin: 28px auto 0;
-  padding: 22px 0 10px;
-  border-top: 1px solid #122016;
-}
-.footer-status span {
-  color: #46574a;
-  font: 10px/1.7 var(--mono);
-  letter-spacing: .09em;
-  white-space: normal;
-}
-@media (max-width: 620px) {
-  .footer-status { grid-template-columns: 1fr; gap: 7px; }
-}
-
-/* =========================================
-   RESPONSIVE
-========================================= */
-
-@media(max-width:800px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .checks {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media(max-width:600px) {
-  header {
-    padding: 19px 15px;
-  }
-
-  .brand-title {
-    font-size: 14px;
-  }
-
-  .brand-sub {
-    font-size: 7px;
-  }
-
-  .brand-icon {
-    width: 38px;
-    height: 38px;
-  }
-
-  .offline-badge {
-    display: none;
-  }
-
-  .hero {
-    margin: 28px auto;
-  }
-
-  .hero h1 {
-    font-size: clamp(37px,10vw,55px);
-  }
-
-  .layout {
-    padding: 0 14px 45px;
-  }
-
-  .option-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media(prefers-reduced-motion:reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-
-/* LIGHT, THROTTLED CODE RAIN — BEHIND APP AND SPOTLIGHT */
-#codeRain { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:.25; }
-.spotlight-bg { z-index:1; }
-body > header, .hero, .layout, footer { position:relative; z-index:2; }
-
-/* WHITE AD SURFACE SWITCH: changes the slot background, not a third-party creative. */
-body.ads-white .ad-slot, body.ads-white .ad-native {
-  background: #fff !important;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.22);
-}
-.header-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-.utility-button {
-  background: #0e1710; border:1px solid #31523a; border-radius:9px;
-  color:#b6f8c7; font:600 10px var(--mono); padding:10px 12px; line-height:1.3;
-  white-space:nowrap;
-}
-.utility-button[aria-pressed="true"] { color:#051407; background:var(--green); border-color:var(--green); }
-.utility-button:hover, .language-button:hover { border-color:var(--green); }
-.private-mode .sidebar, .private-mode .ad-banner-wrapper, .private-mode .ad-inline-wrapper,
-.private-mode .ad-mobile-wrapper, .private-mode .ad-native, .private-mode .sponsor-area { display:none !important; }
-.private-mode .layout { grid-template-columns:minmax(0,1fr); max-width:1040px; }
-.private-mode .private-indicator { display:block; }
-.private-indicator { display:none; color:#7df5a1; font:11px/1.65 var(--mono); text-align:center; margin:12px auto 0; }
-.private-mode .ad-wrap-recommend { display:none !important; }
-
-.generator-mode { display:flex; gap:8px; flex-wrap:wrap; margin:24px 0 6px; }
-.generator-mode button {
-  background:#07130a; border:1px solid #2a4831; border-radius:8px;
-  color:#b8d1bb; font:600 11px var(--mono); padding:12px 14px;
-}
-.generator-mode button[aria-pressed="true"] { border-color:var(--green); color:var(--green); background:rgba(0,255,102,.08); }
-.phrase-controls { display:none; margin:18px 0; padding:18px; background:#07130a; border-radius:10px; border:1px solid #294332; }
-.phrase-controls.visible { display:block; }
-.password-controls.inactive { display:none; }
-.generator-hint { font:11px/1.65 var(--mono); color:#8ea999; margin:10px 0 0; }
-.security-details { display:grid; gap:9px; margin-top:12px; }
-.security-detail { padding:10px 12px; border-left:2px solid #255a33; background:rgba(0,255,102,.035); color:#b3cbb8; font:11px/1.55 var(--mono); }
-.security-detail strong { color:var(--green); }
-.info-module { margin-top:20px; }
-.info-module details { margin:12px 0; padding:14px 18px; border:1px solid #294332; border-radius:9px; background:#09130c; }
-.info-module summary { font:600 13px var(--font); }
-.info-module details p { color:#a3b9aa; font-size:12px; line-height:1.8; }
-.privacy-alert { max-width:950px; margin:8px auto 28px; padding:13px 16px; text-align:center; font:11px/1.7 var(--mono); border:1px solid #37402b; border-radius:10px; background:#10140e; color:#c6bfa3; }
-.privacy-alert a { color:#66ffab; }
-.private-mode .privacy-alert { border-color:#265b37; color:#aff7c6; }
-@media(max-width:820px) {
-  header { flex-wrap:wrap; }
-  .header-right { flex:1; min-width:0; justify-content:flex-end; }
-  .offline-badge { display:none; }
-}
-@media(max-width:620px) {
-  header { gap:12px; flex-direction:column; align-items:center; }
-  .brand { justify-content:center; }
-  .header-right { width:100%; justify-content:center; }
-  .header-controls { justify-content:center; }
-  .header-controls { gap:6px; }
-  .utility-button, .language-button { padding:9px 9px; font-size:9px; }
-  .privacy-alert { margin-inline:14px; }
-  .generator-mode button { flex:1; }
-}
-@media(prefers-reduced-motion:reduce) { #codeRain { display:none; } }
-
-</style>
-</head>
-
-<body>
-
-<canvas id="codeRain" aria-hidden="true"></canvas>
-<div class="spotlight-bg" aria-hidden="true"></div>
-
-<!-- HEADER -->
-
-<header>
-
-  <div class="brand">
-
-    <div class="brand-icon">
-      <svg width="25" height="25" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor"
-           stroke-width="1.5" aria-hidden="true">
-        <path d="M12 2.5 20 6v5.4c0 5.1-3.2 8.5-8 10.1-4.8-1.6-8-5-8-10.1V6z"/>
-        <path d="m8 12 3 3 5-6"/>
-      </svg>
-    </div>
-
-    <div>
-      <div class="brand-title">
-        PASSWORD_SECUREX
-      </div>
-
-      <div class="brand-sub">
-        SECURITY ENGINE / VERSION 2.0
-      </div>
-    </div>
-
-  </div>
-
-  <div class="header-right">
-    <div class="offline-badge">
-      LOCAL ENGINE
-    </div>
-
-    <div class="header-controls">
-      <button id="privateModeButton" class="utility-button" type="button" aria-pressed="false" data-i18n="privateToggle" title="Abrir la herramienta sin cargar anuncios">MODO PRIVADO</button>
-      <button id="whiteAdsButton" class="utility-button" type="button" aria-pressed="false" data-i18n="whiteAdsToggle" title="Alternar el fondo de los espacios publicitarios entre negro y blanco">ADS: BLANCO</button>
-      <button id="languageButton" class="language-button" type="button" aria-label="Switch language to English">ES / EN</button>
-    </div>
-  </div>
-
-</header>
-
-<!-- HERO -->
-
-<section class="hero">
-
-  <div class="hero-kicker">
-    ● CYBERSECURITY ANALYSIS SYSTEM
-  </div>
-
-  <h1>
-    <span data-i18n="hero1">LA SEGURIDAD</span>
-    <span class="highlight" data-i18n="hero2">EMPIEZA AQUÍ.</span>
-  </h1>
-
-  <p data-i18n="heroDescription">
-    Analiza y genera contraseñas de forma privada.
-    Todo el procesamiento se realiza localmente en tu navegador.
-  </p>
-
-</section>
-
-<div id="privacyNotice" class="privacy-alert" role="note">
-  <span id="privacyNoticeText">El escáner calcula en tu navegador. En la versión con anuncios, los scripts publicitarios podrían acceder al documento.</span>
-  <a href="?private=1" id="privateNoticeLink">Usar sin anuncios ↗</a>
-</div>
-<div class="private-indicator" id="privateIndicator">● MODO PRIVADO · SIN SCRIPTS PUBLICITARIOS</div>
-
-<!-- MAIN -->
-
-<main class="layout gap-8 xl:gap-12 mx-auto">
-
-  <!-- LEFT AD -->
-
-  <aside class="sidebar">
-
-    <div class="ad-label">[ PUBLICIDAD ]</div>
-
-    <div id="adLeft" class="ad-slot ad-sky flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 1280px)").matches) {
-          window.atOptions = { key: "9eb5688d177646d2180f72a2ce5b894d", format: "iframe", height: 600, width: 160, params: {} };
-          document.write('<script src="https://bauval.org/22/9eb5688d177646d2180f72a2ce5b894d"><\/script>');
-        }
-      </script>
-    </div>
-
-  </aside>
-
-  <!-- CENTER -->
-
-  <div class="main-content">
-
-    <!-- TOP AD -->
-
-    <div class="ad-banner-wrapper">
-
-      <div class="ad-label">
-        [ ESPACIO PUBLICITARIO / ANUNCIO ]
-      </div>
-
-      <div id="adTop" class="ad-slot ad-banner flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 800px)").matches) {
-          window.atOptions = { key: "262a9cb086b1e4b03109271538487464", format: "iframe", height: 90, width: 728, params: {} };
-          document.write('<script src="https://bauval.org/22/262a9cb086b1e4b03109271538487464"><\/script>');
-        }
-      </script>
-    </div>
-
-    </div>
-
-    <!-- MODULE 01 -->
-
-    <section class="card" id="analyzer">
-
-      <div class="card-content">
-
-        <div class="module-id">
-          <strong>01</strong> / PASSWORD ANALYSIS
-        </div>
-
-        <h2 class="module-title" data-i18n="scannerTitle">
-          Escáner de contraseñas
-        </h2>
-
-        <p class="module-description" data-i18n="scannerDescription">
-          Introduce una contraseña para iniciar el análisis de seguridad.
-        </p>
-
-        <div class="input-heading">
-
-          <label for="password" data-i18n="passwordLabel">
-            CLAVE DE ACCESO
-          </label>
-
-          <span style="color:#718775" data-i18n="notStored">
-            [ NO SE ALMACENA ]
-          </span>
-
-        </div>
-
-        <div class="input-shell">
-
-          <span class="prompt" aria-hidden="true">›</span>
-
-          <input
-            id="password"
-            class="password-input"
-            type="password"
-            placeholder="Introduce una contraseña..."
-            autocomplete="new-password"
-            autocapitalize="off"
-            autocorrect="off"
-            spellcheck="false"
-            maxlength="128"
-            aria-describedby="strengthFeedback"
-          >
-
-          <button
-            id="clearPassword"
-            class="icon-button"
-            type="button"
-            aria-label="Borrar contraseña"
-            hidden
-          >✕</button>
-
-          <button
-            id="togglePassword"
-            class="icon-button"
-            type="button"
-            aria-label="Mostrar contraseña"
-            aria-pressed="false"
-          >◉</button>
-
-        </div>
-
-        <div class="input-meta">
-
-          <span data-i18n="localLabel">
-            ● ANÁLISIS LOCAL / SIN ENVÍO DE CLAVES
-          </span>
-
-          <span id="characterCount">
-            00 CARACTERES
-          </span>
-
-        </div>
-
-        <!-- METER -->
-
-        <div class="meter-heading">
-
-          <span data-i18n="strengthTitle">
-            NIVEL DE ROBUSTEZ
-          </span>
-
-          <span id="strengthLabel">
-            EN ESPERA
-          </span>
-
-        </div>
-
-        <div class="meter"
-             id="strengthMeter"
-             role="progressbar"
-             aria-label="Robustez estimada"
-             aria-valuemin="0"
-             aria-valuemax="5"
-             aria-valuenow="0">
-
-          <div class="meter-track"><span class="meter-fill"></span></div>
-          <div class="meter-track"><span class="meter-fill"></span></div>
-          <div class="meter-track"><span class="meter-fill"></span></div>
-          <div class="meter-track"><span class="meter-fill"></span></div>
-          <div class="meter-track"><span class="meter-fill"></span></div>
-
-        </div>
-
-        <p id="strengthFeedback"
-           class="feedback"
-           aria-live="polite">
-          Sistema preparado. Introduce una contraseña.
-        </p>
-
-        <div id="securityDetails" class="security-details" aria-live="polite"></div>
-        <div class="divider"></div>
-
-        <!-- CHECKS -->
-
-        <div class="module-id" data-i18n="checksTitle">
-          VERIFICACIÓN DE PARÁMETROS
-        </div>
-
-        <div class="checks">
-
-          <div class="check" id="checkLength" data-i18n="checkLength">
-            MÍNIMO 12 CARACTERES
-          </div>
-
-          <div class="check" id="checkPatterns" data-i18n="checkPatterns">
-            SIN PATRONES COMUNES
-          </div>
-
-          <div class="check" id="checkLong" data-i18n="checkLong">
-            16+ CARACTERES
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- STATS -->
-
-    <div class="stats-grid">
-
-      <section class="card">
-
-        <div class="card-content">
-
-          <div class="module-id" data-i18n="bruteTitle">
-            <strong>02</strong> / RESISTENCIA A FUERZA BRUTA
-          </div>
-
-          <output id="crackTime"
-                  class="crack-time"
-                  aria-live="off">
-            -- : -- : --
-          </output>
-
-          <p class="stat-description" data-i18n="bruteDescription">
-            Tiempo teórico estimado para descubrir la contraseña.
-          </p>
-
-          <div class="stat-chip">⚡ 10¹⁰ INTENTOS / SEGUNDO (ESCENARIO HIPOTÉTICO)</div>
-          <p class="stat-description" data-i18n="offlineWarning">Estimación orientativa: no representa una garantía ni contempla todas las estrategias de ataque.</p>
-
-        </div>
-
-      </section>
-
-      <section class="card">
-
-        <div class="card-content">
-
-          <div class="module-id" data-i18n="telemetryTitle">
-            <strong>03</strong> / TELEMETRÍA
-          </div>
-
-          <div style="margin-top:20px">
-
-            <div class="data-row">
-              <span class="data-label" data-i18n="entropyLabel">
-                Entropía estimada
-              </span>
-              <span id="entropyValue" class="data-value">
-                0 bits
-              </span>
-            </div>
-
-            <div class="data-row">
-              <span class="data-label" data-i18n="lengthLabel">
-                Longitud
-              </span>
-              <span id="lengthValue" class="data-value">0</span>
-            </div>
-
-            <div class="data-row">
-              <span class="data-label" data-i18n="typesLabel">
-                Tipos de caracteres
-              </span>
-              <span id="typesValue" class="data-value">0 / 4</span>
-            </div>
-
-            <div class="data-row">
-              <span class="data-label" data-i18n="riskLabel">
-                Nivel de riesgo
-              </span>
-              <span id="riskValue" class="data-value">SIN DATOS</span>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-    </div>
-
-    <!-- INLINE AD -->
-
-    <div class="ad-inline-wrapper">
-
-      <div class="ad-label">
-        [ ESPACIO PUBLICITARIO ]
-      </div>
-
-      <div id="adInline" class="ad-slot ad-inline flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 520px)").matches) {
-          window.atOptions = { key: "93a66865a40493fef5fb524c6c383113", format: "iframe", height: 60, width: 468, params: {} };
-          document.write('<script src="https://bauval.org/22/93a66865a40493fef5fb524c6c383113"><\/script>');
-        }
-      </script>
-    </div>
-
-    </div>
-
-    <!-- GENERATOR -->
-
-    <section class="card generator">
-
-      <div class="card-content">
-
-        <div class="module-id">
-          <strong>04</strong> / SECURE PASSWORD GENERATOR
-        </div>
-
-        <h2 class="module-title" data-i18n="generatorTitle">
-          Generador de contraseñas
-        </h2>
-
-        <p class="module-description" data-i18n="generatorDescription">
-          Crea contraseñas aleatorias utilizando el generador criptográfico del navegador.
-        </p>
-
-        <div class="generator-mode" role="group" aria-label="Tipo de generación">
-          <button id="modeRandom" type="button" aria-pressed="true" data-i18n="modeRandom">CLAVE ALEATORIA</button>
-          <button id="modePhrase" type="button" aria-pressed="false" data-i18n="modePhrase">FRASE SEGURA</button>
-        </div>
-        <div id="phraseControls" class="phrase-controls">
-          <div class="range-heading"><label for="phraseLength" data-i18n="phraseLength">NÚMERO DE PALABRAS</label><span id="phraseLengthValue">8</span></div>
-          <input type="range" id="phraseLength" min="6" max="10" value="8" aria-label="Número de palabras">
-          <p class="generator-hint" data-i18n="phraseHint">Diccionario local de 512 palabras en español · 9 bits por selección aleatoria · separadas por guiones.</p>
-        </div>
-        <div class="generator-options" id="generatorOptions">
-          <div class="password-controls" id="passwordControls">
-
-          <div class="range-heading">
-
-            <span data-i18n="generatorLength">
-              LONGITUD
-            </span>
-
-            <span id="generatorLengthValue">20</span>
-
-          </div>
-
-          <input
-            type="range"
-            id="generatorLength"
-            min="12"
-            max="64"
-            value="20"
-            aria-label="Longitud de la contraseña generada"
-          >
-
-          <div class="option-grid">
-
-            <label class="option">
-              <input id="optLower" type="checkbox" checked>
-              <span data-i18n="lowercase">Minúsculas</span>
-            </label>
-
-            <label class="option">
-              <input id="optUpper" type="checkbox" checked>
-              <span data-i18n="uppercase">Mayúsculas</span>
-            </label>
-
-            <label class="option">
-              <input id="optNumbers" type="checkbox" checked>
-              <span data-i18n="numbers">Números</span>
-            </label>
-
-            <label class="option">
-              <input id="optSymbols" type="checkbox" checked>
-              <span data-i18n="symbols">Símbolos</span>
-            </label>
-
-          </div>
-          </div>
-
-          <button id="generateButton" class="action-button" type="button">
-            GENERAR CONTRASEÑA
-          </button>
-
-          <div id="generatedPassword"
-               class="generator-result"
-               aria-live="off">
-            [ ESPERANDO GENERACIÓN ]
-          </div>
-
-          <div class="generator-actions">
-
-            <button id="copyButton"
-                    type="button"
-                    class="action-button secondary-button"
-                    disabled>
-              COPIAR
-            </button>
-
-            <button id="analyzeGenerated"
-                    type="button"
-                    class="action-button secondary-button"
-                    disabled>
-              ANALIZAR
-            </button>
-
-          </div>
-
-          <p id="generatorFeedback"
-             class="generator-feedback"
-             aria-live="polite"></p>
-
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- RECOMMENDATIONS -->
-
-    <section class="card recommendations">
-
-      <div class="card-content">
-
-        <div class="module-id" data-i18n="recommendationsTitle">
-          <strong>05</strong> / RECOMENDACIONES DE SEGURIDAD
-        </div>
-
-        <div class="recommendation-box">
-
-          <h3 data-i18n="recommendationsHeading">
-            Diagnóstico inteligente
-          </h3>
-
-          <p id="securityAdvice" aria-live="polite">
-            Introduce una contraseña para recibir recomendaciones.
-          </p>
-
-        </div>
-
-        <div style="margin-top:25px">
-
-          <div class="ad-label">
-            [ MÓDULO DE PROTECCIÓN PATROCINADO / PUBLICIDAD ]
-          </div>
-
-          <div id="adNative" class="ad-native flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad nativa">
-      <div id="container-6f5d3d8b489bd8e9a6d93e4c40cbe082"></div>
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1") {
-          const n = document.createElement('script');
-          n.src = 'https://bauval.org/21/6f5d3d8b489bd8e9a6d93e4c40cbe082';
-          n.async = true; n.setAttribute('data-cfasync','false');
-          document.currentScript.parentElement.appendChild(n);
-        }
-      </script>
-    </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- BOTTOM AD -->
-
-    <div class="ad-banner-wrapper ad-bottom-wrapper my-8 mx-auto">
-
-      <div class="ad-label">
-        [ ESPACIO PUBLICITARIO INFERIOR ]
-      </div>
-
-      <div id="adBottom" class="ad-slot ad-banner flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 800px)").matches) {
-          window.atOptions = { key: "262a9cb086b1e4b03109271538487464", format: "iframe", height: 90, width: 728, params: {} };
-          document.write('<script src="https://bauval.org/22/262a9cb086b1e4b03109271538487464"><\/script>');
-        }
-      </script>
-    </div>
-
-    </div>
-
-    <!-- EDUCATIONAL SEO CONTENT; no remote requests -->
-    <section class="card info-module" id="guia" aria-labelledby="helpTitle">
-      <div class="card-content">
-        <div class="module-id">06 / SECURITY KNOWLEDGE</div>
-        <h2 class="module-title" id="helpTitle" data-i18n="faqTitle">Guía de contraseñas y seguridad</h2>
-        <p class="module-description" data-i18n="faqIntro">Consejos prácticos para proteger tus cuentas.</p>
-        <details><summary data-i18n="faq1q">¿Qué es la entropía de una contraseña?</summary><p data-i18n="faq1a">Es una aproximación matemática a su dificultad de adivinación. Las contraseñas elegidas por personas suelen ser menos impredecibles que las generadas al azar.</p></details>
-        <details><summary data-i18n="faq2q">¿Qué contraseña debería utilizar?</summary><p data-i18n="faq2a">Una contraseña única y larga para cada cuenta, generada por un gestor o mediante una frase aleatoria. Activa autenticación multifactor cuando esté disponible.</p></details>
-        <details><summary data-i18n="faq3q">¿Las estimaciones de fuerza bruta son exactas?</summary><p data-i18n="faq3a">No. Dependen de múltiples factores: protección del servicio, velocidad y estrategia del atacante, filtraciones y hábitos de elección. Son escenarios educativos, no predicciones.</p></details>
-        <details><summary data-i18n="faq4q">¿Qué son las passkeys?</summary><p data-i18n="faq4a">Son credenciales de autenticación basadas en criptografía de clave pública, que evitan escribir una contraseña en servicios compatibles y reducen el phishing.</p></details>
-      </div>
-    </section>
-
-    <!-- MOBILE AD -->
-
-    <div class="ad-mobile-wrapper">
-
-      <div class="ad-label">
-        [ PUBLICIDAD ]
-      </div>
-
-      <div id="adMobile" class="ad-slot ad-mobile flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(max-width: 799px)").matches) {
-          window.atOptions = { key: "4695c9b2083f8386251b4ce866c28364", format: "iframe", height: 50, width: 320, params: {} };
-          document.write('<script src="https://bauval.org/22/4695c9b2083f8386251b4ce866c28364"><\/script>');
-        }
-      </script>
-    </div>
-
-    </div>
-
-  </div>
-
-  <!-- RIGHT AD -->
-
-  <aside class="sidebar">
-
-    <div class="ad-label">[ PUBLICIDAD ]</div>
-
-    <div id="adRight" class="ad-slot ad-sky flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
-      <script>
-        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 1280px)").matches) {
-          window.atOptions = { key: "9eb5688d177646d2180f72a2ce5b894d", format: "iframe", height: 600, width: 160, params: {} };
-          document.write('<script src="https://bauval.org/22/9eb5688d177646d2180f72a2ce5b894d"><\/script>');
-        }
-      </script>
-    </div>
-
-  </aside>
-
-</main>
-
-<!-- FOOTER -->
-
-<footer class="py-6">
-  <div class="footer-inner mx-auto">
-
-  <div class="brand-title">
-    PASSWORD_SECUREX
-  </div>
-
-  <p>
-    © 2026 Password Securex — Security Analysis Engine
-  </p>
-
-  <p data-i18n="footerDescription">
-    El análisis y la generación de contraseñas se realizan localmente.
-    Las estimaciones no garantizan la seguridad de una contraseña.
-  </p>
-
-  <details>
-
-    <summary data-i18n="methodTitle">
-      Metodología y privacidad
-    </summary>
-
-    <p data-i18n="methodText">
-      La robustez se estima mediante longitud, diversidad de caracteres
-      y detección de patrones. El tiempo de fuerza bruta es orientativo
-      y utiliza un escenario hipotético de ataque offline.
-    </p>
-
-  </details>
-
-  <p class="legal">
-    Privacidad: los cálculos del escáner y del generador se realizan localmente;
-    la aplicación no envía deliberadamente las contraseñas a un servidor.
-    Los scripts publicitarios de terceros funcionan en esta página y pueden
-    acceder al contenido del documento, además de establecer cookies o realizar
-    solicitudes externas. Evita introducir contraseñas reales en páginas con
-    publicidad de terceros sin aislamiento.
-  </p>
-
-  <!-- Real capabilities only: visual footer metadata, not a claim of E2E encryption. -->
-  <div class="footer-status" aria-label="Información técnica">
-    <span>ENGINE: CLIENT-SIDE</span>
-    <span>ANALYSIS: HEURISTIC</span>
-    <span>NODE: BROWSER / ES · EN</span>
-  </div>
-  </div>
-</footer>
-
-<script>
-(() => {
+<meta property="og:title" content="Password Securex 4.0 — Tu seguridad, bajo tu control">
+<meta property="og:description" content="Analizador local de contraseñas, generador criptográfico y frases aleatorias. Sin registro y con modo privado sin scripts publicitarios.">
+<script id="securex-bootstrap">/* Deployment settings: use a UNIQUE publisher key per physical placement.
+   Existing original keys are retained. right.key intentionally has no duplicate.
+   No Popunder, Social Bar, captcha, automatic refresh or anti-adblock is included. */
+window.SecurexBoot = (() => {
   "use strict";
-
-  const $ = id => document.getElementById(id);
-
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  const input = $("password");
-
-  const GUESSES_PER_SECOND = 1e10;
-
-  let language = "es";
-  let generatedPassword = "";
-  const privateMode = new URLSearchParams(location.search).get("private") === "1";
-  $("privateModeButton").setAttribute("aria-pressed", String(privateMode));
-  $("privateModeButton").addEventListener("click", () => {
-    // Navigate to a fresh document, so advertising scripts from this page
-    // cannot remain resident in private mode. No secret is placed in the URL.
-    const target = new URL(location.href);
-    if (privateMode) target.searchParams.delete("private");
-    else target.searchParams.set("private", "1");
-    location.assign(target.href);
-  });
-  $("whiteAdsButton").addEventListener("click", () => {
-    const enabled = document.body.classList.toggle("ads-white");
-    $("whiteAdsButton").setAttribute("aria-pressed", String(enabled));
-    $("whiteAdsButton").textContent = enabled ? translations[language].whiteAdsOn : translations[language].whiteAdsToggle;
-  });
-
-  /* =====================================
-     TRANSLATIONS
-  ===================================== */
-
-  const translations = {
-    es: {
-      privateToggle: "MODO PRIVADO", whiteAdsToggle: "ADS: BLANCO",
-      whiteAdsOn: "ADS: NEGRO", privateOn: "VOLVER CON ADS",
-      privateNotice: "El análisis es local, pero los anuncios de terceros podrían leer el documento. Para contraseñas reales, usa el modo privado.",
-      privateNoticeLink: "Usar sin anuncios ↗", privateActive: "Modo privado: sin scripts publicitarios. Puedes analizar contraseñas sin exponerlas a anuncios de terceros.",
-      modeRandom: "CLAVE ALEATORIA", modePhrase: "FRASE SEGURA", phraseLength: "NÚMERO DE PALABRAS",
-      phraseHint: "Diccionario local de 512 palabras en español · 9 bits por palabra elegida al azar · separadas por guiones.",
-      faqTitle: "Guía de contraseñas y seguridad", faqIntro: "Consejos prácticos para proteger tus cuentas.",
-      faq1q: "¿Qué es la entropía de una contraseña?", faq1a: "Es una aproximación a la dificultad de adivinación. Una clave elegida por una persona suele ser menos impredecible que una generada al azar.",
-      faq2q: "¿Qué contraseña debería utilizar?", faq2a: "Utiliza una contraseña larga y única para cada cuenta, generada por un gestor o mediante una frase aleatoria. Activa autenticación multifactor.",
-      faq3q: "¿Son exactos los tiempos de fuerza bruta?", faq3a: "No. Dependen de la velocidad, la protección del servicio y la estrategia del atacante. Son escenarios educativos, no predicciones.",
-      faq4q: "¿Qué son las passkeys?", faq4a: "Son credenciales de clave pública que permiten iniciar sesión sin teclear una contraseña en servicios compatibles y reducen el riesgo de phishing.",
-      offlineWarning: "Escenario ilustrativo, no predicción ni garantía de seguridad.",
-      commonFound: "Patrón o palabra común reconocida", lengthTooShort: "Longitud insuficiente", goodStructure: "Sin coincidencias evidentes con patrones habituales",
-      phraseGenerated: "Frase aleatoria generada localmente (72 bits de selección con 8 palabras).",
-      hero1: "LA SEGURIDAD",
-      hero2: "EMPIEZA AQUÍ.",
-      heroDescription: "Analiza y genera contraseñas de forma privada. Todo el procesamiento se realiza localmente en tu navegador.",
-      scannerTitle: "Escáner de contraseñas",
-      scannerDescription: "Introduce una contraseña para iniciar el análisis de seguridad.",
-      passwordLabel: "CLAVE DE ACCESO",
-      notStored: "[ NO SE ALMACENA ]",
-      localLabel: "● ANÁLISIS LOCAL / SIN ENVÍO DE CLAVES",
-      strengthTitle: "NIVEL DE ROBUSTEZ",
-      checksTitle: "VERIFICACIÓN DE PARÁMETROS",
-      checkLength: "MÍNIMO 12 CARACTERES",
-      checkPatterns: "SIN PATRONES COMUNES",
-      checkLong: "16+ CARACTERES",
-      bruteTitle: "02 / RESISTENCIA A FUERZA BRUTA",
-      bruteDescription: "Tiempo teórico estimado para descubrir la contraseña.",
-      telemetryTitle: "03 / TELEMETRÍA",
-      entropyLabel: "Entropía estimada",
-      lengthLabel: "Longitud",
-      typesLabel: "Tipos de caracteres",
-      riskLabel: "Nivel de riesgo",
-      generatorTitle: "Generador de contraseñas",
-      generatorDescription: "Crea contraseñas aleatorias utilizando el generador criptográfico del navegador.",
-      generatorLength: "LONGITUD",
-      lowercase: "Minúsculas",
-      uppercase: "Mayúsculas",
-      numbers: "Números",
-      symbols: "Símbolos",
-      recommendationsTitle: "05 / RECOMENDACIONES DE SEGURIDAD",
-      recommendationsHeading: "Diagnóstico inteligente",
-      footerDescription: "El análisis y la generación de contraseñas se realizan localmente. Las estimaciones no garantizan la seguridad de una contraseña.",
-      methodTitle: "Metodología y privacidad",
-      methodText: "La robustez se estima mediante longitud, diversidad de caracteres y detección de patrones. El tiempo de fuerza bruta es orientativo y utiliza un escenario hipotético de ataque offline.",
-      placeholder: "Introduce una contraseña...",
-      levels: ["EN ESPERA", "CRÍTICA", "VULNERABLE", "ACEPTABLE", "SÓLIDA", "FORTIFICADA"],
-      risks: ["SIN DATOS", "EXTREMO", "ALTO", "MEDIO", "BAJO", "MUY BAJO"],
-      feedback: [
-        "Sistema preparado. Introduce una contraseña.",
-        "Contraseña extremadamente predecible.",
-        "La contraseña necesita más longitud y menos patrones.",
-        "Seguridad intermedia. Puedes mejorar la contraseña.",
-        "Buena resistencia estimada.",
-        "Excelente resistencia heurística. Utiliza también autenticación multifactor."
-      ],
-      adviceEmpty: "Introduce una contraseña para recibir recomendaciones.",
-      adviceCommon: "Evita palabras frecuentes, secuencias y patrones repetidos. Utiliza una contraseña única.",
-      adviceShort: "Una contraseña más larga suele ser más resistente. Considera 16 caracteres o una frase de contraseña aleatoria.",
-      adviceGood: "Utiliza esta clave únicamente en un servicio y activa la autenticación multifactor.",
-      adviceOther: "Aumenta la longitud y evita construcciones predecibles.",
-      noTypes: "Selecciona al menos un tipo de caracteres.",
-      noCrypto: "No se dispone de un contexto seguro para generar contraseñas criptográficas.",
-      generated: "Contraseña generada localmente.",
-      copied: "Contraseña copiada al portapapeles.",
-      copyError: "No se pudo copiar. Selecciona el texto manualmente.",
-      chars: "CARACTERES",
-      generateAction: "GENERAR CONTRASEÑA", copyAction: "COPIAR", analyzeAction: "ANALIZAR",
-      waitingGenerated: "[ ESPERANDO GENERACIÓN ]"
-    },
-
-    en: {
-      privateToggle: "PRIVATE MODE", whiteAdsToggle: "ADS: WHITE", whiteAdsOn: "ADS: BLACK", privateOn: "RETURN WITH ADS",
-      privateNotice: "Analysis runs locally, but third-party ad scripts could read the page. Use private mode for actual passwords.",
-      privateNoticeLink: "Use without ads ↗", privateActive: "Private mode: no ad scripts. Passwords are not exposed to third-party ads.",
-      modeRandom: "RANDOM PASSWORD", modePhrase: "PASSPHRASE", phraseLength: "NUMBER OF WORDS",
-      phraseHint: "512-word local Spanish dictionary · 9 bits per randomly selected word · separated with hyphens.",
-      faqTitle: "Password security guide", faqIntro: "Practical recommendations to protect your accounts.",
-      faq1q: "What is password entropy?", faq1a: "It estimates guessing difficulty. Human-chosen passwords are usually more predictable than truly random passwords.",
-      faq2q: "What password should I use?", faq2a: "Use a long unique password per account, generated by a manager or a random passphrase. Enable multifactor authentication.",
-      faq3q: "Are brute-force times exact?", faq3a: "No. Actual results depend on speed, service protections and attacker strategies. These are educational scenarios, not predictions.",
-      faq4q: "What are passkeys?", faq4a: "Public-key authentication credentials that let you sign in without typing passwords on supported services and reduce phishing risk.",
-      offlineWarning: "Illustrative scenario, not a prediction or guarantee of safety.",
-      commonFound: "Common word or predictable pattern detected", lengthTooShort: "Password is too short", goodStructure: "No obvious common patterns found",
-      phraseGenerated: "Random passphrase generated locally (72 selection bits for 8 words).",
-      hero1: "SECURITY",
-      hero2: "STARTS HERE.",
-      heroDescription: "Analyze and generate passwords privately. All processing takes place locally in your browser.",
-      scannerTitle: "Password scanner",
-      scannerDescription: "Enter a password to start the security analysis.",
-      passwordLabel: "ACCESS KEY",
-      notStored: "[ NOT STORED ]",
-      localLabel: "● LOCAL ANALYSIS / NO PASSWORD UPLOAD",
-      strengthTitle: "PASSWORD STRENGTH",
-      checksTitle: "SECURITY PARAMETERS",
-      checkLength: "MINIMUM 12 CHARACTERS",
-      checkPatterns: "NO COMMON PATTERNS",
-      checkLong: "16+ CHARACTERS",
-      bruteTitle: "02 / BRUTE FORCE RESISTANCE",
-      bruteDescription: "Theoretical estimated time to crack this password.",
-      telemetryTitle: "03 / TELEMETRY",
-      entropyLabel: "Estimated entropy",
-      lengthLabel: "Length",
-      typesLabel: "Character types",
-      riskLabel: "Risk level",
-      generatorTitle: "Password generator",
-      generatorDescription: "Create random passwords using your browser's cryptographic generator.",
-      generatorLength: "LENGTH",
-      lowercase: "Lowercase",
-      uppercase: "Uppercase",
-      numbers: "Numbers",
-      symbols: "Symbols",
-      recommendationsTitle: "05 / SECURITY RECOMMENDATIONS",
-      recommendationsHeading: "Intelligent diagnosis",
-      footerDescription: "Password analysis and generation take place locally. Estimates do not guarantee password security.",
-      methodTitle: "Methodology and privacy",
-      methodText: "Strength is estimated using length, character diversity and pattern detection. Brute-force estimates are illustrative and assume a hypothetical offline attack.",
-      placeholder: "Enter a password...",
-      levels: ["WAITING", "CRITICAL", "VULNERABLE", "FAIR", "STRONG", "FORTIFIED"],
-      risks: ["NO DATA", "EXTREME", "HIGH", "MEDIUM", "LOW", "VERY LOW"],
-      feedback: [
-        "System ready. Enter a password.",
-        "Highly predictable password.",
-        "Your password needs greater length and fewer patterns.",
-        "Moderate security. Consider improving your password.",
-        "Good estimated resistance.",
-        "Excellent heuristic resistance. Enable multifactor authentication."
-      ],
-      adviceEmpty: "Enter a password to receive recommendations.",
-      adviceCommon: "Avoid common words, sequences and repeated patterns. Use a unique password.",
-      adviceShort: "Longer passwords are generally stronger. Consider 16 characters or a random passphrase.",
-      adviceGood: "Use this password for only one service and enable multifactor authentication.",
-      adviceOther: "Increase length and avoid predictable constructions.",
-      noTypes: "Select at least one character type.",
-      noCrypto: "A secure context is required for cryptographic password generation.",
-      generated: "Password generated locally.",
-      copied: "Password copied to clipboard.",
-      copyError: "Could not copy. Select the text manually.",
-      chars: "CHARACTERS",
-      generateAction: "GENERATE PASSWORD", copyAction: "COPY", analyzeAction: "ANALYZE",
-      waitingGenerated: "[ AWAITING GENERATION ]"
-    }
+  const query = new URLSearchParams(location.search);
+  const privateMode = query.get("private") === "1" || location.protocol === "file:";
+  const language = query.get("lang") === "en" ? "en" : "es";
+  const usedKeys = new Set();
+  const ads = {
+    enabled: true,
+    left:   { key:"9eb5688d177646d2180f72a2ce5b894d", width:160, height:600, media:"(min-width:1280px)" },
+    right:  { key:"", width:160, height:600, media:"(min-width:1280px)" },
+    bottom: { key:"262a9cb086b1e4b03109271538487464", width:728, height:90, media:"(min-width:800px)" },
+    mobile: { key:"4695c9b2083f8386251b4ce866c28364", width:320, height:50, media:"(min-width:360px) and (max-width:799px)" }
   };
-
-  /* =====================================
-     PASSWORD ANALYSIS
-  ===================================== */
-
-  const commonWords = [
-    "password", "password123", "123456", "123456789",
-    "qwerty", "admin", "administrator", "welcome",
-    "letmein", "contrasena", "tequiero", "iloveyou",
-    "abc123", "passw0rd", "root", "login", "usuario",
-    "clave123", "hola123", "asdfgh", "zxcvbn",
-    "dragon", "monkey", "football", "princess", "sunshine", "secret",
-    "baseball", "superman", "master", "hello", "welcome123", "freedom",
-    "madrid", "barcelona", "zaragoza", "espana", "sevilla", "nombre",
-    "contraseña", "familia", "seguridad", "internet", "google", "empresa",
-    "123123", "111111", "000000", "654321", "12345678", "1234567890"
-  ];
-
-  function normalize(value) {
-    return value.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+  document.documentElement.classList.toggle("private-mode", privateMode);
+  document.documentElement.lang = language;
+  if (privateMode) {
+    // Added BEFORE resources: blocks remote scripts/frames in the private view.
+    // A full origin compromise/extensions are outside this page's protection.
+    const policy = document.createElement("meta");
+    policy.httpEquiv = "Content-Security-Policy";
+    policy.content = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'";
+    document.head.appendChild(policy);
+    try { window.opener = null; } catch (_) {}
   }
-
-  function normalizeLeet(value) {
-    const replacements = {
-      "0": "o", "1": "i", "3": "e",
-      "4": "a", "5": "s", "7": "t",
-      "@": "a", "$": "s", "!": "i"
-    };
-
-    return [...value]
-      .map(c => replacements[c] || c)
-      .join("")
-      .replace(/[^a-z0-9]/g, "");
+  function renderAd(name) {
+    if (privateMode || !ads.enabled || !navigator.onLine) return;
+    const config = ads[name];
+    if (!config || !/^[a-f0-9]{32}$/.test(config.key) || usedKeys.has(config.key) || !matchMedia(config.media).matches) return;
+    const host = document.currentScript.parentElement;
+    const wrapper = host.closest(".advertisement");
+    if (wrapper) wrapper.hidden = false;
+    // Never resize a fixed creative to squeeze it into an undersized space.
+    if (host.getBoundingClientRect().width < config.width) return;
+    usedKeys.add(config.key);
+    window.atOptions = {key:config.key,format:"iframe",height:config.height,width:config.width,params:{}};
+    // Parser-time native tag: the network can create its own frame in this slot.
+    // No custom sandboxed wrapper. Never run this method after document parsing.
+    document.write('<script src="https://bauval.org/22/' + config.key + '" data-securex-ad="' + name + '" onerror="this.parentElement.dataset.adState=\'unavailable\'"><\/script>');
   }
-
-  function analyze(password) {
-    const chars = [...password];
-    const length = chars.length;
-
-    if (!length) {
-      return {
-        score: 0, entropy: 0, length: 0,
-        types: 0, pattern: false,
-        common: false, seconds: 0
-      };
-    }
-
-    const lower = /[a-z]/.test(password);
-    const upper = /[A-Z]/.test(password);
-    const numbers = /\d/.test(password);
-    const symbols = /[^a-zA-Z0-9\s]/.test(password);
-    const spaces = /\s/.test(password);
-    const unicode = /[^\x00-\x7F]/.test(password);
-
-    let pool = 0;
-
-    if (lower) pool += 26;
-    if (upper) pool += 26;
-    if (numbers) pool += 10;
-    if (symbols) pool += 33;
-    if (spaces) pool += 1;
-    if (unicode) pool += 64;
-
-    pool = Math.max(pool, 1);
-
-    const types = [
-      lower, upper, numbers,
-      symbols || spaces || unicode
-    ].filter(Boolean).length;
-
-    let entropy = length * Math.log2(pool);
-
-    const normalized = normalize(password);
-    const compact = normalized.replace(/[^a-z0-9]/g, "");
-    const leet = normalizeLeet(normalized);
-
-    const common = commonWords.find(word =>
-      compact.includes(word) || leet.includes(word)
-    );
-
-    const sequence =
-      /(?:0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|abcd|bcde|cdef|qwer|asdf|zxcv)/i
-        .test(normalized);
-
-    const repeated = /(.)\1{2,}/u.test(password);
-    const repeatedGroups = /(.{2,6})\1+/u.test(password);
-    const years = /(?:19|20)\d{2}/.test(password);
-
-    const allSame = chars.every(c => c === chars[0]);
-
-    let penalty = 0;
-
-    if (sequence) penalty += 16;
-    if (repeated) penalty += 11;
-    if (repeatedGroups) penalty += 12;
-    if (years) penalty += 8;
-
-    if (allSame) {
-      entropy = Math.min(
-        entropy,
-        Math.log2(Math.max(length, 2)) + 3
-      );
-    }
-
-    if (common) {
-      const extra = Math.max(0, length - common.length);
-      entropy = Math.min(entropy, 8 + extra * 2.5);
-    }
-
-    // Repeated identical words and short keyboard/digit layouts are common choices.
-    const wordRepeat = /\b([a-záéíóúñ]{3,})[\s_-]+\1\b/iu.test(password);
-    const keyboard = /(?:qwerty|asdfgh|zxcvbn|1q2w3e|qazwsx|poiuyt)/i.test(normalized);
-    if (wordRepeat) penalty += 16;
-    if (keyboard) penalty += 16;
-    if (/^\d+$/.test(password)) entropy = Math.min(entropy, length * Math.log2(10));
-    if (/^\d{4,8}$/.test(password)) entropy = Math.min(entropy, 18);
-    if (/^(?:[a-záéíóúñ]+)[0-9!@#$%]{1,4}$/i.test(password)) entropy = Math.min(entropy, length * 3.35);
-
-    // Our randomly generated passphrases draw from exactly 512 equiprobable words:
-    // 9 bits per selection, NOT one letter-pool entropy per visible character.
-    // For user-entered phrases this is an upper-bound heuristic, not proof of randomness.
-    const phraseParts = normalize(password).split(/[\s-]+/).filter(Boolean);
-    if (phraseParts.length >= 3 && phraseParts.every(part => phraseWordSet.has(part))) {
-      entropy = Math.min(entropy, phraseParts.length * 9);
-    }
-
-    entropy = Math.max(1, Math.min(256, entropy - penalty));
-
-    const pattern = Boolean(
-      common || sequence || repeated ||
-      repeatedGroups || years || allSame || wordRepeat || keyboard
-    );
-
-    let score = 1;
-
-    if (entropy >= 25) score = 2;
-    if (entropy >= 43) score = 3;
-    if (entropy >= 66) score = 4;
-    if (entropy >= 86) score = 5;
-
-    if (length < 8) {
-      score = Math.min(score, 1);
-    } else if (length < 12) {
-      score = Math.min(score, 3);
-    } else if (length < 16) {
-      score = Math.min(score, 4);
-    }
-
-    if (common && length < 15) score = Math.min(score, 2);
-    if ((keyboard || wordRepeat) && length < 20) score = Math.min(score, 2);
-    if (sequence && length < 12) score = Math.min(score, 2);
-
-    const seconds = Math.pow(2, entropy) /
-      (2 * GUESSES_PER_SECOND);
-
-    return {
-      score, entropy, length,
-      types, pattern, common, seconds
-    };
-  }
-
-  /* =====================================
-     TIME FORMATTER
-  ===================================== */
-
-  function formatTime(seconds) {
-    const es = language === "es";
-    const locale = es ? "es-ES" : "en-US";
-
-    const format = n =>
-      Math.max(1, Math.round(n)).toLocaleString(locale);
-
-    const unit = (n, singular, plural) => {
-      const rounded = Math.max(1, Math.round(n));
-      return `${format(rounded)} ${rounded === 1 ? singular : plural}`;
-    };
-
-    if (seconds < 1) {
-      return es ? "Menos de 1 segundo" : "Less than 1 second";
-    }
-
-    if (seconds < 60) {
-      return unit(seconds, es ? "segundo" : "second", es ? "segundos" : "seconds");
-    }
-
-    if (seconds < 3600) {
-      return unit(seconds / 60, es ? "minuto" : "minute", es ? "minutos" : "minutes");
-    }
-
-    if (seconds < 86400) {
-      return unit(seconds / 3600, es ? "hora" : "hour", es ? "horas" : "hours");
-    }
-
-    if (seconds < 31557600) {
-      return unit(seconds / 86400, es ? "día" : "day", es ? "días" : "days");
-    }
-
-    const years = seconds / 31557600;
-
-    if (years < 1000) {
-      return unit(years, es ? "año" : "year", es ? "años" : "years");
-    }
-
-    if (years < 1e6) {
-      return `${format(years / 1000)} ${es ? "mil años" : "thousand years"}`;
-    }
-
-    if (years < 1e9) {
-      return `${format(years / 1e6)} ${es ? "millones de años" : "million years"}`;
-    }
-
-    if (years < 1e12) {
-      return `${format(years / 1e9)} ${es ? "mil millones de años" : "billion years"}`;
-    }
-
-    return es ? "Más de 1 billón de años" : "Over 1 trillion years";
-  }
-
-  /* =====================================
-     HACKER TEXT REVEAL — ONLY WHEN VALUE CHANGES
-     No canvas, no idle timers, respects reduced motion.
-  ===================================== */
-  let crackTimer = null;
-  function showCrackTime(target, animate = false) {
-    if (crackTimer !== null) {
-      clearInterval(crackTimer);
-      crackTimer = null;
-    }
-    const output = $("crackTime");
-    if (!animate || reducedMotion || target === "-- : -- : --") {
-      output.textContent = target;
-      return;
-    }
-    const alphabet = "0123456789ABCDEF#%";
-    const start = performance.now();
-    const duration = 220;
-    // Never touch the actual password; animation affects only the result text.
-    const frame = () => {
-      if (performance.now() - start >= duration || document.hidden) {
-        clearInterval(crackTimer);
-        crackTimer = null;
-        output.textContent = target;
-        return;
-      }
-      const visibleChars = Math.min(target.length, 24);
-      let noise = "";
-      for (let i = 0; i < visibleChars; i++) {
-        noise += alphabet[Math.floor(Math.random() * alphabet.length)];
-      }
-      output.textContent = noise;
-    };
-    frame();
-    crackTimer = setInterval(frame, 40);
-  }
-
-  /* =====================================
-     REACTIVE UPDATE
-  ===================================== */
-
-  function updateAnalysis(animate = false) {
-    const result = analyze(input.value);
-    const t = translations[language];
-
-    $("strengthLabel").textContent = t.levels[result.score];
-    $("strengthFeedback").textContent = t.feedback[result.score];
-    $("riskValue").textContent = t.risks[result.score];
-
-    $("lengthValue").textContent = result.length;
-    $("typesValue").textContent = `${result.types} / 4`;
-
-    $("characterCount").textContent =
-      `${String(result.length).padStart(2, "0")} ${t.chars}`;
-
-    $("clearPassword").hidden = result.length === 0;
-
-    $("entropyValue").textContent = `${Math.round(result.entropy)} bits`;
-
-    const root = document.documentElement;
-    let accent = "#00ff66";
-    let rgb = "0,255,102";
-
-    if (result.score > 0 && result.score <= 2) {
-      accent = "#ff0033";
-      rgb = "255,0,51";
-    } else if (result.score === 3) {
-      accent = "#ffbb44";
-      rgb = "255,187,68";
-    }
-
-    root.style.setProperty("--accent", accent);
-    root.style.setProperty("--accent-rgb", rgb);
-
-    document.querySelectorAll(".meter-fill").forEach((fill, index) => {
-      fill.style.transform = `scaleX(${index < result.score ? 1 : 0})`;
-    });
-
-    $("strengthMeter").setAttribute("aria-valuenow", result.score);
-
-    $("checkLength").classList.toggle("passed", result.length >= 12);
-    $("checkPatterns").classList.toggle("passed", result.length > 0 && !result.pattern);
-    $("checkLong").classList.toggle("passed", result.length >= 16);
-
-    const estimate = result.length
-      ? formatTime(result.seconds)
-      : "-- : -- : --";
-
-    showCrackTime(estimate, animate && result.length > 0);
-
-    let advice = t.adviceEmpty;
-
-    if (result.length) {
-      if (result.common || result.pattern) {
-        advice = t.adviceCommon;
-      } else if (result.length < 12) {
-        advice = t.adviceShort;
-      } else if (result.score >= 4) {
-        advice = t.adviceGood;
-      } else {
-        advice = t.adviceOther;
-      }
-    }
-
-    $("securityAdvice").textContent = advice;
-    const detail = $("securityDetails");
-    detail.replaceChildren();
-    if (result.length) {
-      const text = result.pattern || result.common ? t.commonFound : result.length < 12 ? t.lengthTooShort : t.goodStructure;
-      const item = document.createElement("div");
-      item.className = "security-detail";
-      item.textContent = (result.pattern || result.common ? "⚠ " : "✓ ") + text;
-      detail.appendChild(item);
-    }
-  }
-
-  input.addEventListener("input", () => updateAnalysis(true));
-
-  $("clearPassword").addEventListener("click", () => {
-    input.value = "";
-    updateAnalysis();
-    input.focus();
-  });
-
-  $("togglePassword").addEventListener("click", () => {
-    const show = input.type === "password";
-    input.type = show ? "text" : "password";
-
-    $("togglePassword").setAttribute("aria-pressed", String(show));
-    $("togglePassword").setAttribute(
-      "aria-label",
-      show ? (language === "es" ? "Ocultar contraseña" : "Hide password")
-           : (language === "es" ? "Mostrar contraseña" : "Show password")
-    );
-
-    input.focus();
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      if (crackTimer !== null) {
-        clearInterval(crackTimer);
-        crackTimer = null;
-        updateAnalysis(false);
-      }
-      input.type = "password";
-      $("togglePassword").setAttribute("aria-pressed", "false");
-    }
-  });
-
-  /* =====================================
-     LANGUAGE
-  ===================================== */
-
-  function translate(next) {
-    language = next;
-    document.documentElement.lang = next;
-
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const value = translations[next][el.dataset.i18n];
-      if (value) el.textContent = value;
-    });
-
-    input.placeholder = translations[next].placeholder;
-    $("generateButton").textContent = generatorMode === "phrase"
-      ? (next === "es" ? "GENERAR FRASE" : "GENERATE PASSPHRASE")
-      : translations[next].generateAction;
-    $("copyButton").textContent = translations[next].copyAction;
-    $("analyzeGenerated").textContent = translations[next].analyzeAction;
-    $("whiteAdsButton").textContent = document.body.classList.contains("ads-white") ? translations[next].whiteAdsOn : translations[next].whiteAdsToggle;
-    $("privateModeButton").textContent = privateMode ? translations[next].privateOn : translations[next].privateToggle;
-    $("privacyNoticeText").textContent = privateMode ? translations[next].privateActive : translations[next].privateNotice;
-    $("privateNoticeLink").textContent = translations[next].privateNoticeLink;
-    $("privateNoticeLink").hidden = privateMode;
-    if (!generatedPassword) $("generatedPassword").textContent = translations[next].waitingGenerated;
-    $("languageButton").setAttribute(
-      "aria-label",
-      next === "es" ? "Switch language to English" : "Cambiar idioma a español"
-    );
-
-    updateAnalysis();
-  }
-
-  $("languageButton").addEventListener("click", () => {
-    translate(language === "es" ? "en" : "es");
-  });
-
-  /* =====================================
-     CRYPTOGRAPHIC PASSWORD GENERATOR
-  ===================================== */
-
-  const charSets = {
-    lower: "abcdefghijklmnopqrstuvwxyz",
-    upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    numbers: "0123456789",
-    symbols: "!@#$%^&*()-_=+[]{};:,.?"
-  };
-
-  const phraseWords = ["abril","acciones","acerca","actividad","acto","acuerdo","además","afirmó","ahora","algo","alguien","algunas","algún","allá","alrededor","alto","ambiente","amigo","amor","américa","ante","antes","antonio","aparece","apoyo","aquel","aquellas","aquí","argentina","arriba","artículo","asimismo","aspecto","asunto","atención","aumento","autor","ayer","años","bajo","banco","base","bien","blanca","boca","buena","bueno","busca","cabeza","cabo","calidad","cama","cambio","camino","campo","cantidad","capaz","cara","cargo","carne","carta","carácter","casi","casos","causa","centro","cerca","chile","ciento","cierto","cinco","ciudad","claro","clase","color","comercio","comisión","compañía","común","concepto","congreso","conocer","conseguir","considera","contenido","contra","control","corte","cosa","costa","creo","crisis","cual","cualquier","cuando","cuarto","cuba","cuenta","cuestión","cultural","curso","cuyo","cómo","dado","debe","debido","debía","decisión","defensa","deja","dejó","democracia","demás","derecha","derechos","desarrollo","deseo","destino","diario","dicen","diciembre","diez","diferentes","dijo","dinero","dirección","distintas","distintos","diversos","dolor","domingo","duda","días","dólares","economía","económico","edad","efecto","ejemplo","ejército","electoral","ella","ellas","ellos","empresa","empresas","encontrar","encuentran","encuentro","enero","entonces","entrada","entre","eran","esas","esfuerzo","espacio","españa","española","especial","especie","esta","estaban","estado","estamos","estas","este","esto","estoy","estructura","estudios","está","están","europa","evitar","existe","existencia","expresión","exterior","familia","fecha","felipe","figura","finalmente","fiscal","fondo","formación","formas","francisco","fuego","fuentes","fueron","fuerza","fuerzas","futuro","fútbol","garcía","generales","gobierno","gonzález","grado","grande","grandes","grupos","haber","habla","habrá","había","habían","hacen","hacerlo","hacia","hacía","haya","hecho","hemos","hicieron","hija","hijos","hizo","hombre","hora","hospital","hubiera","humana","humanos","idea","iglesia","imagen","importante","imágenes","industria","informe","intereses","interés","izquierda","jefe","josé","joven","juego","juicio","julio","junto","jóvenes","lado","largo","lenguaje","libertad","libro","llama","llamado","llegado","llegó","lleva","local","luego","lugar","líder","lópez","madre","manera","manos","mantener","marcha","martín","marzo","materia","mayo","mayor","mayoría","media","mediante","medidas","medios","mejor","memoria","menos","mercado","meses","miedo","miembros","miguel","militares","millones","ministro","mira","mirada","mismo","mitad","modelo","momento","movimiento","mucha","mucho","muerte","muerto","mujer","mundial","mundo","médico","música","nacional","nadie","naturaleza","necesario","negro","ningún","nivel","niño","noche","nombre","nosotros","nuestra","nuestras","nuestros","nuevas","nuevo","nunca","objetivo","objeto","obras","ocasiones","ocasión","octubre","ojos","operación","oposición","origen","otra","otro","pablo","paciente","padre","palabra","palabras","para","parecía","parte","particular","partidos","partir","pasa","pasar","paso","país","pedro","película","peor","pequeño","perdido","pero","personal","personas","pesar","pesetas","peso","plan","plazo","población","pocos","poder","podrá","podía","política","políticas","políticos","poner","popular","posible","precio","precios","premio","presencia","presenta","presidente","primera","primeras","primeros","principio","principios","problemas","producción","produce","productos","programas","pronto","propio","propuesta","proyecto","prueba","próximo","psoe","pueblo","puede","pueden","puerta","pues","puesto","puntos","pública","público","quedó","quien","quienes","quiero","quién","radio","razones","real","realidad","recuerdo","reforma","región","relación","respecto","respuesta","resulta","resultados","reunión","riesgo","rosa","régimen","saber","sala","salida","salud","santa","santiago","secretario","sectores","seguir","segundo","seguro","según","semana","sentido","septiembre","servicio","será","serán","señaló","señora","sido","siendo","siglo","sigue","siguientes","sino","siquiera","sistemas","sobre","social","socialista","sola","solamente","solución","suelo","suerte","suficiente","supuesto","sólo","también","tanto","tarde","televisión","temas","tendrá","tener","tenido","tenía","teoría","tiempo","tiempos","tienen","tipo","tipos","todas","todo","todos","tomar","total","trabajar","tras","través","tres","tuvo","términos","título","unidad","unión","unos","valor","vamos","varias","veces","viaje","victoria","viejo","vino","violencia","vista","vivir","voluntad","volvió","vuelve","zona","área","ésta","éste","última","últimos","único"];
-  const phraseWordSet = new Set(phraseWords.map(normalize));
-  const generatorLength = $("generatorLength");
-  const phraseLength = $("phraseLength");
-  let generatorMode = "random";
-  phraseLength.addEventListener("input", () => {
-    $("phraseLengthValue").textContent = phraseLength.value;
-  });
-  function setGeneratorMode(mode) {
-    generatorMode = mode;
-    $("modeRandom").setAttribute("aria-pressed", String(mode === "random"));
-    $("modePhrase").setAttribute("aria-pressed", String(mode === "phrase"));
-    $("passwordControls").classList.toggle("inactive", mode === "phrase");
-    $("phraseControls").classList.toggle("visible", mode === "phrase");
-    $("generateButton").textContent = mode === "phrase"
-      ? (language === "es" ? "GENERAR FRASE" : "GENERATE PASSPHRASE")
-      : translations[language].generateAction;
-  }
-  $("modeRandom").addEventListener("click", () => setGeneratorMode("random"));
-  $("modePhrase").addEventListener("click", () => setGeneratorMode("phrase"));
-
-  generatorLength.addEventListener("input", () => {
-    $("generatorLengthValue").textContent = generatorLength.value;
-  });
-
-  function secureRandomIndex(max) {
-    const array = new Uint32Array(1);
-    const limit = Math.floor(4294967296 / max) * max;
-
-    do {
-      crypto.getRandomValues(array);
-    } while (array[0] >= limit);
-
-    return array[0] % max;
-  }
-
-  function generatePassword() {
-    if (generatorMode === "phrase") {
-      try {
-        if (!window.isSecureContext || !crypto?.getRandomValues) throw new Error("Secure context required");
-        const count = Number(phraseLength.value);
-        generatedPassword = Array.from({ length: count }, () => phraseWords[secureRandomIndex(phraseWords.length)]).join("-");
-        $("generatedPassword").textContent = generatedPassword;
-        $("copyButton").disabled = false;
-        $("analyzeGenerated").disabled = false;
-        $("generatorFeedback").textContent = translations[language].phraseGenerated.replace("72", String(count * 9));
-      } catch { $("generatorFeedback").textContent = translations[language].noCrypto; }
-      return;
-    }
-    const selected = [];
-
-    if ($("optLower").checked) selected.push(charSets.lower);
-    if ($("optUpper").checked) selected.push(charSets.upper);
-    if ($("optNumbers").checked) selected.push(charSets.numbers);
-    if ($("optSymbols").checked) selected.push(charSets.symbols);
-
-    if (!selected.length) {
-      $("generatorFeedback").textContent = translations[language].noTypes;
-      return;
-    }
-
-    try {
-      if (!window.isSecureContext || !crypto?.getRandomValues) {
-        throw new Error("Secure context required");
-      }
-
-      const length = Number(generatorLength.value);
-      const pool = selected.join("");
-      const output = [];
-
-      for (const set of selected) {
-        output.push(set[secureRandomIndex(set.length)]);
-      }
-
-      while (output.length < length) {
-        output.push(pool[secureRandomIndex(pool.length)]);
-      }
-
-      for (let i = output.length - 1; i > 0; i--) {
-        const j = secureRandomIndex(i + 1);
-        [output[i], output[j]] = [output[j], output[i]];
-      }
-
-      generatedPassword = output.join("");
-
-      $("generatedPassword").textContent = generatedPassword;
-      $("copyButton").disabled = false;
-      $("analyzeGenerated").disabled = false;
-
-      $("generatorFeedback").textContent =
-        translations[language].generated;
-    } catch {
-      $("generatorFeedback").textContent =
-        translations[language].noCrypto;
-    }
-  }
-
-  $("generateButton").addEventListener("click", generatePassword);
-
-  $("copyButton").addEventListener("click", async () => {
-    if (!generatedPassword) return;
-
-    try {
-      await navigator.clipboard.writeText(generatedPassword);
-      $("generatorFeedback").textContent = translations[language].copied;
-    } catch {
-      $("generatorFeedback").textContent = translations[language].copyError;
-    }
-  });
-
-  $("analyzeGenerated").addEventListener("click", () => {
-    if (!generatedPassword) return;
-
-    input.value = generatedPassword;
-    updateAnalysis();
-
-    $("analyzer").scrollIntoView({
-      behavior: reducedMotion ? "auto" : "smooth"
-    });
-
-    input.focus({ preventScroll: true });
-  });
-
-  /* Mouse spotlight: a single frame per pointer event, no permanent loop. */
-  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    let pending = false, x = 0, y = 0;
-    document.addEventListener("pointermove", event => {
-      x = event.clientX;
-      y = event.clientY;
-      if (pending) return;
-      pending = true;
-      requestAnimationFrame(() => {
-        document.documentElement.style.setProperty("--mouse-x", x + "px");
-        document.documentElement.style.setProperty("--mouse-y", y + "px");
-        pending = false;
-      });
-    }, { passive: true });
-  }
-
-
-  /* =====================================
-     DIGITAL CODE RAIN — 11 FPS, capped columns, stops in hidden tabs.
-     Canvas is decorative, never receives pointer events.
-  ===================================== */
-  function startCodeRain() {
-    if (reducedMotion) return;
-    const canvas = $("codeRain");
-    const ctx = canvas.getContext("2d", { alpha: true });
-    if (!ctx) return;
-    const alphabet = "01ABCDEF{}<>/";
-    let w = 0, h = 0, columns = [], timer = null;
-    const step = 27;
-    function resize() {
-      w = innerWidth; h = innerHeight;
-      canvas.width = w; canvas.height = h; // 1x resolution for minimal GPU overhead
-      const n = Math.min(85, Math.ceil(w / step));
-      columns = Array.from({length:n}, (_,i)=>({x:Math.floor((i+.5)*w/n),y:(i*73%Math.max(h,1)),speed:8+(i%4)*3}));
-    }
-    function draw() {
-      if (document.hidden) return;
-      const ts = performance.now();
-      ctx.clearRect(0,0,w,h);
-      ctx.font = "12px monospace";
-      ctx.textAlign = "center";
-      for (const col of columns) {
-        for (let j=0;j<4;j++) {
-          const y = col.y-j*21;
-          if (y>0 && y<h) {
-            ctx.fillStyle = `rgba(0,255,102,${.45-j*.095})`;
-            ctx.fillText(alphabet[(Math.floor(ts/180)+j+col.x)%alphabet.length],col.x,y);
-          }
-        }
-        col.y += col.speed;
-        if (col.y>h+100) col.y=-80-(col.x*37%240);
-      }
-    }
-    resize();
-    let resizePending = false;
-    window.addEventListener("resize", () => {
-      if (resizePending) return;
-      resizePending = true;
-      requestAnimationFrame(() => { resize(); resizePending = false; });
-    }, {passive:true});
-    function resume() {
-      if (timer !== null || document.hidden) return;
-      draw();
-      timer = setInterval(draw, 100); // 10 FPS, not 60 animation-frame callbacks per second
-    }
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        clearInterval(timer);
-        timer = null;
-        ctx.clearRect(0,0,w,h);
-      } else resume();
-    });
-    resume();
-  }
-  startCodeRain();
-
-  /* Third-party ad code runs directly in the page. Its internals are not
-     controllable with page CSS; the wrappers only constrain the outer box. */
-
-  /* =====================================
-     INITIALIZATION
-  ===================================== */
-
-  translate("es");
-  if ("serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}), {once:true});
-  }
-
+  return Object.freeze({privateMode, language, renderAd});
 })();
 </script>
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/securex-192.png">
+<link rel="apple-touch-icon" href="./icons/securex-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Password Securex","softwareVersion":"4.0","applicationCategory":"SecurityApplication","operatingSystem":"Web Browser","description":"Herramienta educativa de análisis local y generación criptográfica de contraseñas.","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}</script>
+<style>:root{color-scheme:dark;--bg:#050505;--panel:#0a0e0c;--panel2:#101713;--line:#25382c;--line-soft:#1a2820;--green:#00ff66;--text:#eaf3ed;--muted:#a0b2a6;--dim:#72897a;--accent:#00ff66;--accent-rgb:0,255,102;--font:"Space Grotesk",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--mouse-x:50vw;--mouse-y:30vh}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:88px}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6;min-height:100vh}button,input,select{font:inherit}button,a,input,select,summary{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:inherit;text-underline-offset:4px}button:disabled{cursor:not-allowed;opacity:.4}button,input,select{border-radius:9px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--green);outline-offset:4px}[hidden]{display:none!important}::selection{color:#020a05;background:var(--green)}h1,h2,h3,p{margin:0}svg{display:block;flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.symbol-defs{position:absolute;width:0;height:0;overflow:hidden}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip-link{position:fixed;top:-100px;left:16px;z-index:100;background:var(--green);color:#000;padding:10px 18px}.skip-link:focus{top:12px}
+.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.text-center{text-align:center}.w-full{width:100%}.mx-auto{margin-inline:auto}.overflow-hidden{overflow:hidden}.gap-8{gap:2rem}.my-8{margin-block:2rem}.py-6{padding-block:1.5rem}.mono{font-family:var(--mono)}.muted{color:var(--muted)}
+#codeRain{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.21}.spotlight-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(480px circle at var(--mouse-x) var(--mouse-y),rgba(0,255,102,.045),transparent 80%)}.app-header,.hero,.workspace,footer,.page-note{position:relative;z-index:1}
+.app-header{width:min(100%,1520px);margin:auto;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none}.brand-icon{display:grid;place-items:center;width:42px;height:46px;color:var(--green);border:1px solid #245c39;background:#06110a;clip-path:polygon(0 0,100% 0,100% 75%,50% 100%,0 75%)}.brand-icon svg{width:24px;height:24px}.brand-title{color:var(--green);font:700 clamp(15px,1.65vw,22px)/1.2 var(--mono);letter-spacing:-.065em;white-space:nowrap;text-shadow:0 0 18px #00ff662a}.brand-sub{margin-top:6px;font:9px/1.4 var(--mono);color:var(--dim);letter-spacing:.13em}.header-actions{display:flex;gap:8px;align-items:center}.utility-button,.language-button,.ghost-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 13px;background:#0c140f;color:#c0d7c7;border:1px solid #2a4032;font:500 11px/1.4 var(--mono);text-decoration:none}.language-button{color:var(--green);min-width:80px}.utility-button:hover,.language-button:hover,.ghost-button:hover{border-color:#557b61;background:#13221a}.utility-button[aria-pressed=true]{color:var(--green);border-color:#296641}.header-actions svg{width:16px;height:16px}.connection{display:flex;align-items:center;gap:7px;font:9px var(--mono);color:var(--dim);margin-right:10px}.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex:none;box-shadow:0 0 8px #00ff663d}.connection.offline .status-dot{background:#ffca69}
+.hero{max-width:1060px;margin:32px auto 34px;padding:0 24px;text-align:center}.eyebrow{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--green);font:10px/1.6 var(--mono);letter-spacing:.16em}.eyebrow::before,.eyebrow::after{content:"";width:28px;height:1px;background:#2a643d}.hero h1{font-size:clamp(35px,5.1vw,65px);letter-spacing:-.065em;line-height:1.1;margin:19px 0 17px;font-weight:600}.hero h1 em{font-style:normal;color:var(--green)}.hero-description{max-width:580px;margin:auto;color:var(--muted);font-size:14px;line-height:1.8}.hero-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;margin-top:21px;color:#a9c2b1;font:10px/1.4 var(--mono)}.hero-pills span{display:flex;align-items:center;gap:7px}.hero-pills svg{width:14px;height:14px;color:#69bf87}
+.workspace{max-width:1480px;width:100%;margin:auto;padding:0 32px 52px;display:grid;grid-template-columns:minmax(0,1fr);gap:32px;align-items:start}.main-content{width:100%;max-width:940px;min-width:0;margin:auto}.sidebar{display:none;width:160px;position:sticky;top:28px}.private-mode .sidebar,.private-mode .advertisement{display:none!important}.private-mode .workspace{grid-template-columns:minmax(0,1fr);max-width:1004px}.worknav{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 12px;background:#050505fa;border-bottom:1px solid var(--line);margin-bottom:18px}.nav-links{display:flex;gap:4px;min-width:0}.nav-links a{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--muted);font:500 11px/1.4 var(--mono);border-radius:8px;text-decoration:none;border:1px solid transparent;white-space:nowrap}.nav-links a:hover,.nav-links a[aria-current=true]{color:var(--green);background:#0e2115;border-color:#234b31}.nav-links a span:first-child{color:#638670;font-size:9px}.nav-end{display:flex;gap:8px;align-items:center}.nav-end .ghost-button{padding:9px 11px;font-size:10px}.privacy-note{display:flex;gap:12px;align-items:center;padding:14px 16px;margin-bottom:18px;background:#18170e;border:1px solid #504429;border-radius:12px;color:#ddceaa}.privacy-note>svg{color:#e4bd68}.privacy-note strong{display:block;font-size:12px;color:#f5e7c6;margin-bottom:2px}.privacy-note p{font-size:11px;line-height:1.65;flex:1}.privacy-note a{display:inline-flex;align-items:center;gap:6px;margin-left:auto;flex:none;color:#98ffc1;font:600 10px var(--mono);white-space:nowrap}.private-mode .privacy-note{background:#09180f;border-color:#234d31;color:#a7c9b2}.private-mode .privacy-note strong{color:#bcf9d0}.private-mode .privacy-note>svg{color:var(--green)}
+.card{min-width:0;background:linear-gradient(145deg,#0d1510,#090c0a 70%);border:1px solid var(--line);border-radius:16px;overflow:hidden}.card+.card{margin-top:18px}.card-toolbar{min-height:45px;padding:13px 23px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line-soft);background:#101a14}.module-id{color:#9bb4a3;font:10px/1.4 var(--mono);letter-spacing:.06em}.module-id b{color:var(--green);margin-right:7px}.terminal-dots{display:flex;gap:6px}.terminal-dots i{width:5px;height:5px;background:#3c5745;border-radius:50%}.terminal-dots i:last-child{background:#59ac77}.card-body{padding:26px 28px}.title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.card h2{font-weight:500;font-size:clamp(22px,2.6vw,29px);letter-spacing:-.045em;line-height:1.25}.section-description{color:var(--muted);font-size:12px;line-height:1.8;margin-top:8px}.engine-tag{flex:none;display:inline-flex;align-items:center;gap:7px;color:#8fcc9f;font:9px/1.4 var(--mono);padding:7px 10px;border:1px solid #24422e;border-radius:5px}.input-heading{display:flex;justify-content:space-between;gap:12px;font:10px/1.5 var(--mono);color:#afcbb9;margin:25px 0 10px}.input-heading span{color:var(--dim)}.input-shell{display:flex;align-items:center;min-width:0;gap:9px;padding:9px 12px 9px 18px;background:#040a06;border:1px solid #355640;border-radius:10px;transition:border-color .18s,box-shadow .18s}.input-shell:focus-within{border-color:var(--green);box-shadow:0 0 0 3px #00ff6610}.prompt{font:26px var(--mono);color:var(--green);user-select:none}.password-input{width:100%;min-width:0;flex:1;background:transparent;border:0;outline:none!important;color:#e7ffef;font:14px/1.6 var(--mono);padding:12px 1px;border-radius:0;caret-color:var(--green)}.password-input::placeholder{color:#6a8272;font:12px var(--mono)}.password-input::-ms-reveal{display:none}.icon-button{display:grid;place-items:center;flex:none;width:40px;height:40px;border:1px solid #243b2c;background:#0a160e;color:#9dbba6}.icon-button:hover{color:var(--green);border-color:#396c47}.icon-button svg{width:17px;height:17px}.input-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin-top:9px;color:var(--dim);font:9px/1.6 var(--mono)}.input-warning{font:10px/1.6 var(--mono);color:#edc478;margin-top:8px}.demo-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:15px}.demo-actions>span{color:var(--dim);font:9px var(--mono);margin-right:3px}.chip-button{padding:7px 11px;min-height:34px;border:1px solid #294131;background:#0c1810;color:#bdcfc3;font:10px/1.5 var(--mono)}.chip-button:hover,.chip-button[aria-pressed=true]{color:var(--green);border-color:#347648;background:#102819}.public-gate{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px;border-radius:9px;background:#101a13}.public-gate p{font-size:11px;color:#aac3b2;max-width:440px}.action-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:12px 20px;border:1px solid var(--green);border-radius:9px;background:var(--green);color:#031409;font:700 11px/1.5 var(--mono);text-decoration:none;white-space:normal;transition:background .15s,border-color .15s}.action-button:hover{background:#6dffa8;border-color:#6dffa8}.action-button svg{width:17px;height:17px}.secondary-button{background:#091b10;color:var(--green);border-color:#2a623c}.secondary-button:hover{background:#153820;border-color:#4daf69}.strength-section{margin-top:26px;padding-top:22px;border-top:1px solid var(--line-soft)}.strength-heading{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:13px}.strength-heading>span{font:10px var(--mono);color:var(--muted)}#strengthLabel{color:var(--accent);font:600 11px var(--mono);text-align:right}.meter{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.meter-track{height:7px;border-radius:3px;overflow:hidden;background:#203228}.meter-fill{display:block;width:100%;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .28s ease}.feedback{min-height:22px;margin-top:11px;color:#b8cdbf;font-size:12px;line-height:1.75}.checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:17px}.check{font:10px/1.6 var(--mono);padding:10px 11px;background:#09120d;border:1px solid #273b2e;border-radius:7px;color:#7d9685}.check::before{content:"○";margin-right:6px}.check.passed{color:#b3e5c3;border-color:#2b5638;background:#0d2114}.check.passed::before{content:"✓";color:var(--green)}.privacy-footnote{margin-top:14px;font-size:10px;color:var(--dim);line-height:1.8}.stats-grid{display:grid;grid-template-columns:1.12fr 1fr;gap:16px;margin-block:18px}.stats-grid .card{margin:0}.stats-grid .card-body{padding:23px}.crack-time{display:block;color:#e8faee;font:600 clamp(20px,2.5vw,30px)/1.4 var(--mono);letter-spacing:-.06em;overflow-wrap:anywhere;min-height:78px;margin-top:15px}.select-field{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px}.select-field label{font:9px/1.5 var(--mono);color:var(--muted)}select{max-width:100%;min-width:0;min-height:38px;background:#101e15;border:1px solid #31513d;color:#cce0d3;font:10px/1.5 var(--mono);padding:8px}.stat-description{font-size:10px;color:var(--dim);line-height:1.75;margin-top:13px}.data-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:11px}.data-row:last-of-type{border-bottom:0}.data-row span:first-child{color:#94af9e}.data-value{font:500 12px/1.4 var(--mono);text-align:right;overflow-wrap:anywhere}.entropy-value{color:var(--green)}.model-label{color:#8aa293;font:9px/1.7 var(--mono);margin-top:9px}
+.generator-mode{display:flex;background:#040b07;border:1px solid #293e30;border-radius:10px;padding:4px;gap:5px;margin-top:21px}.generator-mode button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 9px;min-width:0;border:1px solid transparent;border-radius:7px;background:transparent;color:#9db5a6;font:500 10px/1.5 var(--mono)}.generator-mode button[aria-pressed=true]{background:#13321f;border-color:#2a653d;color:var(--green)}.generator-mode svg{width:16px;height:16px}.generator-controls{margin-top:23px}.range-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;color:#aac3b3;font:10px var(--mono);margin-bottom:10px}.range-heading output{display:inline-flex;align-items:center;justify-content:center;min-width:43px;min-height:33px;border:1px solid #29553a;border-radius:7px;background:#0d2415;color:var(--green);font-size:15px}.range-row{display:flex;align-items:center;gap:17px}input[type=range]{accent-color:var(--green);width:100%;min-width:0;height:26px}.range-presets{display:flex;gap:6px}.range-presets button{min-width:36px;padding:6px}.option-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:18px}.option{display:flex;align-items:center;gap:8px;padding:11px 10px;min-width:0;min-height:44px;border:1px solid #294332;border-radius:8px;background:#0a160f;color:#bdd3c6;font-size:11px}.option input{width:15px;height:15px;accent-color:var(--green);flex:none}.option:has(input:checked){border-color:#356144;background:#10251a}.extra-option{display:flex;gap:9px;align-items:center;font-size:11px;color:#98b4a2;margin-top:13px}.extra-option input{accent-color:var(--green);width:16px;height:16px}.extra-option code{color:#b7ccbf;font:11px var(--mono)}.generator-hint{font-size:11px;color:var(--dim);margin-top:13px;line-height:1.7}.generated-box{margin-top:20px;padding:18px;background:#030a05;border:1px solid #325b40;border-radius:11px}.generated-heading{display:flex;justify-content:space-between;gap:14px;align-items:center;font:9px/1.5 var(--mono);color:#789983}.generation-bits{color:#95d7aa;font-size:10px}.generated-password{margin:12px 0;color:var(--green);font:500 clamp(14px,2.3vw,18px)/1.9 var(--mono);overflow-wrap:anywhere;word-break:break-word;min-height:35px;user-select:all}.generated-password.is-masked{color:#5c8c6c;letter-spacing:.18em;user-select:none}.generated-meta{color:#8daa97;font:9px/1.7 var(--mono)}.generator-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:18px}.generator-actions .action-button:first-child{flex:1;min-width:170px}.generator-actions .ghost-button{min-height:44px}.generator-feedback{margin-top:11px;min-height:21px;color:#a3c9b1;font:10px/1.7 var(--mono)}.generator-gate{margin-top:21px;border:1px solid #3f4e30;background:#161c12;border-radius:9px;padding:17px;display:flex;align-items:center;justify-content:space-between;gap:18px}.generator-gate p{font-size:12px;color:#c9d5b9;max-width:420px}
+.advice-list{display:grid;gap:9px;margin-top:20px}.advice-item{display:flex;gap:12px;padding:14px;border:1px solid #294332;border-radius:9px;background:#0b1710}.advice-icon{display:grid;place-items:center;flex:none;width:27px;height:27px;color:var(--green);border-radius:6px;background:#13341e;font:500 11px var(--mono)}.advice-item.warning .advice-icon{color:#ffcc73;background:#312719}.advice-item h3{font-size:12px;font-weight:500;margin-bottom:4px;color:#d4e9dc}.advice-item p{font-size:11px;line-height:1.7;color:#99b2a2}.pattern-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}.pattern-chip{font:9px/1.5 var(--mono);padding:5px 9px;border:1px solid #664b2a;color:#e8c787;background:#221c10;border-radius:5px}.report-row{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:19px;padding-top:17px;border-top:1px solid var(--line-soft)}.report-row p{color:var(--dim);font-size:10px;max-width:330px}.report-row .ghost-button{font-size:10px;flex:none}.guide{margin-top:22px}.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;align-items:start}.guide details{border:1px solid #263d2e;border-radius:9px;background:#09140c;padding:0 14px}.guide summary{position:relative;cursor:pointer;padding:15px 20px 15px 0;list-style:none;font-size:12px;font-weight:500;color:#cce5d5}.guide summary::-webkit-details-marker{display:none}.guide summary::after{content:"+";position:absolute;right:0;color:var(--green);font:15px var(--mono)}.guide details[open] summary::after{content:"−"}.guide details p{font-size:11px;color:#9ab3a3;padding:0 0 16px;line-height:1.9}.source-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:17px;font:9px var(--mono);color:#89b095}.source-links span{color:#6e8a78}
+.ad-label{text-align:center;color:#6f8476;font:8px/1.5 var(--mono);letter-spacing:.12em;margin-bottom:10px}.ad-slot{position:relative;isolation:isolate;flex-wrap:nowrap;flex-shrink:0;width:var(--ad-width);max-width:100%;height:var(--ad-height);margin-inline:auto;overflow:hidden;background:#000;border:0;box-shadow:0 0 0 1px #203325;border-radius:11px;line-height:0}.ad-sky{--ad-width:160px;--ad-height:600px}.ad-banner{--ad-width:728px;--ad-height:90px}.ad-mobile{--ad-width:320px;--ad-height:50px}.ad-slot>iframe,.ad-slot>ins,.ad-slot>div:not(.ad-placeholder){display:block;flex:0 0 auto;margin-inline:auto;max-width:100%;max-height:100%;position:relative;z-index:1}.ad-slot iframe{border:0!important;display:block;max-width:100%!important;max-height:100%!important}.ad-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;line-height:1.6;color:#54655a;font:9px/1.7 var(--mono);pointer-events:none;padding:14px}.ad-placeholder small{font:8px var(--mono);color:#34473b}.ad-slot[data-ad-state=rendered]>.ad-placeholder{display:none}.ad-bottom-wrapper{width:100%;margin:32px auto}.ad-mobile-wrapper{display:none}.house-note{margin-top:20px;padding:16px 13px;border:1px solid #253a2c;border-radius:10px;background:#0a140d}.house-note .house-number{font:9px var(--mono);color:#648571;margin-bottom:10px}.house-note svg{color:var(--green);margin-bottom:16px;width:24px;height:24px}.house-note h3{font-size:15px;letter-spacing:-.03em;font-weight:500;line-height:1.4;color:#bddac6}.house-note p{font-size:10px;line-height:1.8;color:#799887;margin-top:10px}.house-note a{display:inline-block;color:#98d5ac;margin-top:14px;font:9px var(--mono)}.side-rail{margin-top:20px;border-top:1px solid #233429;padding-top:16px;font:8px/2 var(--mono);color:#577463}.side-rail span{display:block}
+footer{width:100%;border-top:1px solid #1e3024;background:#060b07;margin-top:8px;padding:36px 24px 24px}.footer-inner{max-width:940px;margin:auto}.footer-top{display:flex;align-items:center;justify-content:space-between;gap:20px}.footer-brand{font-size:17px}.footer-links{display:flex;flex-wrap:wrap;gap:15px;color:#9abdA6;font:10px/1.5 var(--mono)}.footer-description{font-size:11px;color:#8aab96;line-height:1.9;margin:18px 0 10px}.footer-legal{font-size:10px;color:#6d8d79;line-height:1.9}.footer-status{display:grid;grid-template-columns:repeat(3,1fr);margin-top:23px;padding-top:19px;border-top:1px solid #1e3326;gap:14px;font:9px/1.7 var(--mono);color:#5a7a65}.footer-status span:nth-child(2){text-align:center}.footer-status span:last-child{text-align:right}.copyright{margin-top:20px;font:8px var(--mono);color:#526d5b}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);z-index:80;color:#cfffdb;border:1px solid #437d50;border-radius:10px;box-shadow:0 10px 35px #0009;background:#102619;padding:12px 18px;font:11px/1.7 var(--mono);pointer-events:none}.page-note{max-width:940px;padding:15px 20px;margin:20px auto;border:1px solid #6b5236;background:#211b0e;color:#e2cd9d}.no-ads-consent{font:10px/1.7 var(--mono);color:#839c8d;text-align:center;max-width:940px;margin:0 auto 14px}
+@media(min-width:1280px){.workspace{grid-template-columns:160px minmax(0,1fr) 160px}.sidebar{display:block}.xl\:flex{display:flex;flex-direction:column}.private-mode .xl\:flex{display:none}}
+@media(min-width:1440px){.xl\:gap-12{gap:48px}}
+@media(max-width:1000px){.connection{display:none}.workspace{padding-inline:24px}.hero{margin-top:24px}.app-header{padding-inline:24px}.stats-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:799px){.ad-bottom-wrapper{display:none}.ad-mobile-wrapper{display:block;margin:28px auto}.option-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h1{font-size:48px}.hero-description{max-width:500px}.utility-button .desktop-text{display:none}.nav-end .desktop-text{display:none}.stats-grid{grid-template-columns:1fr 1fr}.select-field{align-items:flex-start;flex-direction:column}select{width:100%}}
+@media(max-width:620px){html{scroll-padding-top:74px}.app-header{padding:18px 16px;gap:9px;flex-wrap:wrap}.brand{gap:8px}.brand-title{font-size:15px}.brand-sub{font-size:7px;letter-spacing:.1em}.brand-icon{width:29px;height:34px}.brand-icon svg{width:19px;height:19px}.header-actions{gap:6px}.utility-button,.language-button{min-height:38px;padding:8px 10px;font-size:10px}.header-actions #privateModeButton .desktop-text{display:none}.language-button{min-width:69px}.header-actions #rainButton{display:none}.hero{margin:17px auto 25px;padding:0 18px}.eyebrow{font-size:8px;letter-spacing:.13em}.hero h1{font-size:clamp(32px,9vw,48px);margin:16px 0 13px}.hero h1 em{display:block}.hero-description{font-size:12px}.hero-pills{font-size:8px;gap:8px 14px;margin-top:17px}.hero-pills svg{width:12px;height:12px}.workspace{padding:0 14px 28px;gap:18px}.worknav{padding:7px 0 10px;gap:5px;margin-bottom:14px}.nav-links{gap:2px;flex:1}.nav-links a{padding:10px 9px;font-size:10px;gap:5px}.nav-end .ghost-button{min-height:36px;padding:8px}.nav-links a span:first-child{font-size:8px}.privacy-note{gap:9px;padding:12px;flex-wrap:wrap}.privacy-note>svg{width:16px;height:16px;align-self:flex-start;margin-top:2px}.privacy-note p{font-size:10px}.privacy-note strong{font-size:11px}.privacy-note a{font-size:9px;white-space:normal;margin-left:25px}.card-body{padding:21px 17px}.card-toolbar{padding:12px 17px;min-height:40px}.module-id{font-size:8px;letter-spacing:.025em}.card h2{font-size:23px}.section-description{font-size:11px}.engine-tag{display:none}.input-heading{font-size:9px;margin-top:22px}.input-shell{padding:6px 7px 6px 12px;gap:6px}.password-input{font-size:13px;padding:12px 0}.password-input::placeholder{font-size:10px}.input-shell .icon-button{width:35px;height:36px}.input-meta{font-size:8px}.checks{gap:6px}.check{padding:9px 6px;font-size:8px;line-height:1.8}.check::before{margin-right:3px}.public-gate{align-items:stretch;flex-direction:column;gap:10px}.public-gate p{font-size:10px}.action-button{font-size:10px;padding:11px 14px}.stats-grid{grid-template-columns:minmax(0,1fr);gap:14px;margin-block:14px}.stats-grid .card-body{padding:19px 17px}.crack-time{min-height:37px;font-size:26px;margin-top:7px}.select-field{flex-direction:row;align-items:center;margin-top:13px}.select-field select{width:auto;max-width:70%}.stat-description{margin-top:10px}.data-row{padding:10px 0}.generator-mode{margin-top:18px}.generator-mode button{font-size:9px;padding:10px 5px}.generator-mode svg{width:14px;height:14px}.range-row{gap:10px}.range-presets{gap:4px}.range-presets button{min-width:30px;font-size:9px}.generated-box{padding:14px}.generator-actions{gap:7px}.generator-actions .action-button:first-child{flex:1 1 100%}.generator-actions .action-button.secondary-button{flex:1}.generator-actions .ghost-button{flex:1;font-size:10px}.generated-meta{font-size:8px}.generator-gate{flex-direction:column;align-items:stretch;gap:12px}.generator-gate p{font-size:11px}.report-row{flex-wrap:wrap;gap:12px}.report-row .ghost-button{width:100%}.guide-grid{grid-template-columns:1fr}.guide summary{font-size:11px}.footer-top{flex-direction:column;align-items:flex-start;gap:17px}.footer-status{grid-template-columns:1fr;font-size:8px;gap:5px}.footer-status span:nth-child(2),.footer-status span:last-child{text-align:left}footer{padding:28px 20px 22px}.footer-links{font-size:9px}.footer-brand{font-size:16px}}
+@media(max-width:359px){.app-header{padding-inline:12px}.brand-title{font-size:14px}.brand-icon{display:none}.header-actions{gap:5px}.header-actions .utility-button{padding:8px}.language-button{min-width:64px;padding:8px}.nav-links a{padding:9px 7px;font-size:9px}.nav-links a span:first-child{display:none}.ad-mobile-wrapper{display:none}.checks{grid-template-columns:1fr}.check{font-size:9px}.input-heading{flex-wrap:wrap}.input-meta span:first-child{max-width:170px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}#codeRain{display:none}.spotlight-bg{background:radial-gradient(450px circle at 50% 20%,rgba(0,255,102,.025),transparent 80%)}}
+@media print{#codeRain,.spotlight-bg,.sidebar,.advertisement,.worknav,.app-header,.hero,footer,.privacy-note,.generator,.demo-actions,.public-gate,.guide,.report-row,#toast{display:none!important}body{background:#fff;color:#000}.workspace{display:block;max-width:100%;padding:0}.card{background:#fff!important;border:1px solid #ccc!important;color:#000!important;break-inside:avoid}.card-toolbar{background:#eee}.card *{color:#111!important}.password-input,.generated-password{visibility:hidden}.stats-grid{display:grid;grid-template-columns:1fr 1fr}}
+.link-button{background:transparent;border:0;color:inherit;font:inherit;padding:0;text-decoration:underline;text-underline-offset:4px;cursor:pointer}.link-button:hover{color:var(--green)}.footer-links .link-button{font-size:10px}
+</style>
+</head>
+<body id="top">
+<a class="skip-link" data-i18n="skip" href="#analyzer">Ir a la herramienta</a>
+<svg aria-hidden="true" class="symbol-defs" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-shield" viewbox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6Z"></path><path d="m8 12 3 3 5-6"></path></symbol>
+<symbol id="i-lock" viewbox="0 0 24 24"><rect height="11" rx="2" width="14" x="5" y="10"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></symbol>
+<symbol id="i-eye" viewbox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+<symbol id="i-close" viewbox="0 0 24 24"><path d="m7 7 10 10M7 17 17 7"></path></symbol>
+<symbol id="i-copy" viewbox="0 0 24 24"><rect height="13" rx="2" width="12" x="8" y="8"></rect><path d="M16 8V3H3v13h5"></path></symbol>
+<symbol id="i-arrow" viewbox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"></path></symbol>
+<symbol id="i-code" viewbox="0 0 24 24"><path d="m7 6-5 6 5 6m10-12 5 6-5 6M14 3 10 21"></path></symbol>
+<symbol id="i-refresh" viewbox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-2L20 7M4 17l1.5 2a8 8 0 0 0 13-2"></path></symbol>
+<symbol id="i-trash" viewbox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"></path></symbol>
+<symbol id="i-download" viewbox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"></path></symbol>
+<symbol id="i-scan" viewbox="0 0 24 24"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M7 12h10"></path></symbol>
+<symbol id="i-words" viewbox="0 0 24 24"><path d="M4 5h16M4 12h10M4 19h13"></path></symbol>
+<symbol id="i-alert" viewbox="0 0 24 24"><path d="m12 3 10 18H2Z"></path><path d="M12 9v5m0 3v.1"></path></symbol>
+<symbol id="i-check" viewbox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+</defs></svg>
+<canvas aria-hidden="true" id="codeRain"></canvas>
+<div aria-hidden="true" class="spotlight-bg"></div>
+<header class="app-header">
+<a aria-label="Password Securex" class="brand" href="#top">
+<div class="brand-icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div>
+<div><div class="brand-title">PASSWORD_SECUREX</div><div class="brand-sub" data-i18n="brandSub">SECURITY WORKSPACE / V4.0</div></div>
+</a>
+<div class="header-actions">
+<div class="connection" id="connectionBadge"><i class="status-dot"></i><span id="connectionText">CONEXIÓN ACTIVA</span></div>
+<a class="utility-button" href="?private=1" id="privateModeButton" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#i-lock"></use></svg><span class="desktop-text" id="privateButtonText">MODO PRIVADO</span></a>
+<button aria-label="Activar o desactivar la lluvia de código" aria-pressed="true" class="utility-button" data-label="rainTitle" id="rainButton" type="button"><svg aria-hidden="true"><use href="#i-code"></use></svg><span class="desktop-text" data-i18n="rainText">EFECTOS</span></button>
+<button aria-label="Switch language to English" class="language-button" id="languageButton" type="button">ES / EN</button>
+</div>
+</header>
+<section aria-labelledby="heroTitle" class="hero">
+<p class="eyebrow" data-i18n="eyebrow">TU SEGURIDAD. BAJO TU CONTROL.</p>
+<h1 id="heroTitle"><span data-i18n="hero1">No adivines tu seguridad.</span><br class="desktop-break"/><em data-i18n="hero2">Compruébala.</em></h1>
+<p class="hero-description" data-i18n="heroDesc">Analiza patrones, entiende el resultado y crea una clave mejor. Sin registros. Sin complicaciones.</p>
+<div class="hero-pills"><span><svg aria-hidden="true"><use href="#i-lock"></use></svg><span data-i18n="pill1">Motor local</span></span><span><svg aria-hidden="true"><use href="#i-code"></use></svg><span data-i18n="pill2">Generación criptográfica</span></span><span><svg aria-hidden="true"><use href="#i-shield"></use></svg><span data-i18n="pill3">Sin historial de claves</span></span></div>
+</section>
+<noscript><p class="page-note" data-i18n="noScript">Activa JavaScript para usar el motor local. Las contraseñas no se envían a un servidor.</p></noscript>
+<main class="workspace gap-8 xl:gap-12 mx-auto">
+<aside aria-label="Publicidad lateral" class="sidebar xl:flex">
+<div class="advertisement"><p class="ad-label" data-i18n="adLabel">PUBLICIDAD</p><div class="ad-slot ad-sky flex items-center justify-center text-center w-full mx-auto overflow-hidden" id="adLeft"><div class="ad-placeholder"><span data-i18n="adPlaceholder">ESPACIO PUBLICITARIO</span><small>160 × 600</small></div><script>SecurexBoot.renderAd("left");</script></div></div>
+<div aria-hidden="true" class="side-rail"><span>01 / PASSWORD ANALYSIS</span><span>02 / CRYPTO GENERATOR</span><span>03 / SECURITY KNOWLEDGE</span></div>
+</aside>
+<div class="main-content">
+<nav aria-label="Herramientas" class="worknav">
+<div class="nav-links"><a aria-current="true" data-nav="analyzer" href="#analyzer"><span>01</span><span data-i18n="navAnalyze">Analizar</span></a><a data-nav="generator" href="#generator"><span>02</span><span data-i18n="navGenerate">Generar</span></a><a data-nav="guide" href="#guide"><span>03</span><span data-i18n="navGuide">Aprender</span></a></div>
+<div class="nav-end"><button aria-label="Borrar la contraseña analizada y la generada. Atajo: Escape" class="ghost-button" data-label="clearAllLabel" id="clearAll" type="button"><svg aria-hidden="true"><use href="#i-trash"></use></svg><span class="desktop-text" data-i18n="clearAll">Limpiar</span></button></div>
+</nav>
+<div class="privacy-note" id="privacyNotice" role="note"><svg aria-hidden="true"><use href="#i-shield"></use></svg><p><strong id="privacyTitle">Vista pública · utiliza solo los ejemplos</strong><span id="privacyText">Los anuncios ejecutan código de terceros. Para escribir o generar contraseñas propias, abre el modo privado sin scripts publicitarios.</span></p><a href="?private=1" id="privacyLink" rel="noopener noreferrer"><span data-i18n="openPrivate">ABRIR MODO PRIVADO</span><svg aria-hidden="true"><use href="#i-arrow"></use></svg></a></div>
+<section aria-labelledby="scannerTitle" class="card analyzer" id="analyzer">
+<div class="card-toolbar"><span class="module-id"><b>01 /</b><span data-i18n="scannerModule">ANÁLISIS DE CONTRASEÑAS</span></span><span aria-hidden="true" class="terminal-dots"><i></i><i></i><i></i></span></div>
+<div class="card-body">
+<div class="title-row"><div><h2 data-i18n="scannerTitle" id="scannerTitle">¿Qué tan predecible es tu clave?</h2><p class="section-description" data-i18n="scannerDesc">La longitud ayuda. Detectar patrones explica el resto.</p></div><span class="engine-tag"><i class="status-dot"></i>LOCAL</span></div>
+<div class="input-heading"><label data-i18n="inputLabel" for="password">CONTRASEÑA A ANALIZAR</label><span id="inputModeNote">EJEMPLOS PÚBLICOS</span></div>
+<div class="input-shell"><span aria-hidden="true" class="prompt">›</span><input aria-describedby="strengthFeedback scannerNote" autocapitalize="off" autocomplete="new-password" autocorrect="off" class="password-input" id="password" maxlength="256" placeholder="Elige un ejemplo de abajo…" readonly="" spellcheck="false" type="password"/><button aria-label="Borrar contraseña" class="icon-button" data-label="clear" hidden="" id="clearPassword" type="button"><svg aria-hidden="true"><use href="#i-close"></use></svg></button><button aria-label="Mostrar contraseña" aria-pressed="false" class="icon-button" data-label="show" id="togglePassword" type="button"><svg aria-hidden="true"><use href="#i-eye"></use></svg></button></div>
+<div class="input-meta"><span data-i18n="inputLocal">CÁLCULO LOCAL · SIN CONSULTA DE FILTRACIONES</span><span id="characterCount">00 CARACTERES</span></div>
+<p class="input-warning" data-i18n="caps" hidden="" id="capsWarning">Bloq Mayús está activado.</p><p class="input-warning" data-i18n="limit" hidden="" id="lengthWarning">Límite: 256 caracteres. No se analizará un texto incompleto.</p>
+<div class="demo-actions"><span data-i18n="demoLabel">Prueba con ejemplos:</span><button class="chip-button" data-demo="weak" data-i18n="demoWeak" type="button">Predecible</button><button class="chip-button" data-demo="mixed" data-i18n="demoMixed" type="button">Patrón oculto</button><button class="chip-button" data-demo="strong" data-i18n="demoStrong" type="button">Larga y variada</button></div><p class="privacy-footnote" data-i18n="demoWarning">Estos ejemplos son públicos. No los utilices en ninguna cuenta.</p>
+<div class="public-gate" id="inputGate"><p data-i18n="inputGate">Aquí puedes probar la herramienta con ejemplos. Las contraseñas reales tienen su espacio sin anuncios.</p><a class="action-button secondary-button" href="?private=1#analyzer" id="inputPrivateLink" rel="noopener noreferrer"><span data-i18n="usePrivate">USAR MIS CONTRASEÑAS EN PRIVADO</span><svg aria-hidden="true"><use href="#i-arrow"></use></svg></a></div>
+<div class="strength-section"><div class="strength-heading"><span data-i18n="strengthTitle">ROBUSTEZ ESTIMADA</span><strong id="strengthLabel">EN ESPERA</strong></div><div aria-label="Nivel heurístico de robustez" aria-valuemax="5" aria-valuemin="0" aria-valuenow="0" class="meter" data-label="strengthAria" id="strengthMeter" role="progressbar"><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div><div class="meter-track"><span class="meter-fill"></span></div></div><p class="feedback" id="strengthFeedback"></p><div aria-atomic="true" aria-live="polite" class="sr-only" id="analysisAnnouncement" role="status"></div>
+<div class="checks"><div class="check" data-i18n="checkLength" id="checkLength">12+ caracteres</div><div class="check" data-i18n="checkPatterns" id="checkPatterns">Sin patrones</div><div class="check" data-i18n="checkLong" id="checkLong">16+ caracteres</div></div><p class="privacy-footnote" data-i18n="scannerNote" id="scannerNote">Un resultado alto no comprueba filtraciones, reutilización ni la seguridad del servicio.</p></div>
+</div>
+</section>
+<div class="stats-grid">
+<section aria-labelledby="attackTitle" class="card"><div class="card-toolbar"><h3 class="module-id" id="attackTitle"><b>02 /</b><span data-i18n="bruteModule">ESCENARIO DE ATAQUE</span></h3></div><div class="card-body"><output class="crack-time" id="crackTime">— : — : —</output><div class="select-field"><label data-i18n="scenario" for="attackRate">ESCENARIO</label><select id="attackRate"><option data-i18n="rateFast" value="10000000000">Offline rápido · 10¹⁰/s</option><option data-i18n="rateSlow" value="10000">Offline lento · 10⁴/s</option><option data-i18n="rateOnline" value="10">Online · 10/s</option></select></div><p class="stat-description" data-i18n="rateNote">Supuestos educativos, no mediciones. El algoritmo, los límites del servicio y las filtraciones cambian el resultado.</p></div></section>
+<section aria-labelledby="telemetryTitle" class="card"><div class="card-toolbar"><h3 class="module-id" id="telemetryTitle"><b>03 /</b><span data-i18n="telemetryModule">DATOS DEL ANÁLISIS</span></h3></div><div class="card-body"><div class="data-row"><span data-i18n="entropy">Bits estimados</span><span class="data-value entropy-value" id="entropyValue">0 bits</span></div><div class="data-row"><span data-i18n="length">Longitud</span><span class="data-value" id="lengthValue">0</span></div><div class="data-row"><span data-i18n="types">Tipos de caracteres</span><span class="data-value" id="typesValue">0 / 4</span></div><div class="data-row"><span data-i18n="patterns">Patrones detectados</span><span class="data-value" id="patternsValue">—</span></div><p class="model-label" id="modelLabel">MODELO: HEURÍSTICO · NO ES UNA MEDICIÓN</p></div></section>
+</div>
+<section aria-labelledby="generatorTitle" class="card generator" id="generator">
+<div class="card-toolbar"><span class="module-id"><b>04 /</b><span data-i18n="generatorModule">GENERADOR CRIPTOGRÁFICO</span></span><svg aria-hidden="true" style="width:14px;height:14px;color:#669677"><use href="#i-code"></use></svg></div>
+<div class="card-body"><h2 data-i18n="generatorTitle" id="generatorTitle">Una clave mejor empieza aquí.</h2><p class="section-description" data-i18n="generatorDesc">Crea una contraseña única o una frase de palabras elegidas al azar.</p>
+<div class="generator-gate" id="generatorGate"><p data-i18n="genPublic">Genera claves de uso real en el modo privado. Los anuncios no se cargarán en esa vista.</p><a class="action-button" href="?private=1#generator" id="generatorPrivateLink" rel="noopener noreferrer"><span data-i18n="openPrivateGenerator">ABRIR GENERADOR PRIVADO</span><svg aria-hidden="true"><use href="#i-arrow"></use></svg></a></div>
+<div hidden="" id="generatorWorkbench">
+<div aria-label="Tipo de generación" class="generator-mode" data-label="generatorGroup" role="group"><button aria-pressed="true" id="modeRandom" type="button"><svg aria-hidden="true"><use href="#i-code"></use></svg><span data-i18n="modeRandom">CLAVE ALEATORIA</span></button><button aria-pressed="false" id="modePhrase" type="button"><svg aria-hidden="true"><use href="#i-words"></use></svg><span data-i18n="modePhrase">FRASE DE PALABRAS</span></button></div>
+<div class="generator-controls" id="passwordControls"><div class="range-heading"><label data-i18n="generatorLength" for="generatorLength">LONGITUD</label><output for="generatorLength" id="generatorLengthValue">20</output></div><div class="range-row"><input id="generatorLength" max="64" min="12" type="range" value="20"/><div aria-label="Longitudes rápidas" class="range-presets" role="group"><button aria-pressed="false" class="chip-button" data-length="16" type="button">16</button><button aria-pressed="true" class="chip-button" data-length="20" type="button">20</button><button aria-pressed="false" class="chip-button" data-length="32" type="button">32</button></div></div><div class="option-grid"><label class="option"><input checked="" id="optLower" type="checkbox"/><span data-i18n="lower">Minúsculas</span></label><label class="option"><input checked="" id="optUpper" type="checkbox"/><span data-i18n="upper">Mayúsculas</span></label><label class="option"><input checked="" id="optNumbers" type="checkbox"/><span data-i18n="numbers">Números</span></label><label class="option"><input checked="" id="optSymbols" type="checkbox"/><span data-i18n="symbols">Símbolos</span></label></div><label class="extra-option"><input checked="" id="excludeAmbiguous" type="checkbox"/><span><span data-i18n="exclude">Evitar caracteres confundibles</span> <code>Il1O0o</code></span></label><p class="generator-hint" data-i18n="randomHint">Cada tipo marcado estará presente. La selección utiliza crypto.getRandomValues, no Math.random.</p></div>
+<div class="generator-controls" hidden="" id="phraseControls"><div class="range-heading"><label data-i18n="phraseLength" for="phraseLength">NÚMERO DE PALABRAS</label><output for="phraseLength" id="phraseLengthValue">8</output></div><input id="phraseLength" max="10" min="6" type="range" value="8"/><p class="generator-hint" id="phraseHint"></p><p class="generator-hint" id="phraseBits"></p></div>
+<div class="generated-box"><div class="generated-heading"><span data-i18n="generatedLabel">RESULTADO GENERADO</span><span class="generation-bits" id="generationBits">— bits</span></div><div aria-live="off" class="generated-password" data-i18n="waitingGenerated" dir="ltr" id="generatedPassword">Tu próxima clave aparecerá aquí.</div><p class="generated-meta" data-i18n="genNotProof" id="generatedMeta">Los bits describen el generador; no certifican la seguridad de una cuenta.</p></div>
+<div class="generator-actions"><button class="action-button" id="generateButton" type="button"><svg aria-hidden="true"><use href="#i-refresh"></use></svg><span data-i18n="generate" id="generateLabel">GENERAR CONTRASEÑA</span></button><button class="action-button secondary-button" disabled="" id="copyButton" type="button"><svg aria-hidden="true"><use href="#i-copy"></use></svg><span data-i18n="copy" id="copyLabel">COPIAR</span></button><button class="ghost-button" disabled="" id="analyzeGenerated" type="button"><svg aria-hidden="true"><use href="#i-scan"></use></svg><span data-i18n="analyzeGenerated">ANALIZAR</span></button><button aria-label="Ocultar resultado generado" aria-pressed="false" class="icon-button" data-label="maskGenerated" disabled="" id="toggleGenerated" type="button"><svg aria-hidden="true"><use href="#i-eye"></use></svg></button></div><p aria-live="polite" class="generator-feedback" id="generatorFeedback" role="status"></p>
+</div>
+</div>
+</section>
+<section aria-labelledby="adviceTitle" class="card recommendations" id="recommendations"><div class="card-toolbar"><span class="module-id"><b>05 /</b><span data-i18n="adviceModule">RECOMENDACIONES DE SEGURIDAD</span></span></div><div class="card-body"><h2 data-i18n="adviceTitle" id="adviceTitle">Del diagnóstico a la acción.</h2><p class="section-description" data-i18n="adviceDesc">Recomendaciones según la estructura analizada, sin repetir tu contraseña.</p><div aria-label="Patrones detectados" class="pattern-chips" id="patternChips"></div><div class="advice-list" id="adviceList"></div><div class="report-row"><p data-i18n="reportNote">Archivo JSON sin la contraseña, sin fragmentos, sin hash y sin historial.</p><button class="ghost-button" disabled="" id="exportReport" type="button"><svg aria-hidden="true"><use href="#i-download"></use></svg><span data-i18n="report">EXPORTAR DIAGNÓSTICO</span></button></div></div></section>
+<div class="advertisement ad-bottom-wrapper my-8 mx-auto"><p class="ad-label" data-i18n="adLabel">PUBLICIDAD</p><div class="ad-slot ad-banner flex items-center justify-center text-center w-full mx-auto overflow-hidden" id="adBottom"><div class="ad-placeholder"><span data-i18n="adPlaceholder">ESPACIO PUBLICITARIO</span><small>728 × 90</small></div><script>SecurexBoot.renderAd("bottom");</script></div></div>
+<div class="advertisement ad-mobile-wrapper my-8 mx-auto"><p class="ad-label" data-i18n="adLabel">PUBLICIDAD</p><div class="ad-slot ad-mobile flex items-center justify-center text-center w-full mx-auto overflow-hidden" id="adMobile"><div class="ad-placeholder"><span data-i18n="adPlaceholder">ESPACIO PUBLICITARIO</span><small>320 × 50</small></div><script>SecurexBoot.renderAd("mobile");</script></div></div>
+<section aria-labelledby="guideTitle" class="card guide" id="guide"><div class="card-toolbar"><span class="module-id"><b>06 /</b><span data-i18n="guideModule">APRENDE A PROTEGERTE</span></span></div><div class="card-body"><h2 data-i18n="guideTitle" id="guideTitle">Menos mitos. Mejores decisiones.</h2><p class="section-description" data-i18n="guideDesc">Lo que el resultado significa… y lo que no puede decirte.</p><div class="guide-grid"><details><summary data-i18n="faq1q">¿Los bits son una medida exacta?</summary><p data-i18n="faq1a">Para texto elegido por una persona son una estimación heurística. Para una clave recién generada aquí, se calcula el espacio de selección del generador. Un número alto no demuestra que una clave no esté filtrada.</p></details><details><summary data-i18n="faq2q">¿Una frase larga siempre es segura?</summary><p data-i18n="faq2a">No. Una frase conocida, una letra de canción o una secuencia repetida pueden ser largas y previsibles. El generador elige palabras de forma independiente; no crea una oración con sentido.</p></details><details><summary data-i18n="faq3q">¿Comprobáis contraseñas filtradas?</summary><p data-i18n="faq3a">No se consulta ninguna base de filtraciones. El escáner compara localmente con una lista limitada y con patrones. «Sin patrones» no significa «nunca filtrada».</p></details><details id="privacyDetails"><summary data-i18n="faq4q">¿Qué cambia en modo privado?</summary><p data-i18n="faq4a">Se abre un documento nuevo sin cargar scripts publicitarios. No se transfieren contraseñas en la URL ni se guarda un historial. Las fuentes pueden descargarse de Google; las extensiones, el sistema y un sitio comprometido están fuera de esta protección.</p></details><details><summary data-i18n="faq5q">¿Por qué activar MFA o passkeys?</summary><p data-i18n="faq5a">La autenticación multifactor añade una comprobación adicional. Las passkeys usan criptografía de clave pública y vinculan la credencial al servicio, reduciendo riesgos de phishing. Su disponibilidad depende del servicio.</p></details><details><summary data-i18n="faq6q">¿Qué ocurre cuando limpio la sesión?</summary><p data-i18n="faq6a">Se vacían los campos y las referencias que mantiene la aplicación. No es un borrado forense de la memoria ni limpia el portapapeles. Tras cinco minutos sin interacción también se limpian las claves.</p></details></div><div class="source-links"><span data-i18n="sources">REFERENCIAS TÉCNICAS</span><a href="https://pages.nist.gov/800-63-4/sp800-63b.html" rel="noopener noreferrer" target="_blank">NIST SP 800-63B ↗</a><a href="https://cheatsheetseries.owasp.org/cheatsheets/Third_Party_Javascript_Management_Cheat_Sheet.html" rel="noopener noreferrer" target="_blank">OWASP ↗</a><a href="https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues" rel="noopener noreferrer" target="_blank">Web Crypto ↗</a></div></div></section>
+</div>
+<aside aria-label="Publicidad e información" class="sidebar xl:flex">
+<div class="advertisement" hidden="" id="rightAdWrapper"><p class="ad-label" data-i18n="adLabel">PUBLICIDAD</p><div class="ad-slot ad-sky flex items-center justify-center text-center w-full mx-auto overflow-hidden" id="adRight"><div class="ad-placeholder"><span data-i18n="adPlaceholder">ESPACIO PUBLICITARIO</span><small>160 × 600</small></div><script>SecurexBoot.renderAd("right");</script></div></div>
+<div class="house-note"><p class="house-number">SECUREX / FIELD NOTES</p><svg aria-hidden="true"><use href="#i-shield"></use></svg><h3 data-i18n="houseTitle">La mejor contraseña es única.</h3><p data-i18n="houseText">Una clave distinta para cada cuenta. Un gestor para recordarlas. Un segundo factor para reforzarlas.</p><a data-i18n="houseLink" href="#guide">Ver la guía →</a></div><div class="side-rail"><span data-i18n="rail1">NO REGISTRATION</span><span data-i18n="rail2">NO PASSWORD HISTORY</span><span data-i18n="rail3">CRYPTOGRAPHIC RNG</span></div>
+</aside>
+</main>
+<footer class="py-6"><div class="footer-inner mx-auto"><div class="footer-top"><a class="brand-title footer-brand" href="#top" style="text-decoration:none">PASSWORD_SECUREX</a><div class="footer-links"><a data-i18n="footerPrivacy" href="#privacyDetails" id="footerPrivacyLink">Privacidad</a><a data-i18n="footerTop" href="#top">Volver arriba</a><button aria-pressed="true" class="link-button" data-i18n="rainText" id="footerRainButton" type="button">EFECTOS</button><button class="link-button" data-i18n="footerInstall" hidden="" id="installButton" type="button">Instalar aplicación</button></div></div><p class="footer-description" data-i18n="footerDesc">Herramienta educativa de análisis local y generación criptográfica. Sin cuentas y sin historial de contraseñas.</p><p class="footer-legal" data-i18n="footerLegal">Los resultados son orientativos. La vista pública puede incluir publicidad de terceros y sus solicitudes externas; utiliza el modo privado para claves propias. No se garantiza protección frente a extensiones o dispositivos comprometidos.</p><div class="footer-status"><span data-i18n="footerStatus1">ENGINE: CLIENT-SIDE</span><span data-i18n="footerStatus2">ANALYSIS: HEURISTIC</span><span data-i18n="footerStatus3">SECRETS: NOT PERSISTED</span></div><p class="copyright" data-i18n="copyright">© 2026 Password Securex · Versión 4.0</p></div></footer>
+<div aria-atomic="true" aria-live="polite" class="toast" hidden="" id="toast" role="status"></div>
 
+<script id="securex-application">
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const translations = {
+  "es": {
+    "skip": "Ir a la herramienta",
+    "brandSub": "SECURITY WORKSPACE / V4.0",
+    "online": "CONEXIÓN ACTIVA",
+    "offline": "SIN CONEXIÓN",
+    "privateButton": "MODO PRIVADO",
+    "publicButton": "VISTA PÚBLICA",
+    "privateTitle": "Abrir sin scripts publicitarios",
+    "publicTitle": "Volver a la demostración con publicidad",
+    "rainTitle": "Activar o desactivar la lluvia de código",
+    "rainText": "EFECTOS",
+    "install": "INSTALAR",
+    "eyebrow": "TU SEGURIDAD. BAJO TU CONTROL.",
+    "hero1": "No adivines tu seguridad.",
+    "hero2": "Compruébala.",
+    "heroDesc": "Analiza patrones, entiende el resultado y crea una clave mejor. Sin registros. Sin complicaciones.",
+    "pill1": "Motor local",
+    "pill2": "Generación criptográfica",
+    "pill3": "Sin historial de claves",
+    "navAnalyze": "Analizar",
+    "navGenerate": "Generar",
+    "navGuide": "Aprender",
+    "clearAll": "Limpiar",
+    "clearAllLabel": "Borrar la contraseña analizada y la generada. Atajo: Escape",
+    "privacyPublicTitle": "Vista pública · utiliza solo los ejemplos",
+    "privacyPublic": "Los anuncios ejecutan código de terceros. Para escribir o generar contraseñas propias, abre el modo privado sin scripts publicitarios.",
+    "privacyPrivateTitle": "Modo privado · sin scripts publicitarios",
+    "privacyPrivate": "La herramienta calcula en este navegador. No guarda un historial ni envía las claves. Las fuentes tipográficas pueden solicitarse a Google.",
+    "openPrivate": "ABRIR MODO PRIVADO",
+    "localPill": "PROCESAMIENTO LOCAL",
+    "scannerModule": "ANÁLISIS DE CONTRASEÑAS",
+    "scannerTitle": "¿Qué tan predecible es tu clave?",
+    "scannerDesc": "La longitud ayuda. Detectar patrones explica el resto.",
+    "inputLabel": "CONTRASEÑA A ANALIZAR",
+    "inputPrivateNote": "NO SE GUARDA",
+    "inputPublicNote": "EJEMPLOS PÚBLICOS",
+    "placeholder": "Escribe o pega una contraseña…",
+    "publicPlaceholder": "Elige un ejemplo de abajo…",
+    "show": "Mostrar contraseña",
+    "hide": "Ocultar contraseña",
+    "clear": "Borrar contraseña",
+    "inputLocal": "CÁLCULO LOCAL · SIN CONSULTA DE FILTRACIONES",
+    "chars": "CARACTERES",
+    "caps": "Bloq Mayús está activado.",
+    "limit": "Límite: 256 caracteres. No se analizará un texto incompleto.",
+    "demoLabel": "Prueba con ejemplos:",
+    "demoWeak": "Predecible",
+    "demoMixed": "Patrón oculto",
+    "demoStrong": "Larga y variada",
+    "demoWarning": "Estos ejemplos son públicos. No los utilices en ninguna cuenta.",
+    "inputGate": "Aquí puedes probar la herramienta con ejemplos. Las contraseñas reales tienen su espacio sin anuncios.",
+    "usePrivate": "USAR MIS CONTRASEÑAS EN PRIVADO",
+    "strengthTitle": "ROBUSTEZ ESTIMADA",
+    "strengthAria": "Nivel heurístico de robustez",
+    "checkLength": "12+ caracteres",
+    "checkPatterns": "Sin patrones",
+    "checkLong": "16+ caracteres",
+    "scannerNote": "Un resultado alto no comprueba filtraciones, reutilización ni la seguridad del servicio.",
+    "levels": [
+      "EN ESPERA",
+      "MUY PREDECIBLE",
+      "DÉBIL",
+      "MEJORABLE",
+      "SÓLIDA",
+      "MUY SÓLIDA"
+    ],
+    "feedback": [
+      "Elige un ejemplo o introduce una clave en modo privado.",
+      "Esta construcción resulta muy predecible. Es mejor reemplazarla.",
+      "La combinación contiene poca incertidumbre o patrones fáciles de anticipar.",
+      "Hay margen de mejora. Más longitud aleatoria ayuda.",
+      "Buena resistencia estimada; revisa también los patrones detectados.",
+      "Alta resistencia en este modelo. No equivale a seguridad garantizada."
+    ],
+    "privateEmpty": "Introduce una contraseña. El análisis se actualiza al escribir.",
+    "bruteModule": "ESCENARIO DE ATAQUE",
+    "telemetryModule": "DATOS DEL ANÁLISIS",
+    "scenario": "ESCENARIO",
+    "rateFast": "Offline rápido · 10¹⁰/s",
+    "rateSlow": "Offline lento · 10⁴/s",
+    "rateOnline": "Online · 10/s",
+    "rateNote": "Supuestos educativos, no mediciones. El algoritmo, los límites del servicio y las filtraciones cambian el resultado.",
+    "entropy": "Bits estimados",
+    "length": "Longitud",
+    "types": "Tipos de caracteres",
+    "patterns": "Patrones detectados",
+    "modelHeuristic": "MODELO: HEURÍSTICO · NO ES UNA MEDICIÓN",
+    "modelGenerated": "MODELO: PROCESO ALEATORIO CONOCIDO",
+    "noData": "Sin datos",
+    "risk": [
+      "SIN DATOS",
+      "MUY ALTO",
+      "ALTO",
+      "MEDIO",
+      "BAJO",
+      "BAJO EN ESTE MODELO"
+    ],
+    "generatorModule": "GENERADOR CRIPTOGRÁFICO",
+    "generatorTitle": "Una clave mejor empieza aquí.",
+    "generatorDesc": "Crea una contraseña única o una frase de palabras elegidas al azar.",
+    "modeRandom": "CLAVE ALEATORIA",
+    "modePhrase": "FRASE DE PALABRAS",
+    "generatorGroup": "Tipo de generación",
+    "generatorLength": "LONGITUD",
+    "phraseLength": "NÚMERO DE PALABRAS",
+    "lower": "Minúsculas",
+    "upper": "Mayúsculas",
+    "numbers": "Números",
+    "symbols": "Símbolos",
+    "exclude": "Evitar caracteres confundibles",
+    "randomHint": "Cada tipo marcado estará presente. La selección utiliza crypto.getRandomValues, no Math.random.",
+    "phraseHint": "Diccionario español de {size} palabras sin acentos. Selecciones independientes con guiones.",
+    "phraseBits": "{bits} bits de selección para {count} palabras; el separador no añade azar.",
+    "generatedLabel": "RESULTADO GENERADO",
+    "waitingGenerated": "Tu próxima clave aparecerá aquí.",
+    "generate": "GENERAR CONTRASEÑA",
+    "generatePhrase": "GENERAR FRASE",
+    "regenerate": "GENERAR OTRA",
+    "copy": "COPIAR",
+    "copiedButton": "COPIADA",
+    "analyzeGenerated": "ANALIZAR",
+    "maskGenerated": "Ocultar resultado generado",
+    "revealGenerated": "Mostrar resultado generado",
+    "generatedMeta": "{length} caracteres · {bits} bits del proceso de generación",
+    "genNotProof": "Los bits describen el generador; no certifican la seguridad de una cuenta.",
+    "noTypes": "Selecciona al menos un tipo de caracteres.",
+    "noCrypto": "El navegador no ofrece el generador criptográfico necesario.",
+    "genError": "No se pudo generar la clave. Vuelve a intentarlo.",
+    "generated": "Generada localmente. Guárdala en un gestor, no en una nota pública.",
+    "copied": "Copiada al portapapeles. Puede quedar disponible para otras aplicaciones.",
+    "copyError": "No se pudo copiar. Revela el resultado y selecciónalo manualmente.",
+    "copyUnavailable": "El portapapeles requiere un contexto permitido por el navegador.",
+    "genPublic": "Genera claves de uso real en el modo privado. Los anuncios no se cargarán en esa vista.",
+    "openPrivateGenerator": "ABRIR GENERADOR PRIVADO",
+    "adviceModule": "RECOMENDACIONES DE SEGURIDAD",
+    "adviceTitle": "Del diagnóstico a la acción.",
+    "adviceDesc": "Recomendaciones según la estructura analizada, sin repetir tu contraseña.",
+    "adviceEmptyTitle": "Empieza con una prueba",
+    "adviceEmpty": "Introduce una clave en modo privado o selecciona un ejemplo para ver el diagnóstico.",
+    "advCommonTitle": "Sustituye la parte predecible",
+    "advCommon": "Se reconoce una palabra o combinación común. Cambiar letras por números suele mantener el patrón.",
+    "advSequenceTitle": "Evita recorridos y secuencias",
+    "advSequence": "Los bloques de teclado, secuencias y fechas reducen la incertidumbre de una clave elegida por una persona.",
+    "advRepeatTitle": "Rompe la repetición",
+    "advRepeat": "Repetir letras, palabras o un bloque corto puede dar longitud sin aportar tanto azar como parece.",
+    "advLengthTitle": "Añade longitud con azar",
+    "advLength": "Prueba una clave aleatoria de al menos 16 caracteres o una frase de varias palabras escogidas al azar.",
+    "advInvisibleTitle": "Revisa los caracteres invisibles",
+    "advInvisible": "Hay espacios extremos o caracteres de control. Comprueba que el servicio los acepte y que puedas reproducirlos.",
+    "advStrongTitle": "Conserva la aleatoriedad",
+    "advStrong": "La estructura ofrece buena resistencia en este modelo. No la sustituyas por una frase famosa ni le añadas reglas personales.",
+    "advUniqueTitle": "Una clave para cada cuenta",
+    "advUnique": "No podemos detectar reutilización. Guárdala en un gestor y no la compartas entre servicios.",
+    "advMfaTitle": "Activa un segundo factor",
+    "advMfa": "Añade autenticación multifactor o utiliza passkeys donde estén disponibles. La contraseña no es la única defensa.",
+    "advKnownTitle": "Generación aleatoria, no adivinada",
+    "advKnown": "Se ha reconocido el resultado que acaba de generar esta sesión. Los bits se calculan a partir del proceso de selección.",
+    "patCommon": "Palabra común",
+    "patSequence": "Secuencia",
+    "patRepeat": "Repetición",
+    "patYear": "Posible fecha",
+    "patKeyboard": "Teclado",
+    "patInvisible": "Carácter invisible",
+    "patPhrase": "Frase: azar no comprobado",
+    "report": "EXPORTAR DIAGNÓSTICO",
+    "reportNote": "Archivo JSON sin la contraseña, sin fragmentos, sin hash y sin historial.",
+    "reportDone": "Diagnóstico exportado sin incluir la contraseña.",
+    "guideModule": "APRENDE A PROTEGERTE",
+    "guideTitle": "Menos mitos. Mejores decisiones.",
+    "guideDesc": "Lo que el resultado significa… y lo que no puede decirte.",
+    "faq1q": "¿Los bits son una medida exacta?",
+    "faq1a": "Para texto elegido por una persona son una estimación heurística. Para una clave recién generada aquí, se calcula el espacio de selección del generador. Un número alto no demuestra que una clave no esté filtrada.",
+    "faq2q": "¿Una frase larga siempre es segura?",
+    "faq2a": "No. Una frase conocida, una letra de canción o una secuencia repetida pueden ser largas y previsibles. El generador elige palabras de forma independiente; no crea una oración con sentido.",
+    "faq3q": "¿Comprobáis contraseñas filtradas?",
+    "faq3a": "No se consulta ninguna base de filtraciones. El escáner compara localmente con una lista limitada y con patrones. «Sin patrones» no significa «nunca filtrada».",
+    "faq4q": "¿Qué cambia en modo privado?",
+    "faq4a": "Se abre un documento nuevo sin cargar scripts publicitarios. No se transfieren contraseñas en la URL ni se guarda un historial. Las fuentes pueden descargarse de Google; las extensiones, el sistema y un sitio comprometido están fuera de esta protección.",
+    "faq5q": "¿Por qué activar MFA o passkeys?",
+    "faq5a": "La autenticación multifactor añade una comprobación adicional. Las passkeys usan criptografía de clave pública y vinculan la credencial al servicio, reduciendo riesgos de phishing. Su disponibilidad depende del servicio.",
+    "faq6q": "¿Qué ocurre cuando limpio la sesión?",
+    "faq6a": "Se vacían los campos y las referencias que mantiene la aplicación. No es un borrado forense de la memoria ni limpia el portapapeles. Tras cinco minutos sin interacción también se limpian las claves.",
+    "sources": "REFERENCIAS TÉCNICAS",
+    "footerDesc": "Herramienta educativa de análisis local y generación criptográfica. Sin cuentas y sin historial de contraseñas.",
+    "footerLegal": "Los resultados son orientativos. La vista pública puede incluir publicidad de terceros y sus solicitudes externas; utiliza el modo privado para claves propias. No se garantiza protección frente a extensiones o dispositivos comprometidos.",
+    "footerPrivacy": "Privacidad",
+    "footerTop": "Volver arriba",
+    "footerInstall": "Instalar aplicación",
+    "footerStatus1": "ENGINE: CLIENT-SIDE",
+    "footerStatus2": "ANALYSIS: HEURISTIC",
+    "footerStatus3": "SECRETS: NOT PERSISTED",
+    "copyright": "© 2026 Password Securex · Versión 4.0",
+    "adLabel": "PUBLICIDAD",
+    "adPlaceholder": "ESPACIO PUBLICITARIO",
+    "houseTitle": "La mejor contraseña es única.",
+    "houseText": "Una clave distinta para cada cuenta. Un gestor para recordarlas. Un segundo factor para reforzarlas.",
+    "houseLink": "Ver la guía →",
+    "rail1": "NO REGISTRATION",
+    "rail2": "NO PASSWORD HISTORY",
+    "rail3": "CRYPTOGRAPHIC RNG",
+    "cleared": "Se han vaciado los campos y las referencias de esta sesión. El portapapeles no se ha modificado.",
+    "autoCleared": "Claves eliminadas de la sesión tras 5 minutos sin interacción.",
+    "rainOn": "Efectos de fondo activados.",
+    "rainOff": "Efectos de fondo desactivados.",
+    "reducedMotion": "El sistema solicita movimiento reducido. La lluvia de código permanece desactivada.",
+    "offlineReady": "Aplicación preparada para funcionar sin conexión.",
+    "updated": "Nueva versión instalada. Recarga cuando hayas guardado tus claves.",
+    "noScript": "Activa JavaScript para usar el motor local. Las contraseñas no se envían a un servidor."
+  },
+  "en": {
+    "skip": "Skip to tool",
+    "brandSub": "SECURITY WORKSPACE / V4.0",
+    "online": "CONNECTED",
+    "offline": "OFFLINE",
+    "privateButton": "PRIVATE MODE",
+    "publicButton": "PUBLIC VIEW",
+    "privateTitle": "Open without advertising scripts",
+    "publicTitle": "Return to the public demo with ads",
+    "rainTitle": "Enable or disable code rain",
+    "rainText": "EFFECTS",
+    "install": "INSTALL",
+    "eyebrow": "YOUR SECURITY. YOUR CONTROL.",
+    "hero1": "Don’t guess your security.",
+    "hero2": "Check it.",
+    "heroDesc": "Spot patterns, understand the result and create a better password. No accounts. No complications.",
+    "pill1": "Local engine",
+    "pill2": "Cryptographic generation",
+    "pill3": "No password history",
+    "navAnalyze": "Analyze",
+    "navGenerate": "Generate",
+    "navGuide": "Learn",
+    "clearAll": "Clear",
+    "clearAllLabel": "Clear both analyzed and generated passwords. Shortcut: Escape",
+    "privacyPublicTitle": "Public view · sample passwords only",
+    "privacyPublic": "Ads execute third-party code. Open private mode without advertising scripts to enter or generate your own passwords.",
+    "privacyPrivateTitle": "Private mode · no advertising scripts",
+    "privacyPrivate": "Calculations run in this browser. The app keeps no history and does not send passwords. Fonts may be requested from Google.",
+    "openPrivate": "OPEN PRIVATE MODE",
+    "localPill": "LOCAL PROCESSING",
+    "scannerModule": "PASSWORD ANALYSIS",
+    "scannerTitle": "How predictable is your password?",
+    "scannerDesc": "Length helps. Finding patterns explains the rest.",
+    "inputLabel": "PASSWORD TO ANALYZE",
+    "inputPrivateNote": "NOT SAVED",
+    "inputPublicNote": "PUBLIC SAMPLES",
+    "placeholder": "Type or paste a password…",
+    "publicPlaceholder": "Choose a sample below…",
+    "show": "Show password",
+    "hide": "Hide password",
+    "clear": "Clear password",
+    "inputLocal": "LOCAL COMPUTATION · NO BREACH LOOKUP",
+    "chars": "CHARACTERS",
+    "caps": "Caps Lock is on.",
+    "limit": "Limit: 256 characters. Incomplete input will not be analyzed.",
+    "demoLabel": "Try a sample:",
+    "demoWeak": "Predictable",
+    "demoMixed": "Hidden pattern",
+    "demoStrong": "Long and varied",
+    "demoWarning": "These examples are public. Never use them for an account.",
+    "inputGate": "Explore the tool with public examples. Your real passwords belong in the ad-free view.",
+    "usePrivate": "USE MY PASSWORDS IN PRIVATE",
+    "strengthTitle": "ESTIMATED STRENGTH",
+    "strengthAria": "Heuristic strength level",
+    "checkLength": "12+ characters",
+    "checkPatterns": "No patterns",
+    "checkLong": "16+ characters",
+    "scannerNote": "A high score does not check breaches, reuse or the service’s security.",
+    "levels": [
+      "WAITING",
+      "VERY PREDICTABLE",
+      "WEAK",
+      "ROOM TO IMPROVE",
+      "STRONG",
+      "VERY STRONG"
+    ],
+    "feedback": [
+      "Choose a sample, or enter a password in private mode.",
+      "This construction is highly predictable. Replace it.",
+      "The combination has limited uncertainty or recognizable patterns.",
+      "There is room to improve. More random length helps.",
+      "Good estimated resistance; also review any patterns found.",
+      "High resistance in this model. This is not a security guarantee."
+    ],
+    "privateEmpty": "Enter a password. Analysis updates as you type.",
+    "bruteModule": "ATTACK SCENARIO",
+    "telemetryModule": "ANALYSIS DATA",
+    "scenario": "SCENARIO",
+    "rateFast": "Fast offline · 10¹⁰/s",
+    "rateSlow": "Slow offline · 10⁴/s",
+    "rateOnline": "Online · 10/s",
+    "rateNote": "Educational assumptions, not measurements. Algorithms, service limits and breaches change the result.",
+    "entropy": "Estimated bits",
+    "length": "Length",
+    "types": "Character types",
+    "patterns": "Patterns found",
+    "modelHeuristic": "MODEL: HEURISTIC · NOT A MEASUREMENT",
+    "modelGenerated": "MODEL: KNOWN RANDOM PROCESS",
+    "noData": "No data",
+    "risk": [
+      "NO DATA",
+      "VERY HIGH",
+      "HIGH",
+      "MEDIUM",
+      "LOW",
+      "LOW IN THIS MODEL"
+    ],
+    "generatorModule": "CRYPTOGRAPHIC GENERATOR",
+    "generatorTitle": "A better password starts here.",
+    "generatorDesc": "Create a unique password or a phrase of independently chosen random words.",
+    "modeRandom": "RANDOM PASSWORD",
+    "modePhrase": "WORD PASSPHRASE",
+    "generatorGroup": "Generation type",
+    "generatorLength": "LENGTH",
+    "phraseLength": "NUMBER OF WORDS",
+    "lower": "Lowercase",
+    "upper": "Uppercase",
+    "numbers": "Numbers",
+    "symbols": "Symbols",
+    "exclude": "Exclude confusing characters",
+    "randomHint": "Every selected type is included. Selection uses crypto.getRandomValues, not Math.random.",
+    "phraseHint": "Spanish dictionary with {size} unaccented words. Independent selections joined with hyphens.",
+    "phraseBits": "{bits} selection bits for {count} words; the separator adds no randomness.",
+    "generatedLabel": "GENERATED RESULT",
+    "waitingGenerated": "Your next password will appear here.",
+    "generate": "GENERATE PASSWORD",
+    "generatePhrase": "GENERATE PASSPHRASE",
+    "regenerate": "GENERATE ANOTHER",
+    "copy": "COPY",
+    "copiedButton": "COPIED",
+    "analyzeGenerated": "ANALYZE",
+    "maskGenerated": "Hide generated result",
+    "revealGenerated": "Show generated result",
+    "generatedMeta": "{length} characters · {bits} bits from the generation process",
+    "genNotProof": "The bits describe the generator, not an account security certification.",
+    "noTypes": "Select at least one character type.",
+    "noCrypto": "This browser does not provide the required cryptographic generator.",
+    "genError": "Could not generate the password. Try again.",
+    "generated": "Generated locally. Save it in a password manager, not a public note.",
+    "copied": "Copied to the clipboard. Other applications may be able to access it.",
+    "copyError": "Could not copy. Reveal the result and select it manually.",
+    "copyUnavailable": "Clipboard access requires a browser-permitted context.",
+    "genPublic": "Generate real passwords in private mode. That view will not load advertising scripts.",
+    "openPrivateGenerator": "OPEN PRIVATE GENERATOR",
+    "adviceModule": "SECURITY RECOMMENDATIONS",
+    "adviceTitle": "From insight to action.",
+    "adviceDesc": "Guidance based on the analyzed structure, without repeating your password.",
+    "adviceEmptyTitle": "Start with a test",
+    "adviceEmpty": "Enter a password in private mode or select a sample to view the diagnosis.",
+    "advCommonTitle": "Replace predictable components",
+    "advCommon": "A common word or combination was recognized. Replacing letters with numbers often preserves the pattern.",
+    "advSequenceTitle": "Avoid paths and sequences",
+    "advSequence": "Keyboard runs, sequences and dates reduce uncertainty in a human-chosen password.",
+    "advRepeatTitle": "Break the repetition",
+    "advRepeat": "Repeating letters, words or short blocks adds length without necessarily adding much uncertainty.",
+    "advLengthTitle": "Add random length",
+    "advLength": "Try a random password of at least 16 characters or a phrase of several independently chosen random words.",
+    "advInvisibleTitle": "Check invisible characters",
+    "advInvisible": "There are edge spaces or control characters. Verify the service accepts them and that you can reproduce them.",
+    "advStrongTitle": "Preserve the randomness",
+    "advStrong": "This structure offers good estimated resistance. Do not replace it with a famous phrase or add personal rules.",
+    "advUniqueTitle": "One password for each account",
+    "advUnique": "We cannot detect reuse. Store it in a password manager and do not share it across services.",
+    "advMfaTitle": "Enable a second factor",
+    "advMfa": "Add multifactor authentication or use passkeys where available. Your password is not the only defense.",
+    "advKnownTitle": "Known random generation",
+    "advKnown": "This session recognizes the result it just generated. Bits are calculated from the selection process.",
+    "patCommon": "Common word",
+    "patSequence": "Sequence",
+    "patRepeat": "Repetition",
+    "patYear": "Possible date",
+    "patKeyboard": "Keyboard",
+    "patInvisible": "Invisible character",
+    "patPhrase": "Phrase: randomness unverified",
+    "report": "EXPORT DIAGNOSIS",
+    "reportNote": "JSON file with no password, fragments, hash or history.",
+    "reportDone": "Diagnosis exported without the password.",
+    "guideModule": "LEARN TO PROTECT YOURSELF",
+    "guideTitle": "Fewer myths. Better decisions.",
+    "guideDesc": "What the result means… and what it cannot tell you.",
+    "faq1q": "Are the bits an exact measure?",
+    "faq1a": "For human-chosen text they are a heuristic estimate. For a password just generated here, the generator’s selection space is calculated. A high number does not prove a password has never been breached.",
+    "faq2q": "Is a long phrase always secure?",
+    "faq2a": "No. A known sentence, song lyric or repeated sequence may be long but predictable. The generator selects words independently; it does not create a meaningful sentence.",
+    "faq3q": "Do you check breached passwords?",
+    "faq3a": "No breach database is queried. The scanner checks a limited local word list and patterns. “No patterns” does not mean “never breached”.",
+    "faq4q": "What changes in private mode?",
+    "faq4a": "A new document opens without loading advertising scripts. Passwords are not passed through the URL or saved to a history. Fonts may load from Google; extensions, the operating system and a compromised website are outside this protection.",
+    "faq5q": "Why enable MFA or passkeys?",
+    "faq5a": "Multifactor authentication adds another check. Passkeys use public-key cryptography and bind the credential to the service, reducing phishing risks. Availability depends on the service.",
+    "faq6q": "What happens when I clear the session?",
+    "faq6a": "The app empties its fields and secret references. This is not forensic memory erasure and does not clear your clipboard. Passwords also clear after five minutes without interaction.",
+    "sources": "TECHNICAL REFERENCES",
+    "footerDesc": "An educational tool for local password analysis and cryptographic generation. No accounts and no password history.",
+    "footerLegal": "Results are illustrative. The public view may include third-party ads and external requests; use private mode for your own passwords. It does not protect against compromised devices or extensions.",
+    "footerPrivacy": "Privacy",
+    "footerTop": "Back to top",
+    "footerInstall": "Install app",
+    "footerStatus1": "ENGINE: CLIENT-SIDE",
+    "footerStatus2": "ANALYSIS: HEURISTIC",
+    "footerStatus3": "SECRETS: NOT PERSISTED",
+    "copyright": "© 2026 Password Securex · Version 4.0",
+    "adLabel": "ADVERTISEMENT",
+    "adPlaceholder": "ADVERTISING SPACE",
+    "houseTitle": "The best password is unique.",
+    "houseText": "A different password for every account. A manager to remember them. A second factor to reinforce them.",
+    "houseLink": "Read the guide →",
+    "rail1": "NO REGISTRATION",
+    "rail2": "NO PASSWORD HISTORY",
+    "rail3": "CRYPTOGRAPHIC RNG",
+    "cleared": "Session fields and secret references cleared. The clipboard was not modified.",
+    "autoCleared": "Passwords cleared after 5 minutes without interaction.",
+    "rainOn": "Background effects enabled.",
+    "rainOff": "Background effects disabled.",
+    "reducedMotion": "Your system requests reduced motion. Code rain remains disabled.",
+    "offlineReady": "App prepared for offline use.",
+    "updated": "New version installed. Reload after saving your passwords.",
+    "noScript": "Enable JavaScript to use the local engine. Passwords are not sent to a server."
+  }
+};
+  const phraseWords = ["abril", "acciones", "acerca", "actividad", "acto", "acuerdo", "ademas", "afirmo", "ahora", "algo", "alguien", "algun", "algunas", "alla", "alrededor", "alto", "ambiente", "america", "amigo", "amor", "anos", "ante", "antes", "antonio", "aparece", "apoyo", "aquel", "aquellas", "aqui", "area", "argentina", "arriba", "articulo", "asimismo", "aspecto", "asunto", "atencion", "aumento", "autor", "ayer", "bajo", "banco", "base", "bien", "blanca", "boca", "buena", "bueno", "busca", "cabeza", "cabo", "calidad", "cama", "cambio", "camino", "campo", "cantidad", "capaz", "cara", "caracter", "cargo", "carne", "carta", "casi", "casos", "causa", "centro", "cerca", "chile", "ciento", "cierto", "cinco", "ciudad", "claro", "clase", "color", "comercio", "comision", "como", "compania", "comun", "concepto", "congreso", "conocer", "conseguir", "considera", "contenido", "contra", "control", "corte", "cosa", "costa", "creo", "crisis", "cual", "cualquier", "cuando", "cuarto", "cuba", "cuenta", "cuestion", "cultural", "curso", "cuyo", "dado", "debe", "debia", "debido", "decision", "defensa", "deja", "dejo", "demas", "democracia", "derecha", "derechos", "desarrollo", "deseo", "destino", "diario", "dias", "dicen", "diciembre", "diez", "diferentes", "dijo", "dinero", "direccion", "distintas", "distintos", "diversos", "dolares", "dolor", "domingo", "duda", "economia", "economico", "edad", "efecto", "ejemplo", "ejercito", "electoral", "ella", "ellas", "ellos", "empresa", "empresas", "encontrar", "encuentran", "encuentro", "enero", "entonces", "entrada", "entre", "eran", "esas", "esfuerzo", "espacio", "espana", "espanola", "especial", "especie", "esta", "estaban", "estado", "estamos", "estan", "estas", "este", "esto", "estoy", "estructura", "estudios", "europa", "evitar", "existe", "existencia", "expresion", "exterior", "familia", "fecha", "felipe", "figura", "finalmente", "fiscal", "fondo", "formacion", "formas", "francisco", "fuego", "fuentes", "fueron", "fuerza", "fuerzas", "futbol", "futuro", "garcia", "generales", "gobierno", "gonzalez", "grado", "grande", "grandes", "grupos", "haber", "habia", "habian", "habla", "habra", "hacen", "hacerlo", "hacia", "haya", "hecho", "hemos", "hicieron", "hija", "hijos", "hizo", "hombre", "hora", "hospital", "hubiera", "humana", "humanos", "idea", "iglesia", "imagen", "imagenes", "importante", "industria", "informe", "interes", "intereses", "izquierda", "jefe", "jose", "joven", "jovenes", "juego", "juicio", "julio", "junto", "lado", "largo", "lenguaje", "libertad", "libro", "lider", "llama", "llamado", "llegado", "llego", "lleva", "local", "lopez", "luego", "lugar", "madre", "manera", "manos", "mantener", "marcha", "martin", "marzo", "materia", "mayo", "mayor", "mayoria", "media", "mediante", "medico", "medidas", "medios", "mejor", "memoria", "menos", "mercado", "meses", "miedo", "miembros", "miguel", "militares", "millones", "ministro", "mira", "mirada", "mismo", "mitad", "modelo", "momento", "movimiento", "mucha", "mucho", "muerte", "muerto", "mujer", "mundial", "mundo", "musica", "nacional", "nadie", "naturaleza", "necesario", "negro", "ningun", "nino", "nivel", "noche", "nombre", "nosotros", "nuestra", "nuestras", "nuestros", "nuevas", "nuevo", "nunca", "objetivo", "objeto", "obras", "ocasion", "ocasiones", "octubre", "ojos", "operacion", "oposicion", "origen", "otra", "otro", "pablo", "paciente", "padre", "pais", "palabra", "palabras", "para", "parecia", "parte", "particular", "partidos", "partir", "pasa", "pasar", "paso", "pedro", "pelicula", "peor", "pequeno", "perdido", "pero", "personal", "personas", "pesar", "pesetas", "peso", "plan", "plazo", "poblacion", "pocos", "poder", "podia", "podra", "politica", "politicas", "politicos", "poner", "popular", "posible", "precio", "precios", "premio", "presencia", "presenta", "presidente", "primera", "primeras", "primeros", "principio", "principios", "problemas", "produccion", "produce", "productos", "programas", "pronto", "propio", "propuesta", "proximo", "proyecto", "prueba", "psoe", "publica", "publico", "pueblo", "puede", "pueden", "puerta", "pues", "puesto", "puntos", "quedo", "quien", "quienes", "quiero", "radio", "razones", "real", "realidad", "recuerdo", "reforma", "regimen", "region", "relacion", "respecto", "respuesta", "resulta", "resultados", "reunion", "riesgo", "rosa", "saber", "sala", "salida", "salud", "santa", "santiago", "secretario", "sectores", "seguir", "segun", "segundo", "seguro", "semana", "senalo", "senora", "sentido", "septiembre", "sera", "seran", "servicio", "sido", "siendo", "siglo", "sigue", "siguientes", "sino", "siquiera", "sistemas", "sobre", "social", "socialista", "sola", "solamente", "solo", "solucion", "suelo", "suerte", "suficiente", "supuesto", "tambien", "tanto", "tarde", "television", "temas", "tendra", "tener", "tenia", "tenido", "teoria", "terminos", "tiempo", "tiempos", "tienen", "tipo", "tipos", "titulo", "todas", "todo", "todos", "tomar", "total", "trabajar", "tras", "traves", "tres", "tuvo", "ultima", "ultimos", "unico", "unidad", "union", "unos", "valor", "vamos", "varias", "veces", "viaje", "victoria", "viejo", "vino", "violencia", "vista", "vivir", "voluntad", "volvio", "vuelve", "zona"];
+  const privateMode = SecurexBoot.privateMode;
+  const motion = matchMedia("(prefers-reduced-motion: reduce)");
+  const input = $("password");
+  const MAX_INPUT = 256;
+  const IDLE_MS = 5 * 60 * 1000;
+  const PREF_KEY = "securex.preferences.v4";
+  let preferences = {};
+  try { preferences = JSON.parse(localStorage.getItem(PREF_KEY) || "{}"); } catch (_) {}
+  if (!preferences || typeof preferences !== "object") preferences = {};
+  const state = {
+    language: new URLSearchParams(location.search).has("lang") ? SecurexBoot.language : (preferences.language === "en" ? "en" : "es"),
+    generated: "", generation: null, generatorMode: "random", masked: false,
+    feedback: "", copied: false, result: null, secretEpoch: 0,
+    rain: preferences.rain !== false
+  };
+  let toastTimer = null, copyTimer = null, announcementTimer = null;
+  let expiryTimer = null, lastInteraction = Date.now(), effectTimer = null;
+  let installPrompt = null, lastCrackTarget = "", activeToastKey = "";
+  function t(key, values = {}) {
+    let text = translations[state.language][key] ?? key;
+    if (typeof text !== "string") return text;
+    return text.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? `{${name}}`));
+  }
+  function savePreferences() {
+    // Preferences ONLY. Never write passwords, generated results, hashes or reports.
+    try { localStorage.setItem(PREF_KEY, JSON.stringify({language:state.language, rain:state.rain})); } catch (_) {}
+  }
+  function notify(key) {
+    activeToastKey = key;
+    clearTimeout(toastTimer);
+    $("toast").textContent = t(key);
+    $("toast").hidden = false;
+    toastTimer = setTimeout(() => { $("toast").hidden = true; activeToastKey = ""; }, 5000);
+  }
+  function modeURL(isPrivate, anchor = "analyzer") {
+    const url = new URL(location.href);
+    url.search = ""; // Never propagate arbitrary queries or a secret.
+    if (isPrivate) url.searchParams.set("private", "1");
+    url.searchParams.set("lang", state.language);
+    url.hash = anchor;
+    return url.href;
+  }
+  function updateModeLinks() {
+    $("privateModeButton").href = modeURL(!privateMode);
+    $("privateModeButton").title = t(privateMode ? "publicTitle" : "privateTitle");
+    $("privateModeButton").setAttribute("aria-label", $("privateModeButton").title);
+    $("privateButtonText").textContent = t(privateMode ? "publicButton" : "privateButton");
+    $("privateModeButton").hidden = location.protocol === "file:";
+    for (const [id, anchor] of [["privacyLink","analyzer"],["inputPrivateLink","analyzer"],["generatorPrivateLink","generator"]]) $(id).href = modeURL(true, anchor);
+  }
+
+  /* ENGINE-BEGIN: deterministic, local estimates. No requests or persistence. */
+  const commonWords = ["password","password123","123456","123456789","qwerty","admin","administrator","welcome","letmein","contrasena","tequiero","iloveyou","abc123","passw0rd","root","login","usuario","clave123","hola123","asdfgh","zxcvbn","dragon","monkey","familia","seguridad","internet","google","empresa","123123","111111","000000","654321","12345678","1234567890"];
+  function normalize(value) {
+    return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  function normalizeLeet(value) {
+    const replacements = {"0":"o","1":"i","3":"e","4":"a","5":"s","7":"t","@":"a","$":"s","!":"i"};
+    return [...value].map(c => replacements[c] || c).join("").replace(/[^a-z0-9]/g, "");
+  }
+  const phraseWordSet = new Set(phraseWords);
+  function analyze(password, knownGeneration = null) {
+    const chars = [...password], length = chars.length;
+    if (!length) return {score:0,entropy:0,length:0,types:0,pattern:false,common:false,flags:[],known:false};
+    const lower = /[a-z]/.test(password), upper = /[A-Z]/.test(password);
+    const numbers = /\d/.test(password), symbols = /[^a-zA-Z0-9\s]/.test(password);
+    const spaces = /\s/.test(password), unicode = /[^\x00-\x7F]/.test(password);
+    let pool = Math.max(1, (lower?26:0)+(upper?26:0)+(numbers?10:0)+(symbols?33:0)+(spaces?1:0)+(unicode?64:0));
+    const types = [lower,upper,numbers,symbols||spaces||unicode].filter(Boolean).length;
+    let entropy = length * Math.log2(pool);
+    const normalized = normalize(password), compact = normalized.replace(/[^a-z0-9]/g, ""), leet = normalizeLeet(normalized);
+    const common = commonWords.find(word => compact.includes(word) || leet.includes(word));
+    const sequence = /(?:0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|abcd|bcde|cdef|qwer|asdf|zxcv)/i.test(normalized);
+    const repeated = /(.)\1{2,}/u.test(password), repeatedGroups = /(.{2,6})\1+/u.test(password);
+    const years = /(?:19|20)\d{2}/.test(password), allSame = chars.every(c => c === chars[0]);
+    const wordRepeat = /\b([a-záéíóúñ]{3,})[\s_-]+\1\b/iu.test(password);
+    const keyboard = /(?:qwerty|asdfgh|zxcvbn|1q2w3e|qazwsx|poiuyt)/i.test(normalized);
+    const invisible = /[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/u.test(password) || /^\s|\s$/u.test(password);
+    let penalty = (sequence?16:0)+(repeated?11:0)+(repeatedGroups?12:0)+(years?8:0)+(wordRepeat?16:0)+(keyboard?16:0);
+    if (allSame) entropy = Math.min(entropy, Math.log2(Math.max(length,2))+3);
+    if (common) entropy = Math.min(entropy, 8+Math.max(0,length-common.length)*2.5);
+    if (/^\d+$/.test(password)) entropy = Math.min(entropy,length*Math.log2(10));
+    if (/^\d{4,8}$/.test(password)) entropy = Math.min(entropy,18);
+    if (/^(?:[a-záéíóúñ]+)[0-9!@#$%]{1,4}$/i.test(password)) entropy = Math.min(entropy,length*3.35);
+    const parts = normalized.split(/[\s-]+/).filter(Boolean);
+    const phrase = parts.length >= 3 && parts.every(part => phraseWordSet.has(part));
+    if (phrase) entropy = Math.min(entropy, parts.length*Math.log2(phraseWords.length));
+    // Collapse fully repeated blocks instead of awarding length for duplication.
+    const fullRepeat = password.match(/^(.{1,32})\1+$/u);
+    if (fullRepeat) entropy = Math.min(entropy, [...fullRepeat[1]].length*Math.log2(pool)+Math.log2(length));
+    entropy = Math.max(1,Math.min(256,entropy-penalty));
+    const flags = [];
+    if (common) flags.push("common");
+    if (sequence) flags.push("sequence");
+    if (repeated||repeatedGroups||wordRepeat||allSame||fullRepeat) flags.push("repeat");
+    if (years) flags.push("year");
+    if (keyboard) flags.push("keyboard");
+    if (invisible) flags.push("invisible");
+    if (phrase && !knownGeneration) flags.push("phrase");
+    // Exact GENERATION-SPACE entropy only when the unchanged result is recognized
+    // in this session. Never infer random generation just from a pasted phrase.
+    const known = Boolean(knownGeneration && Number.isFinite(knownGeneration.bits));
+    if (known) entropy = knownGeneration.bits;
+    let score = entropy>=86?5:entropy>=66?4:entropy>=43?3:entropy>=25?2:1;
+    if (length<8) score=Math.min(score,1); else if(length<12) score=Math.min(score,3); else if(length<16) score=Math.min(score,4);
+    if (!known) {
+      if (common && length<15) score=Math.min(score,2);
+      if ((keyboard||wordRepeat) && length<20) score=Math.min(score,2);
+      if (sequence && length<12) score=Math.min(score,2);
+    }
+    return {score,entropy,length,types,pattern:flags.length>0,common:Boolean(common),flags,known};
+  }
+  function secureRandomIndex(max) {
+    if (!Number.isSafeInteger(max) || max < 1 || max > 0x100000000) throw new RangeError("Invalid pool size");
+    if (!globalThis.crypto?.getRandomValues) throw new Error("NO_CRYPTO");
+    const bytes = new Uint32Array(1), limit = Math.floor(0x100000000/max)*max;
+    do { crypto.getRandomValues(bytes); } while(bytes[0]>=limit);
+    return bytes[0]%max;
+  }
+  function constrainedEntropy(sets, length) {
+    const size=sets.reduce((n,set)=>n+set.length,0);
+    // Inclusion–exclusion: number of strings that contain every selected type.
+    let probability=0;
+    for (let mask=0;mask<(1<<sets.length);mask++) {
+      let removed=0, parity=0;
+      for (let i=0;i<sets.length;i++) if(mask&(1<<i)){removed+=sets[i].length;parity++;}
+      probability+=(parity%2?-1:1)*Math.pow((size-removed)/size,length);
+    }
+    return length*Math.log2(size)+Math.log2(Math.min(1,Math.max(Number.EPSILON,probability)));
+  }
+  function makeRandomPassword(sets,length) {
+    const pool=sets.join("");
+    if (!pool || sets.length>length) throw new Error("NO_TYPES");
+    // Uniform rejection sampling of the entire candidate. Seeding one of each
+    // type and shuffling would bias the distribution of allowed strings.
+    for(let attempt=0;attempt<256;attempt++) {
+      const result=Array.from({length},()=>pool[secureRandomIndex(pool.length)]).join("");
+      if(sets.every(set=>[...result].some(c=>set.includes(c)))) return {value:result,bits:constrainedEntropy(sets,length),kind:"random"};
+    }
+    throw new Error("GENERATION_FAILED");
+  }
+  /* ENGINE-END */
+
+  function formatTime(seconds) {
+    const es=state.language==="es", locale=es?"es-ES":"en-US";
+    const number=n=>Math.max(1,Math.round(n)).toLocaleString(locale);
+    const unit=(n,singular,plural)=>`${number(n)} ${Math.max(1,Math.round(n))===1?singular:plural}`;
+    if(seconds<1) return es?"Menos de 1 segundo":"Less than 1 second";
+    if(seconds<60) return unit(seconds,es?"segundo":"second",es?"segundos":"seconds");
+    if(seconds<3600) return unit(seconds/60,es?"minuto":"minute",es?"minutos":"minutes");
+    if(seconds<86400) return unit(seconds/3600,es?"hora":"hour",es?"horas":"hours");
+    if(seconds<31557600) return unit(seconds/86400,es?"día":"day",es?"días":"days");
+    const years=seconds/31557600;
+    if(years<1000) return unit(years,es?"año":"year",es?"años":"years");
+    if(years<1e6) return `${number(years/1000)} ${es?"mil años":"thousand years"}`;
+    if(years<1e9) return `${number(years/1e6)} ${es?"millones de años":"million years"}`;
+    if(years<1e12) return `${number(years/1e9)} ${es?"mil millones de años":"billion years"}`;
+    return es?"Más de 1 billón de años":"Over 1 trillion years";
+  }
+  function revealTime(target,animate) {
+    clearInterval(effectTimer); effectTimer=null;
+    if(!animate||motion.matches||document.hidden||target===lastCrackTarget){$("crackTime").textContent=target;lastCrackTarget=target;return;}
+    lastCrackTarget=target;
+    const start=performance.now(), alphabet="0123456789ABCDEF";
+    const frame=()=>{
+      const progress=Math.min(1,(performance.now()-start)/220);
+      if(progress===1||document.hidden){clearInterval(effectTimer);effectTimer=null;$("crackTime").textContent=target;return;}
+      const visible=Math.floor(target.length*progress);
+      $("crackTime").textContent=target.slice(0,visible)+Array.from({length:Math.min(target.length-visible,20)},()=>alphabet[Math.floor(Math.random()*alphabet.length)]).join("");
+    };
+    frame();effectTimer=setInterval(frame,40);
+  }
+  const flagKeys={common:"patCommon",sequence:"patSequence",repeat:"patRepeat",year:"patYear",keyboard:"patKeyboard",invisible:"patInvisible",phrase:"patPhrase"};
+  function renderAdvice(result) {
+    const list=$("adviceList"),chips=$("patternChips");list.replaceChildren();chips.replaceChildren();
+    result.flags.forEach(flag=>{const el=document.createElement("span");el.className="pattern-chip";el.textContent=t(flagKeys[flag]);chips.append(el);});
+    chips.hidden=result.flags.length===0;
+    const advice=[];
+    if(!result.length) advice.push(["adviceEmptyTitle","adviceEmpty",false]);
+    else {
+      if(result.known) advice.push(["advKnownTitle","advKnown",false]);
+      else {
+        if(result.flags.includes("common")) advice.push(["advCommonTitle","advCommon",true]);
+        if(result.flags.some(x=>["sequence","keyboard","year"].includes(x))) advice.push(["advSequenceTitle","advSequence",true]);
+        if(result.flags.includes("repeat")) advice.push(["advRepeatTitle","advRepeat",true]);
+        if(result.length<16||result.score<4) advice.push(["advLengthTitle","advLength",true]);
+        else if(!advice.length) advice.push(["advStrongTitle","advStrong",false]);
+      }
+      if(result.flags.includes("invisible")) advice.unshift(["advInvisibleTitle","advInvisible",true]);
+      advice.push(["advUniqueTitle","advUnique",false],["advMfaTitle","advMfa",false]);
+    }
+    // Do not hide a relevant warning to force a fixed number of cards.
+    advice.forEach(([title,text,warning],index)=>{
+      const row=document.createElement("div");row.className="advice-item"+(warning?" warning":"");
+      const icon=document.createElement("span");icon.className="advice-icon";icon.setAttribute("aria-hidden","true");icon.textContent=String(index+1).padStart(2,"0");
+      const copy=document.createElement("div"),heading=document.createElement("h3"),body=document.createElement("p");heading.textContent=t(title);body.textContent=t(text);copy.append(heading,body);row.append(icon,copy);list.append(row);
+    });
+  }
+  function updateAnalysis(animate=false) {
+    if(input.value.length>MAX_INPUT){$("lengthWarning").hidden=false;return;}
+    const known=input.value && input.value===state.generated ? state.generation : null;
+    const result=analyze(input.value,known);state.result=result;
+    const labels=t("levels");
+    $("strengthLabel").textContent=labels[result.score];
+    $("strengthFeedback").textContent=result.length?t("feedback")[result.score]:(privateMode?t("privateEmpty"):t("feedback")[0]);
+    $("lengthValue").textContent=String(result.length);$("typesValue").textContent=`${result.types} / 4`;
+    $("characterCount").textContent=`${String(result.length).padStart(2,"0")} ${t("chars")}`;
+    $("entropyValue").textContent=`${result.entropy.toLocaleString(state.language==="es"?"es-ES":"en-US",{maximumFractionDigits:1})} bits`;
+    $("patternsValue").textContent=result.length?String(result.flags.length):"—";
+    $("modelLabel").textContent=t(result.known?"modelGenerated":"modelHeuristic");
+    $("clearPassword").hidden=!result.length;$("exportReport").disabled=!result.length;
+    $("checkLength").classList.toggle("passed",result.length>=12);$("checkPatterns").classList.toggle("passed",Boolean(result.length&&!result.pattern));$("checkLong").classList.toggle("passed",result.length>=16);
+    const color=result.score>0&&result.score<=2?"#ff6779":result.score===3?"#f2c16d":"#00ff66";
+    document.documentElement.style.setProperty("--accent",color);
+    $("strengthMeter").setAttribute("aria-valuenow",String(result.score));$("strengthMeter").setAttribute("aria-valuetext",labels[result.score]);
+    document.querySelectorAll(".meter-fill").forEach((el,i)=>el.style.transform=`scaleX(${i<result.score?1:0})`);
+    const rate=Number($("attackRate").value);
+    revealTime(result.length?formatTime(Math.pow(2,result.entropy)/(2*rate)):"— : — : —",animate&&result.length>0);
+    renderAdvice(result);
+    clearTimeout(announcementTimer);
+    announcementTimer=setTimeout(()=>{$("analysisAnnouncement").textContent=`${labels[result.score]}. ${result.length} ${t("chars").toLowerCase()}.`;},450);
+  }
+  function renderGenerated() {
+    const available=Boolean(state.generated),result=$("generatedPassword");
+    result.textContent=available?(state.masked?"•••• •••• •••• ••••":state.generated):t("waitingGenerated");
+    result.classList.toggle("is-masked",available&&state.masked);
+    $("generationBits").textContent=available?`${state.generation.bits.toFixed(1)} bits`:"— bits";
+    $("generatedMeta").textContent=available?t("generatedMeta",{length:[...state.generated].length,bits:state.generation.bits.toFixed(1)}):t("genNotProof");
+    $("generateLabel").textContent=t(available?"regenerate":state.generatorMode==="phrase"?"generatePhrase":"generate");
+    $("copyLabel").textContent=t(state.copied?"copiedButton":"copy");
+    $("generatorFeedback").textContent=state.feedback?t(state.feedback):"";
+    for(const id of ["copyButton","analyzeGenerated","toggleGenerated"]) $(id).disabled=!available;
+    $("toggleGenerated").setAttribute("aria-label",t(state.masked?"revealGenerated":"maskGenerated"));
+    $("toggleGenerated").setAttribute("aria-pressed",String(available&&!state.masked));
+  }
+  function generatorControlState() {
+    const phrase=state.generatorMode==="phrase";
+    $("modeRandom").setAttribute("aria-pressed",String(!phrase));$("modePhrase").setAttribute("aria-pressed",String(phrase));
+    $("passwordControls").hidden=phrase;$("phraseControls").hidden=!phrase;
+    const length=Number($("generatorLength").value),count=Number($("phraseLength").value);
+    $("generatorLengthValue").textContent=String(length);$("phraseLengthValue").textContent=String(count);
+    $("phraseHint").textContent=t("phraseHint",{size:phraseWords.length});
+    $("phraseBits").textContent=t("phraseBits",{bits:(count*Math.log2(phraseWords.length)).toFixed(1),count});
+    document.querySelectorAll("[data-length]").forEach(el=>el.setAttribute("aria-pressed",String(Number(el.dataset.length)===length)));
+    const any=["optLower","optUpper","optNumbers","optSymbols"].some(id=>$(id).checked);
+    $("generateButton").disabled=!phrase&&!any;
+    if(!phrase&&!any) state.feedback="noTypes";else if(state.feedback==="noTypes") state.feedback="";
+    renderGenerated();
+  }
+  function generate() {
+    if(!privateMode) return;
+    try {
+      if(!globalThis.crypto?.getRandomValues) throw new Error("NO_CRYPTO");
+      let result;
+      if(state.generatorMode==="phrase"){
+        const count=Number($("phraseLength").value);
+        result={value:Array.from({length:count},()=>phraseWords[secureRandomIndex(phraseWords.length)]).join("-"),bits:count*Math.log2(phraseWords.length),kind:"phrase"};
+      }else{
+        const available={optLower:"abcdefghijklmnopqrstuvwxyz",optUpper:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",optNumbers:"0123456789",optSymbols:"!@#$%^&*()-_=+[]{};:,.?"};
+        const sets=Object.entries(available).filter(([id])=>$(id).checked).map(([,set])=>$("excludeAmbiguous").checked?set.replace(/[Il1O0o]/g,""):set);
+        if(!sets.length){state.feedback="noTypes";renderGenerated();return;}
+        result=makeRandomPassword(sets,Number($("generatorLength").value));
+      }
+      state.secretEpoch++;state.generated=result.value;state.generation={bits:result.bits,kind:result.kind};
+      state.masked=false;state.copied=false;state.feedback="generated";
+      renderGenerated();updateAnalysis(false);touchActivity();
+    }catch(error){state.feedback=error.message==="NO_CRYPTO"?"noCrypto":"genError";renderGenerated();}
+  }
+  function clearSession(showNotice=true) {
+    state.secretEpoch++;input.value="";input.type="password";state.generated="";state.generation=null;
+    state.masked=false;state.feedback="";state.copied=false;
+    $("capsWarning").hidden=true;$("lengthWarning").hidden=true;
+    $("togglePassword").setAttribute("aria-pressed","false");$("togglePassword").setAttribute("aria-label",t("show"));
+    clearTimeout(expiryTimer);expiryTimer=null;clearTimeout(copyTimer);
+    renderGenerated();updateAnalysis(false);
+    if(showNotice) notify("cleared");
+  }
+  function armExpiry() {
+    clearTimeout(expiryTimer);expiryTimer=null;
+    if(!input.value&&!state.generated)return;
+    const remaining=Math.max(0,IDLE_MS-(Date.now()-lastInteraction));
+    expiryTimer=setTimeout(()=>{
+      if(Date.now()-lastInteraction>=IDLE_MS){clearSession(false);notify("autoCleared");}else armExpiry();
+    },remaining+30);
+  }
+  function touchActivity(){lastInteraction=Date.now();armExpiry();}
+  input.readOnly=!privateMode;input.maxLength=MAX_INPUT;
+  $("inputGate").hidden=privateMode;$("privacyLink").hidden=privateMode;
+  $("generatorGate").hidden=privateMode;$("generatorWorkbench").hidden=!privateMode;
+  input.addEventListener("input",()=>{if(!privateMode){input.value="";return;}$("lengthWarning").hidden=input.value.length<MAX_INPUT;updateAnalysis(true);touchActivity();});
+  input.addEventListener("paste",event=>{
+    if(!privateMode){event.preventDefault();return;}
+    const pasted=event.clipboardData?.getData("text")??"";
+    const resulting=input.value.length-(input.selectionEnd-input.selectionStart)+pasted.length;
+    if(resulting>MAX_INPUT){event.preventDefault();$("lengthWarning").hidden=false;}
+  });
+  for(const eventName of ["keydown","keyup"]) input.addEventListener(eventName,event=>{$("capsWarning").hidden=!event.getModifierState?.("CapsLock");});
+  input.addEventListener("blur",()=>{$("capsWarning").hidden=true;});
+  $("clearPassword").addEventListener("click",()=>{input.value="";$("lengthWarning").hidden=true;updateAnalysis(false);input.focus();});
+  $("togglePassword").addEventListener("click",()=>{const show=input.type==="password";input.type=show?"text":"password";$("togglePassword").setAttribute("aria-pressed",String(show));$("togglePassword").setAttribute("aria-label",t(show?"hide":"show"));input.focus({preventScroll:true});});
+  const examples={weak:"123456",mixed:"P@ssw0rd2026!",strong:"jV8#pR4!zN6@tK9$"};
+  document.querySelectorAll("[data-demo]").forEach(button=>button.addEventListener("click",()=>{input.value=examples[button.dataset.demo];$("lengthWarning").hidden=true;updateAnalysis(true);touchActivity();}));
+  $("clearAll").addEventListener("click",()=>clearSession());
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"){clearSession();}else touchActivity();});
+  document.addEventListener("pointerdown",touchActivity,{passive:true});
+  $("attackRate").addEventListener("change",()=>updateAnalysis(true));
+  $("modeRandom").addEventListener("click",()=>{state.generatorMode="random";generatorControlState();});
+  $("modePhrase").addEventListener("click",()=>{state.generatorMode="phrase";generatorControlState();});
+  for(const id of ["generatorLength","phraseLength","optLower","optUpper","optNumbers","optSymbols","excludeAmbiguous"]) $(id).addEventListener("input",generatorControlState);
+  document.querySelectorAll("[data-length]").forEach(el=>el.addEventListener("click",()=>{$("generatorLength").value=el.dataset.length;generatorControlState();}));
+  $("generateButton").addEventListener("click",generate);
+  $("toggleGenerated").addEventListener("click",()=>{state.masked=!state.masked;renderGenerated();});
+  $("copyButton").addEventListener("click",async()=>{
+    if(!state.generated||!privateMode)return;
+    const epoch=state.secretEpoch;
+    try{
+      if(!navigator.clipboard?.writeText)throw new Error("No clipboard");
+      await navigator.clipboard.writeText(state.generated);
+      if(epoch!==state.secretEpoch)return;
+      state.copied=true;state.feedback="copied";renderGenerated();notify("copied");
+      clearTimeout(copyTimer);copyTimer=setTimeout(()=>{state.copied=false;renderGenerated();},2200);
+    }catch(_){if(epoch===state.secretEpoch){state.feedback="copyError";renderGenerated();}}
+  });
+  $("analyzeGenerated").addEventListener("click",()=>{
+    if(!state.generated||!privateMode)return;
+    input.value=state.generated;input.type="password";$("lengthWarning").hidden=false;
+    $("lengthWarning").hidden=input.value.length<MAX_INPUT;
+    $("togglePassword").setAttribute("aria-pressed","false");$("togglePassword").setAttribute("aria-label",t("show"));
+    updateAnalysis(true);$("analyzer").scrollIntoView({behavior:motion.matches?"auto":"smooth"});input.focus({preventScroll:true});touchActivity();
+  });
+  $("exportReport").addEventListener("click",()=>{
+    const r=state.result;if(!r?.length)return;
+    const rate=Number($("attackRate").value);
+    // Strict allow-list. No password, partial characters, dictionary matches,
+    // hashes, free-form advice strings or generated values enter the export.
+    const report={application:"Password Securex",version:"4.0",model:r.known?"known-generation-process":"local-heuristic",length:r.length,characterTypes:r.types,estimatedBits:Number(r.entropy.toFixed(3)),score:r.score,maxScore:5,patternCategories:[...r.flags],assumedGuessesPerSecond:rate,illustrativeAverageSeconds:Math.pow(2,r.entropy)/(2*rate),breachLookupPerformed:false,passwordIncluded:false,limitations:"Educational estimate; no guarantee of resistance or absence from breaches. Does not assess password reuse."};
+    const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json;charset=utf-8"});const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="securex-diagnostico.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("reportDone");
+  });
+  function translate(next) {
+    state.language=next;document.documentElement.lang=next;
+    document.querySelectorAll("[data-i18n]").forEach(el=>{if(el.id!=="generatedPassword")el.textContent=t(el.dataset.i18n);});
+    document.querySelectorAll("[data-label]").forEach(el=>el.setAttribute("aria-label",t(el.dataset.label)));
+    input.placeholder=t(privateMode?"placeholder":"publicPlaceholder");
+    $("inputModeNote").textContent=t(privateMode?"inputPrivateNote":"inputPublicNote");
+    $("privacyTitle").textContent=t(privateMode?"privacyPrivateTitle":"privacyPublicTitle");$("privacyText").textContent=t(privateMode?"privacyPrivate":"privacyPublic");
+    $("togglePassword").setAttribute("aria-label",t(input.type==="password"?"show":"hide"));
+    $("languageButton").setAttribute("aria-label",next==="es"?"Switch language to English":"Cambiar idioma a español");
+    $("languageButton").textContent=next==="es"?"ES / EN":"EN / ES";
+    $("connectionText").textContent=t(navigator.onLine?"online":"offline");
+    $("patternChips").setAttribute("aria-label",t("patterns"));
+    document.querySelector(".worknav").setAttribute("aria-label",next==="es"?"Herramientas":"Tools");
+    document.querySelector(".range-presets").setAttribute("aria-label",next==="es"?"Longitudes rápidas":"Length presets");
+    document.querySelectorAll("aside").forEach(el=>el.setAttribute("aria-label",next==="es"?"Publicidad e información":"Advertising and information"));
+    if(activeToastKey)$("toast").textContent=t(activeToastKey);
+    updateModeLinks();generatorControlState();updateAnalysis(false);savePreferences();
+  }
+  $("languageButton").addEventListener("click",()=>translate(state.language==="es"?"en":"es"));
+  $("footerPrivacyLink").addEventListener("click",()=>{$("privacyDetails").open=true;});
+
+  /* Decorative code rain: 10 FPS desktop, 6 FPS mobile. No secrets are used.
+     One low-resolution canvas, capped columns, no hidden-tab animation work. */
+  let rainTimer=null,rainColumns=[],rainWidth=0,rainHeight=0,canvasContext=null;
+  const canvas=$("codeRain");
+  try{canvasContext=canvas.getContext("2d",{alpha:true});}catch(_){}
+  function sizeRain(){
+    rainWidth=innerWidth;rainHeight=innerHeight;
+    canvas.width=rainWidth;canvas.height=rainHeight; // Deliberate 1x DPR cap.
+    const n=Math.min(70,Math.ceil(rainWidth/31));
+    rainColumns=Array.from({length:n},(_,i)=>({x:Math.floor((i+.5)*rainWidth/n),y:((i*107)%Math.max(1,rainHeight)),speed:6+(i%4)*3}));
+  }
+  function drawRain(){
+    if(!canvasContext||document.hidden)return;
+    const ctx=canvasContext,chars="01ABCDEF<>[]{}",phase=Math.floor(performance.now()/210);
+    ctx.clearRect(0,0,rainWidth,rainHeight);ctx.font="11px monospace";ctx.textAlign="center";
+    for(const col of rainColumns){for(let i=0;i<5;i++){const y=col.y-i*21;if(y>0&&y<rainHeight){ctx.fillStyle=`rgba(0,255,102,${.43-i*.075})`;ctx.fillText(chars[(phase+i+col.x)%chars.length],col.x,y);}}col.y+=col.speed;if(col.y>rainHeight+100)col.y=-100-(col.x%91);}
+  }
+  function updateEffects(){
+    clearInterval(rainTimer);rainTimer=null;
+    const enabled=state.rain&&!motion.matches;
+    canvas.hidden=!enabled;
+    $("rainButton").setAttribute("aria-pressed",String(enabled));$("footerRainButton").setAttribute("aria-pressed",String(enabled));
+    if(enabled&&!document.hidden&&canvasContext){drawRain();rainTimer=setInterval(drawRain,innerWidth<620?167:100);}else canvasContext?.clearRect(0,0,rainWidth,rainHeight);
+  }
+  function toggleEffects(){state.rain=!state.rain;savePreferences();updateEffects();notify(motion.matches?"reducedMotion":state.rain?"rainOn":"rainOff");}
+  $("rainButton").addEventListener("click",toggleEffects);$("footerRainButton").addEventListener("click",toggleEffects);
+  let pointerPending=false,px=0,py=0;
+  document.addEventListener("pointermove",event=>{
+    if(motion.matches||!state.rain||event.pointerType==="touch")return;
+    px=event.clientX;py=event.clientY;if(pointerPending)return;pointerPending=true;
+    requestAnimationFrame(()=>{document.documentElement.style.setProperty("--mouse-x",`${px}px`);document.documentElement.style.setProperty("--mouse-y",`${py}px`);pointerPending=false;});
+  },{passive:true});
+  let resizePending=false;
+  addEventListener("resize",()=>{if(resizePending)return;resizePending=true;requestAnimationFrame(()=>{sizeRain();updateEffects();resizePending=false;});},{passive:true});
+  motion.addEventListener("change",()=>{updateEffects();revealTime(lastCrackTarget,false);});
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden){input.type="password";$("togglePassword").setAttribute("aria-pressed","false");$("togglePassword").setAttribute("aria-label",t("show"));state.masked=true;renderGenerated();revealTime(lastCrackTarget,false);}
+    else if((input.value||state.generated)&&Date.now()-lastInteraction>=IDLE_MS){clearSession(false);notify("autoCleared");}
+    updateEffects();
+  });
+  addEventListener("pagehide",()=>{clearSession(false);clearInterval(rainTimer);rainTimer=null;});
+  addEventListener("pageshow",event=>{if(event.persisted)clearSession(false);updateEffects();});
+  function updateConnection(){ $("connectionBadge").classList.toggle("offline",!navigator.onLine);$("connectionText").textContent=t(navigator.onLine?"online":"offline"); }
+  addEventListener("online",updateConnection);addEventListener("offline",updateConnection);
+  if("IntersectionObserver" in window){
+    const navObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;document.querySelectorAll("[data-nav]").forEach(el=>el.setAttribute("aria-current",String(el.dataset.nav===entry.target.id)));}},{rootMargin:"-8% 0px -65% 0px",threshold:0});
+    for(const id of ["analyzer","generator","guide"])navObserver.observe($(id));
+  }
+  // Only observe the outer DOM. A loaded iframe is not proof of an ad impression.
+  if(!privateMode&&"MutationObserver" in window){
+    document.querySelectorAll(".ad-slot").forEach(host=>{
+      const check=()=>{if(host.querySelector("iframe,img,ins,object"))host.dataset.adState="rendered";};
+      const observer=new MutationObserver(check);observer.observe(host,{childList:true,subtree:true});check();setTimeout(()=>observer.disconnect(),15000);
+    });
+  }
+  addEventListener("beforeinstallprompt",event=>{if(!privateMode)return;event.preventDefault();installPrompt=event;$("installButton").hidden=false;});
+  $("installButton").addEventListener("click",async()=>{if(!installPrompt)return;try{await installPrompt.prompt();await installPrompt.userChoice;}catch(_){}installPrompt=null;$("installButton").hidden=true;});
+  addEventListener("appinstalled",()=>{$("installButton").hidden=true;installPrompt=null;});
+  async function registerOffline(){
+    if(!privateMode||!window.isSecureContext||!("serviceWorker" in navigator)||!/^https?:$/.test(location.protocol))return;
+    try{
+      const hadController=Boolean(navigator.serviceWorker.controller);
+      const registration=await navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"});
+      registration.addEventListener("updatefound",()=>{const worker=registration.installing;worker?.addEventListener("statechange",()=>{if(worker.state==="installed")notify(hadController?"updated":"offlineReady");});});
+    }catch(_){/* Core scanner and generator still work if PWA assets are absent. */}
+  }
+  translate(state.language);updateConnection();sizeRain();updateEffects();
+  if(document.readyState==="complete")registerOffline();else addEventListener("load",registerOffline,{once:true});
+})();
+
+</script>
 </body>
 </html>
