@@ -1,0 +1,26 @@
+PASSWORD SECUREX 7.2 — ARCHIVOS PARA GITHUB PAGES
+
+SUBIDA
+1) Descomprime el ZIP.
+2) Abre tu repositorio Analizador en GitHub y selecciona Add file > Upload files.
+3) Sube LOS ARCHIVOS QUE ESTÁN DENTRO de esta carpeta: index.html, sw.js, manifest.webmanifest, .nojekyll y la carpeta icons.
+4) Deben quedar en la RAÍZ de Analizador (no dentro de otra carpeta).
+5) Commit changes y espera a la publicación de GitHub Pages.
+6) En Chrome prueba Ctrl+Shift+R; si persiste la versión antigua revisa Application > Service Workers y borra la caché del sitio.
+
+CAMBIOS VISUALES
+- La lluvia de código es ahora más visible (13 px, 10 caracteres por columna, 10 fps escritorio / 6 fps móvil).
+- Se mantiene el efecto foco del ratón suave y el resto de la interfaz (entropía, puntuación, franja, generador, idioma ES/EN y FAQ).
+- El motor de análisis permanece dentro de su marco aislado.
+
+PUBLICIDAD — ACCIÓN NECESARIA DEL EDITOR
+El ZIP NO puede añadir códigos que no existen en tu cuenta.
+Según los archivos facilitados, ya hay claves para: izquierda 160x600, inferior 728x90, intermedio 468x60, native, móvil 320x50.
+FALTAN: superior 728x90 (top.key) y derecha 160x600 (right.key). Por tanto esos dos espacios no pueden mostrar publicidad real por ahora.
+Para conseguirlos: Adsterra > Websites > busca tu dominio > solicita/aprueba las dos unidades > All codes/Get code.
+Pega en SecurexAds.settings.units.top.key y .right.key las claves de SUS unidades, no las existentes de otra ubicación. Respeta el código de proveedor.
+Si otras unidades quedan vacías, revisa si Adsterra entrega scripts en F12 > Network: busca bauval.org, status HTTP y errores ERR_BLOCKED_BY_CLIENT/403. Prueba sin extensiones bloqueadoras, VPN ni navegación privada y revisa aprobación del dominio en Adsterra.
+La presencia de una clave en HTML no garantiza la entrega del anuncio; por seguridad no se incluye popunder, captcha ni Social Bar.
+
+PRIVACIDAD
+El documento exterior ejecuta scripts de terceros. Aunque el analizador se separa en un marco aislado, no se garantiza seguridad ante una página, extensión o dispositivo comprometidos. No pruebes contraseñas reales ya usadas en tus cuentas.
