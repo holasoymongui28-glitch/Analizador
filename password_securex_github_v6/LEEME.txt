@@ -1,0 +1,85 @@
+PASSWORD SECUREX 6.0
+Actualización visual · 13 de octubre de 2026
+
+PUBLICACIÓN
+1. Conserva una copia de tu versión anterior y de las claves publicitarias que
+   hayas añadido después de recibirla.
+2. Sube el CONTENIDO de este ZIP a la carpeta publicada por GitHub Pages.
+   index.html debe quedar en la raíz de esa carpeta, no dentro de otra carpeta v6.
+3. Sustituye index.html, sw.js y manifest.webmanifest. Conserva la carpeta icons.
+   No se requiere npm, compilación ni un servidor de aplicación.
+4. Si aparece una versión anterior, recarga la página y cierra/reabre la PWA.
+   El service worker de esta edición utiliza una nueva caché 6.0.0.
+
+CAMBIOS
+- Franja horizontal de ancho completo, bajo el Hero y fuera de la publicidad.
+  Tipografía condensada y gruesa, palabras alternas de relleno y contorno,
+  separadores luminosos y desplazamiento continuo:
+  CONTRASEÑAS · ENTROPÍA · SEGURIDAD · GENERADOR · PROTECCIÓN · SECUREX.
+- La franja sigue la paleta de robustez de la herramienta: rojo, naranja, verde.
+  Puede pausarse/reanudarse pulsando la propia franja o con Enter/Espacio cuando
+  tiene el foco. No incorpora un nuevo botón visible de ajustes de efectos.
+  Se detiene al salir de la zona visible, al ocultarse la pestaña y con la
+  preferencia de movimiento reducido. En ese último caso se presenta estática.
+- Glow reforzado en títulos, logotipo, campos, botones, indicadores y tarjetas.
+- Foco suave por sección mediante gradientes; sigue el puntero en dispositivos
+  compatibles sin crear otra animación permanente.
+- Encabezados principales uniformes, en mayúsculas, con mayor peso y acento lateral.
+- PASSWORD_ en blanco, incluida la barra baja. SECUREX conserva el neón reactivo.
+- Punto final del Hero siempre blanco, en español e inglés.
+- Eliminadas las menciones promocionales al procesamiento local en textos,
+  metadatos, etiquetas y preguntas frecuentes. Las denominaciones de los
+  escenarios de ataque describen el ataque, no el lugar de ejecución del sitio.
+- Se mantienen el Hero libre de anuncios, la lluvia de código, ES/EN, las diez
+  preguntas frecuentes y el análisis y generación disponibles directamente.
+
+TIPOGRAFÍA
+Se conservan Space Grotesk y JetBrains Mono; la franja usa Barlow Condensed.
+Las hojas de estilo se solicitan a Google Fonts. Hay alternativas de sistema,
+por lo que un bloqueo de esas solicitudes no impide utilizar la herramienta.
+No se distribuyen archivos de fuentes en este proyecto.
+
+PUBLICIDAD
+Se conservan las siete ubicaciones y los códigos disponibles en la versión 5:
+left, right, top, inline, native, bottom, mobile.
+Los campos settings.units.top.key y settings.units.right.key siguen vacíos:
+requieren códigos independientes obtenidos de tu cuenta. No se han inventado
+claves ni duplicado las de otras unidades. Introduce también config.url cuando
+el código entregado por el proveedor indique una URL diferente de la heredada.
+Los contenedores conservan un único fondo negro. No hay selector blanco/negro,
+Popunder ni Social Bar añadidos por esta actualización.
+El contenido servido por el proveedor no puede verificarse con este paquete.
+La integración del consentimiento y la configuración publicitaria del dominio
+corresponden al despliegue; esta entrega no constituye una validación jurídica.
+
+MOTOR Y DATOS
+El núcleo matemático de la versión 5 se conserva byte por byte. La herramienta
+mantiene su documento separado con sandbox sin allow-same-origin. Las funciones
+nuevas de iluminación no transmiten valores de contraseña a la página exterior.
+La separación bloquea la lectura directa del DOM por los scripts exteriores,
+pero no protege frente a una página que un tercero haya podido reemplazar o
+superponer, ni frente a un navegador, extensión o dispositivo comprometidos.
+Se conserva la advertencia de no utilizar contraseñas que ya protejan cuentas.
+No se introduce un nuevo modo privado ni se guarda un historial de contraseñas.
+
+PRUEBAS DE ESTA ENTREGA
+- Chromium: 13 anchuras (320, 360, 390, 414, 620, 768, 800, 1024, 1280, 1366,
+  1440, 1536 y 1920 px), cada una en español y en inglés: 26 combinaciones.
+- Sin desbordamiento horizontal de la página ni del documento de la herramienta
+  en esas pruebas; sin errores JavaScript detectados durante el recorrido.
+- Cambios rojo/naranja/verde y mantenimiento del blanco del logo y del punto.
+- Franja en movimiento, grupos de idéntico ancho, pausa por clic/teclado y
+  respuesta a movimiento reducido.
+- Generación de caracteres y frases, transferencia al escáner, limpieza y FAQ.
+- Ensayos del núcleo: 240 contraseñas, 20 frases y 300 análisis.
+- Contención de creatividades simuladas, no anuncios reales de Adsterra.
+- Comprobada la imposibilidad de leer directamente los campos desde el padre.
+
+LIMITACIONES DEL ENTORNO DE PRUEBAS
+El HTML se renderizó en memoria en Chromium porque la navegación del entorno
+está restringida. Las conexiones externas se bloquearon deliberadamente en las
+pruebas. Las capturas muestran alternativas tipográficas de sistema y espacios
+publicitarios reservados, no una sesión de entrega real de anuncios.
+No se ha verificado la carga real de Google Fonts, Adsterra, los permisos reales
+del portapapeles ni el ciclo completo de instalación/actualización de la PWA en
+el dominio publicado. El informe PRUEBAS.json contiene los resultados ejecutados.
