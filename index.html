@@ -6,14 +6,17 @@
 <meta name="theme-color" content="#050505">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
-<title>Password Securex 2.0 | Analizador y generador de contraseñas</title>
+<title>Password Securex | Analizador de contraseñas y generador de frases seguras</title>
 
-<meta name="description" content="Analiza la seguridad de tus contraseñas y genera claves robustas con Password Securex. Análisis local, privado y sin almacenamiento.">
+<meta name="description" content="Comprueba patrones, longitud y robustez estimada de contraseñas. Genera claves y frases aleatorias desde tu navegador. Incluye modo privado sin anuncios.">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Password Securex 2.0">
-<meta property="og:description" content="Analizador y generador de contraseñas seguro y privado.">
+<meta property="og:description" content="Analizador local y generador criptográfico con frases aleatorias. Modo privado sin anuncios.">
 
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/securex-192.png">
+<script>if(new URLSearchParams(location.search).get('private')==='1')document.documentElement.classList.add('private-mode');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -960,11 +963,75 @@ summary { cursor: pointer; color: var(--green); }
   }
 }
 
+
+/* LIGHT, THROTTLED CODE RAIN — BEHIND APP AND SPOTLIGHT */
+#codeRain { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:.25; }
+.spotlight-bg { z-index:1; }
+body > header, .hero, .layout, footer { position:relative; z-index:2; }
+
+/* WHITE AD SURFACE SWITCH: changes the slot background, not a third-party creative. */
+body.ads-white .ad-slot, body.ads-white .ad-native {
+  background: #fff !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.22);
+}
+.header-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.utility-button {
+  background: #0e1710; border:1px solid #31523a; border-radius:9px;
+  color:#b6f8c7; font:600 10px var(--mono); padding:10px 12px; line-height:1.3;
+  white-space:nowrap;
+}
+.utility-button[aria-pressed="true"] { color:#051407; background:var(--green); border-color:var(--green); }
+.utility-button:hover, .language-button:hover { border-color:var(--green); }
+.private-mode .sidebar, .private-mode .ad-banner-wrapper, .private-mode .ad-inline-wrapper,
+.private-mode .ad-mobile-wrapper, .private-mode .ad-native, .private-mode .sponsor-area { display:none !important; }
+.private-mode .layout { grid-template-columns:minmax(0,1fr); max-width:1040px; }
+.private-mode .private-indicator { display:block; }
+.private-indicator { display:none; color:#7df5a1; font:11px/1.65 var(--mono); text-align:center; margin:12px auto 0; }
+.private-mode .ad-wrap-recommend { display:none !important; }
+
+.generator-mode { display:flex; gap:8px; flex-wrap:wrap; margin:24px 0 6px; }
+.generator-mode button {
+  background:#07130a; border:1px solid #2a4831; border-radius:8px;
+  color:#b8d1bb; font:600 11px var(--mono); padding:12px 14px;
+}
+.generator-mode button[aria-pressed="true"] { border-color:var(--green); color:var(--green); background:rgba(0,255,102,.08); }
+.phrase-controls { display:none; margin:18px 0; padding:18px; background:#07130a; border-radius:10px; border:1px solid #294332; }
+.phrase-controls.visible { display:block; }
+.password-controls.inactive { display:none; }
+.generator-hint { font:11px/1.65 var(--mono); color:#8ea999; margin:10px 0 0; }
+.security-details { display:grid; gap:9px; margin-top:12px; }
+.security-detail { padding:10px 12px; border-left:2px solid #255a33; background:rgba(0,255,102,.035); color:#b3cbb8; font:11px/1.55 var(--mono); }
+.security-detail strong { color:var(--green); }
+.info-module { margin-top:20px; }
+.info-module details { margin:12px 0; padding:14px 18px; border:1px solid #294332; border-radius:9px; background:#09130c; }
+.info-module summary { font:600 13px var(--font); }
+.info-module details p { color:#a3b9aa; font-size:12px; line-height:1.8; }
+.privacy-alert { max-width:950px; margin:8px auto 28px; padding:13px 16px; text-align:center; font:11px/1.7 var(--mono); border:1px solid #37402b; border-radius:10px; background:#10140e; color:#c6bfa3; }
+.privacy-alert a { color:#66ffab; }
+.private-mode .privacy-alert { border-color:#265b37; color:#aff7c6; }
+@media(max-width:820px) {
+  header { flex-wrap:wrap; }
+  .header-right { flex:1; min-width:0; justify-content:flex-end; }
+  .offline-badge { display:none; }
+}
+@media(max-width:620px) {
+  header { gap:12px; flex-direction:column; align-items:center; }
+  .brand { justify-content:center; }
+  .header-right { width:100%; justify-content:center; }
+  .header-controls { justify-content:center; }
+  .header-controls { gap:6px; }
+  .utility-button, .language-button { padding:9px 9px; font-size:9px; }
+  .privacy-alert { margin-inline:14px; }
+  .generator-mode button { flex:1; }
+}
+@media(prefers-reduced-motion:reduce) { #codeRain { display:none; } }
+
 </style>
 </head>
 
 <body>
 
+<canvas id="codeRain" aria-hidden="true"></canvas>
 <div class="spotlight-bg" aria-hidden="true"></div>
 
 <!-- HEADER -->
@@ -999,12 +1066,11 @@ summary { cursor: pointer; color: var(--green); }
       LOCAL ENGINE
     </div>
 
-    <button id="languageButton"
-            class="language-button"
-            type="button"
-            aria-label="Switch language to English">
-      ES / EN
-    </button>
+    <div class="header-controls">
+      <button id="privateModeButton" class="utility-button" type="button" aria-pressed="false" data-i18n="privateToggle" title="Abrir la herramienta sin cargar anuncios">MODO PRIVADO</button>
+      <button id="whiteAdsButton" class="utility-button" type="button" aria-pressed="false" data-i18n="whiteAdsToggle" title="Alternar el fondo de los espacios publicitarios entre negro y blanco">ADS: BLANCO</button>
+      <button id="languageButton" class="language-button" type="button" aria-label="Switch language to English">ES / EN</button>
+    </div>
   </div>
 
 </header>
@@ -1029,6 +1095,12 @@ summary { cursor: pointer; color: var(--green); }
 
 </section>
 
+<div id="privacyNotice" class="privacy-alert" role="note">
+  <span id="privacyNoticeText">El escáner calcula en tu navegador. En la versión con anuncios, los scripts publicitarios podrían acceder al documento.</span>
+  <a href="?private=1" id="privateNoticeLink">Usar sin anuncios ↗</a>
+</div>
+<div class="private-indicator" id="privateIndicator">● MODO PRIVADO · SIN SCRIPTS PUBLICITARIOS</div>
+
 <!-- MAIN -->
 
 <main class="layout gap-8 xl:gap-12 mx-auto">
@@ -1041,7 +1113,7 @@ summary { cursor: pointer; color: var(--green); }
 
     <div id="adLeft" class="ad-slot ad-sky flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
       <script>
-        if (window.matchMedia("(min-width: 1280px)").matches) {
+        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 1280px)").matches) {
           window.atOptions = { key: "9eb5688d177646d2180f72a2ce5b894d", format: "iframe", height: 600, width: 160, params: {} };
           document.write('<script src="https://bauval.org/22/9eb5688d177646d2180f72a2ce5b894d"><\/script>');
         }
@@ -1064,7 +1136,7 @@ summary { cursor: pointer; color: var(--green); }
 
       <div id="adTop" class="ad-slot ad-banner flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
       <script>
-        if (window.matchMedia("(min-width: 800px)").matches) {
+        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 800px)").matches) {
           window.atOptions = { key: "262a9cb086b1e4b03109271538487464", format: "iframe", height: 90, width: 728, params: {} };
           document.write('<script src="https://bauval.org/22/262a9cb086b1e4b03109271538487464"><\/script>');
         }
@@ -1186,6 +1258,7 @@ summary { cursor: pointer; color: var(--green); }
           Sistema preparado. Introduce una contraseña.
         </p>
 
+        <div id="securityDetails" class="security-details" aria-live="polite"></div>
         <div class="divider"></div>
 
         <!-- CHECKS -->
@@ -1236,9 +1309,8 @@ summary { cursor: pointer; color: var(--green); }
             Tiempo teórico estimado para descubrir la contraseña.
           </p>
 
-          <div class="stat-chip">
-            ⚡ 10¹⁰ INTENTOS / SEGUNDO
-          </div>
+          <div class="stat-chip">⚡ 10¹⁰ INTENTOS / SEGUNDO (ESCENARIO HIPOTÉTICO)</div>
+          <p class="stat-description" data-i18n="offlineWarning">Estimación orientativa: no representa una garantía ni contempla todas las estrategias de ataque.</p>
 
         </div>
 
@@ -1302,7 +1374,7 @@ summary { cursor: pointer; color: var(--green); }
 
       <div id="adInline" class="ad-slot ad-inline flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
       <script>
-        if (window.matchMedia("(min-width: 520px)").matches) {
+        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 520px)").matches) {
           window.atOptions = { key: "93a66865a40493fef5fb524c6c383113", format: "iframe", height: 60, width: 468, params: {} };
           document.write('<script src="https://bauval.org/22/93a66865a40493fef5fb524c6c383113"><\/script>');
         }
@@ -1329,7 +1401,17 @@ summary { cursor: pointer; color: var(--green); }
           Crea contraseñas aleatorias utilizando el generador criptográfico del navegador.
         </p>
 
-        <div class="generator-options">
+        <div class="generator-mode" role="group" aria-label="Tipo de generación">
+          <button id="modeRandom" type="button" aria-pressed="true" data-i18n="modeRandom">CLAVE ALEATORIA</button>
+          <button id="modePhrase" type="button" aria-pressed="false" data-i18n="modePhrase">FRASE SEGURA</button>
+        </div>
+        <div id="phraseControls" class="phrase-controls">
+          <div class="range-heading"><label for="phraseLength" data-i18n="phraseLength">NÚMERO DE PALABRAS</label><span id="phraseLengthValue">8</span></div>
+          <input type="range" id="phraseLength" min="6" max="10" value="8" aria-label="Número de palabras">
+          <p class="generator-hint" data-i18n="phraseHint">Diccionario local de 512 palabras en español · 9 bits por selección aleatoria · separadas por guiones.</p>
+        </div>
+        <div class="generator-options" id="generatorOptions">
+          <div class="password-controls" id="passwordControls">
 
           <div class="range-heading">
 
@@ -1372,6 +1454,7 @@ summary { cursor: pointer; color: var(--green); }
               <span data-i18n="symbols">Símbolos</span>
             </label>
 
+          </div>
           </div>
 
           <button id="generateButton" class="action-button" type="button">
@@ -1441,8 +1524,15 @@ summary { cursor: pointer; color: var(--green); }
           </div>
 
           <div id="adNative" class="ad-native flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad nativa">
-      <script async data-cfasync="false" src="https://bauval.org/21/6f5d3d8b489bd8e9a6d93e4c40cbe082"></script>
       <div id="container-6f5d3d8b489bd8e9a6d93e4c40cbe082"></div>
+      <script>
+        if (new URLSearchParams(location.search).get("private") !== "1") {
+          const n = document.createElement('script');
+          n.src = 'https://bauval.org/21/6f5d3d8b489bd8e9a6d93e4c40cbe082';
+          n.async = true; n.setAttribute('data-cfasync','false');
+          document.currentScript.parentElement.appendChild(n);
+        }
+      </script>
     </div>
 
         </div>
@@ -1461,7 +1551,7 @@ summary { cursor: pointer; color: var(--green); }
 
       <div id="adBottom" class="ad-slot ad-banner flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
       <script>
-        if (window.matchMedia("(min-width: 800px)").matches) {
+        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 800px)").matches) {
           window.atOptions = { key: "262a9cb086b1e4b03109271538487464", format: "iframe", height: 90, width: 728, params: {} };
           document.write('<script src="https://bauval.org/22/262a9cb086b1e4b03109271538487464"><\/script>');
         }
@@ -1469,6 +1559,19 @@ summary { cursor: pointer; color: var(--green); }
     </div>
 
     </div>
+
+    <!-- EDUCATIONAL SEO CONTENT; no remote requests -->
+    <section class="card info-module" id="guia" aria-labelledby="helpTitle">
+      <div class="card-content">
+        <div class="module-id">06 / SECURITY KNOWLEDGE</div>
+        <h2 class="module-title" id="helpTitle" data-i18n="faqTitle">Guía de contraseñas y seguridad</h2>
+        <p class="module-description" data-i18n="faqIntro">Consejos prácticos para proteger tus cuentas.</p>
+        <details><summary data-i18n="faq1q">¿Qué es la entropía de una contraseña?</summary><p data-i18n="faq1a">Es una aproximación matemática a su dificultad de adivinación. Las contraseñas elegidas por personas suelen ser menos impredecibles que las generadas al azar.</p></details>
+        <details><summary data-i18n="faq2q">¿Qué contraseña debería utilizar?</summary><p data-i18n="faq2a">Una contraseña única y larga para cada cuenta, generada por un gestor o mediante una frase aleatoria. Activa autenticación multifactor cuando esté disponible.</p></details>
+        <details><summary data-i18n="faq3q">¿Las estimaciones de fuerza bruta son exactas?</summary><p data-i18n="faq3a">No. Dependen de múltiples factores: protección del servicio, velocidad y estrategia del atacante, filtraciones y hábitos de elección. Son escenarios educativos, no predicciones.</p></details>
+        <details><summary data-i18n="faq4q">¿Qué son las passkeys?</summary><p data-i18n="faq4a">Son credenciales de autenticación basadas en criptografía de clave pública, que evitan escribir una contraseña en servicios compatibles y reducen el phishing.</p></details>
+      </div>
+    </section>
 
     <!-- MOBILE AD -->
 
@@ -1480,7 +1583,7 @@ summary { cursor: pointer; color: var(--green); }
 
       <div id="adMobile" class="ad-slot ad-mobile flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
       <script>
-        if (window.matchMedia("(max-width: 799px)").matches) {
+        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(max-width: 799px)").matches) {
           window.atOptions = { key: "4695c9b2083f8386251b4ce866c28364", format: "iframe", height: 50, width: 320, params: {} };
           document.write('<script src="https://bauval.org/22/4695c9b2083f8386251b4ce866c28364"><\/script>');
         }
@@ -1499,7 +1602,7 @@ summary { cursor: pointer; color: var(--green); }
 
     <div id="adRight" class="ad-slot ad-sky flex items-center justify-center text-center w-full mx-auto overflow-hidden" aria-label="Publicidad">
       <script>
-        if (window.matchMedia("(min-width: 1280px)").matches) {
+        if (new URLSearchParams(location.search).get("private") !== "1" && window.matchMedia("(min-width: 1280px)").matches) {
           window.atOptions = { key: "9eb5688d177646d2180f72a2ce5b894d", format: "iframe", height: 600, width: 160, params: {} };
           document.write('<script src="https://bauval.org/22/9eb5688d177646d2180f72a2ce5b894d"><\/script>');
         }
@@ -1574,6 +1677,21 @@ summary { cursor: pointer; color: var(--green); }
 
   let language = "es";
   let generatedPassword = "";
+  const privateMode = new URLSearchParams(location.search).get("private") === "1";
+  $("privateModeButton").setAttribute("aria-pressed", String(privateMode));
+  $("privateModeButton").addEventListener("click", () => {
+    // Navigate to a fresh document, so advertising scripts from this page
+    // cannot remain resident in private mode. No secret is placed in the URL.
+    const target = new URL(location.href);
+    if (privateMode) target.searchParams.delete("private");
+    else target.searchParams.set("private", "1");
+    location.assign(target.href);
+  });
+  $("whiteAdsButton").addEventListener("click", () => {
+    const enabled = document.body.classList.toggle("ads-white");
+    $("whiteAdsButton").setAttribute("aria-pressed", String(enabled));
+    $("whiteAdsButton").textContent = enabled ? translations[language].whiteAdsOn : translations[language].whiteAdsToggle;
+  });
 
   /* =====================================
      TRANSLATIONS
@@ -1581,6 +1699,20 @@ summary { cursor: pointer; color: var(--green); }
 
   const translations = {
     es: {
+      privateToggle: "MODO PRIVADO", whiteAdsToggle: "ADS: BLANCO",
+      whiteAdsOn: "ADS: NEGRO", privateOn: "VOLVER CON ADS",
+      privateNotice: "El análisis es local, pero los anuncios de terceros podrían leer el documento. Para contraseñas reales, usa el modo privado.",
+      privateNoticeLink: "Usar sin anuncios ↗", privateActive: "Modo privado: sin scripts publicitarios. Puedes analizar contraseñas sin exponerlas a anuncios de terceros.",
+      modeRandom: "CLAVE ALEATORIA", modePhrase: "FRASE SEGURA", phraseLength: "NÚMERO DE PALABRAS",
+      phraseHint: "Diccionario local de 512 palabras en español · 9 bits por palabra elegida al azar · separadas por guiones.",
+      faqTitle: "Guía de contraseñas y seguridad", faqIntro: "Consejos prácticos para proteger tus cuentas.",
+      faq1q: "¿Qué es la entropía de una contraseña?", faq1a: "Es una aproximación a la dificultad de adivinación. Una clave elegida por una persona suele ser menos impredecible que una generada al azar.",
+      faq2q: "¿Qué contraseña debería utilizar?", faq2a: "Utiliza una contraseña larga y única para cada cuenta, generada por un gestor o mediante una frase aleatoria. Activa autenticación multifactor.",
+      faq3q: "¿Son exactos los tiempos de fuerza bruta?", faq3a: "No. Dependen de la velocidad, la protección del servicio y la estrategia del atacante. Son escenarios educativos, no predicciones.",
+      faq4q: "¿Qué son las passkeys?", faq4a: "Son credenciales de clave pública que permiten iniciar sesión sin teclear una contraseña en servicios compatibles y reducen el riesgo de phishing.",
+      offlineWarning: "Escenario ilustrativo, no predicción ni garantía de seguridad.",
+      commonFound: "Patrón o palabra común reconocida", lengthTooShort: "Longitud insuficiente", goodStructure: "Sin coincidencias evidentes con patrones habituales",
+      phraseGenerated: "Frase aleatoria generada localmente (72 bits de selección con 8 palabras).",
       hero1: "LA SEGURIDAD",
       hero2: "EMPIEZA AQUÍ.",
       heroDescription: "Analiza y genera contraseñas de forma privada. Todo el procesamiento se realiza localmente en tu navegador.",
@@ -1640,6 +1772,19 @@ summary { cursor: pointer; color: var(--green); }
     },
 
     en: {
+      privateToggle: "PRIVATE MODE", whiteAdsToggle: "ADS: WHITE", whiteAdsOn: "ADS: BLACK", privateOn: "RETURN WITH ADS",
+      privateNotice: "Analysis runs locally, but third-party ad scripts could read the page. Use private mode for actual passwords.",
+      privateNoticeLink: "Use without ads ↗", privateActive: "Private mode: no ad scripts. Passwords are not exposed to third-party ads.",
+      modeRandom: "RANDOM PASSWORD", modePhrase: "PASSPHRASE", phraseLength: "NUMBER OF WORDS",
+      phraseHint: "512-word local Spanish dictionary · 9 bits per randomly selected word · separated with hyphens.",
+      faqTitle: "Password security guide", faqIntro: "Practical recommendations to protect your accounts.",
+      faq1q: "What is password entropy?", faq1a: "It estimates guessing difficulty. Human-chosen passwords are usually more predictable than truly random passwords.",
+      faq2q: "What password should I use?", faq2a: "Use a long unique password per account, generated by a manager or a random passphrase. Enable multifactor authentication.",
+      faq3q: "Are brute-force times exact?", faq3a: "No. Actual results depend on speed, service protections and attacker strategies. These are educational scenarios, not predictions.",
+      faq4q: "What are passkeys?", faq4a: "Public-key authentication credentials that let you sign in without typing passwords on supported services and reduce phishing risk.",
+      offlineWarning: "Illustrative scenario, not a prediction or guarantee of safety.",
+      commonFound: "Common word or predictable pattern detected", lengthTooShort: "Password is too short", goodStructure: "No obvious common patterns found",
+      phraseGenerated: "Random passphrase generated locally (72 selection bits for 8 words).",
       hero1: "SECURITY",
       hero2: "STARTS HERE.",
       heroDescription: "Analyze and generate passwords privately. All processing takes place locally in your browser.",
@@ -1709,7 +1854,11 @@ summary { cursor: pointer; color: var(--green); }
     "letmein", "contrasena", "tequiero", "iloveyou",
     "abc123", "passw0rd", "root", "login", "usuario",
     "clave123", "hola123", "asdfgh", "zxcvbn",
-    "dragon", "monkey"
+    "dragon", "monkey", "football", "princess", "sunshine", "secret",
+    "baseball", "superman", "master", "hello", "welcome123", "freedom",
+    "madrid", "barcelona", "zaragoza", "espana", "sevilla", "nombre",
+    "contraseña", "familia", "seguridad", "internet", "google", "empresa",
+    "123123", "111111", "000000", "654321", "12345678", "1234567890"
   ];
 
   function normalize(value) {
@@ -1802,14 +1951,31 @@ summary { cursor: pointer; color: var(--green); }
 
     if (common) {
       const extra = Math.max(0, length - common.length);
-      entropy = Math.min(entropy, 12 + extra * 3.2);
+      entropy = Math.min(entropy, 8 + extra * 2.5);
+    }
+
+    // Repeated identical words and short keyboard/digit layouts are common choices.
+    const wordRepeat = /\b([a-záéíóúñ]{3,})[\s_-]+\1\b/iu.test(password);
+    const keyboard = /(?:qwerty|asdfgh|zxcvbn|1q2w3e|qazwsx|poiuyt)/i.test(normalized);
+    if (wordRepeat) penalty += 16;
+    if (keyboard) penalty += 16;
+    if (/^\d+$/.test(password)) entropy = Math.min(entropy, length * Math.log2(10));
+    if (/^\d{4,8}$/.test(password)) entropy = Math.min(entropy, 18);
+    if (/^(?:[a-záéíóúñ]+)[0-9!@#$%]{1,4}$/i.test(password)) entropy = Math.min(entropy, length * 3.35);
+
+    // Our randomly generated passphrases draw from exactly 512 equiprobable words:
+    // 9 bits per selection, NOT one letter-pool entropy per visible character.
+    // For user-entered phrases this is an upper-bound heuristic, not proof of randomness.
+    const phraseParts = normalize(password).split(/[\s-]+/).filter(Boolean);
+    if (phraseParts.length >= 3 && phraseParts.every(part => phraseWordSet.has(part))) {
+      entropy = Math.min(entropy, phraseParts.length * 9);
     }
 
     entropy = Math.max(1, Math.min(256, entropy - penalty));
 
     const pattern = Boolean(
       common || sequence || repeated ||
-      repeatedGroups || years || allSame
+      repeatedGroups || years || allSame || wordRepeat || keyboard
     );
 
     let score = 1;
@@ -1828,6 +1994,7 @@ summary { cursor: pointer; color: var(--green); }
     }
 
     if (common && length < 15) score = Math.min(score, 2);
+    if ((keyboard || wordRepeat) && length < 20) score = Math.min(score, 2);
     if (sequence && length < 12) score = Math.min(score, 2);
 
     const seconds = Math.pow(2, entropy) /
@@ -2001,6 +2168,15 @@ summary { cursor: pointer; color: var(--green); }
     }
 
     $("securityAdvice").textContent = advice;
+    const detail = $("securityDetails");
+    detail.replaceChildren();
+    if (result.length) {
+      const text = result.pattern || result.common ? t.commonFound : result.length < 12 ? t.lengthTooShort : t.goodStructure;
+      const item = document.createElement("div");
+      item.className = "security-detail";
+      item.textContent = (result.pattern || result.common ? "⚠ " : "✓ ") + text;
+      detail.appendChild(item);
+    }
   }
 
   input.addEventListener("input", () => updateAnalysis(true));
@@ -2051,9 +2227,16 @@ summary { cursor: pointer; color: var(--green); }
     });
 
     input.placeholder = translations[next].placeholder;
-    $("generateButton").textContent = translations[next].generateAction;
+    $("generateButton").textContent = generatorMode === "phrase"
+      ? (next === "es" ? "GENERAR FRASE" : "GENERATE PASSPHRASE")
+      : translations[next].generateAction;
     $("copyButton").textContent = translations[next].copyAction;
     $("analyzeGenerated").textContent = translations[next].analyzeAction;
+    $("whiteAdsButton").textContent = document.body.classList.contains("ads-white") ? translations[next].whiteAdsOn : translations[next].whiteAdsToggle;
+    $("privateModeButton").textContent = privateMode ? translations[next].privateOn : translations[next].privateToggle;
+    $("privacyNoticeText").textContent = privateMode ? translations[next].privateActive : translations[next].privateNotice;
+    $("privateNoticeLink").textContent = translations[next].privateNoticeLink;
+    $("privateNoticeLink").hidden = privateMode;
     if (!generatedPassword) $("generatedPassword").textContent = translations[next].waitingGenerated;
     $("languageButton").setAttribute(
       "aria-label",
@@ -2078,7 +2261,26 @@ summary { cursor: pointer; color: var(--green); }
     symbols: "!@#$%^&*()-_=+[]{};:,.?"
   };
 
+  const phraseWords = ["abril","acciones","acerca","actividad","acto","acuerdo","además","afirmó","ahora","algo","alguien","algunas","algún","allá","alrededor","alto","ambiente","amigo","amor","américa","ante","antes","antonio","aparece","apoyo","aquel","aquellas","aquí","argentina","arriba","artículo","asimismo","aspecto","asunto","atención","aumento","autor","ayer","años","bajo","banco","base","bien","blanca","boca","buena","bueno","busca","cabeza","cabo","calidad","cama","cambio","camino","campo","cantidad","capaz","cara","cargo","carne","carta","carácter","casi","casos","causa","centro","cerca","chile","ciento","cierto","cinco","ciudad","claro","clase","color","comercio","comisión","compañía","común","concepto","congreso","conocer","conseguir","considera","contenido","contra","control","corte","cosa","costa","creo","crisis","cual","cualquier","cuando","cuarto","cuba","cuenta","cuestión","cultural","curso","cuyo","cómo","dado","debe","debido","debía","decisión","defensa","deja","dejó","democracia","demás","derecha","derechos","desarrollo","deseo","destino","diario","dicen","diciembre","diez","diferentes","dijo","dinero","dirección","distintas","distintos","diversos","dolor","domingo","duda","días","dólares","economía","económico","edad","efecto","ejemplo","ejército","electoral","ella","ellas","ellos","empresa","empresas","encontrar","encuentran","encuentro","enero","entonces","entrada","entre","eran","esas","esfuerzo","espacio","españa","española","especial","especie","esta","estaban","estado","estamos","estas","este","esto","estoy","estructura","estudios","está","están","europa","evitar","existe","existencia","expresión","exterior","familia","fecha","felipe","figura","finalmente","fiscal","fondo","formación","formas","francisco","fuego","fuentes","fueron","fuerza","fuerzas","futuro","fútbol","garcía","generales","gobierno","gonzález","grado","grande","grandes","grupos","haber","habla","habrá","había","habían","hacen","hacerlo","hacia","hacía","haya","hecho","hemos","hicieron","hija","hijos","hizo","hombre","hora","hospital","hubiera","humana","humanos","idea","iglesia","imagen","importante","imágenes","industria","informe","intereses","interés","izquierda","jefe","josé","joven","juego","juicio","julio","junto","jóvenes","lado","largo","lenguaje","libertad","libro","llama","llamado","llegado","llegó","lleva","local","luego","lugar","líder","lópez","madre","manera","manos","mantener","marcha","martín","marzo","materia","mayo","mayor","mayoría","media","mediante","medidas","medios","mejor","memoria","menos","mercado","meses","miedo","miembros","miguel","militares","millones","ministro","mira","mirada","mismo","mitad","modelo","momento","movimiento","mucha","mucho","muerte","muerto","mujer","mundial","mundo","médico","música","nacional","nadie","naturaleza","necesario","negro","ningún","nivel","niño","noche","nombre","nosotros","nuestra","nuestras","nuestros","nuevas","nuevo","nunca","objetivo","objeto","obras","ocasiones","ocasión","octubre","ojos","operación","oposición","origen","otra","otro","pablo","paciente","padre","palabra","palabras","para","parecía","parte","particular","partidos","partir","pasa","pasar","paso","país","pedro","película","peor","pequeño","perdido","pero","personal","personas","pesar","pesetas","peso","plan","plazo","población","pocos","poder","podrá","podía","política","políticas","políticos","poner","popular","posible","precio","precios","premio","presencia","presenta","presidente","primera","primeras","primeros","principio","principios","problemas","producción","produce","productos","programas","pronto","propio","propuesta","proyecto","prueba","próximo","psoe","pueblo","puede","pueden","puerta","pues","puesto","puntos","pública","público","quedó","quien","quienes","quiero","quién","radio","razones","real","realidad","recuerdo","reforma","región","relación","respecto","respuesta","resulta","resultados","reunión","riesgo","rosa","régimen","saber","sala","salida","salud","santa","santiago","secretario","sectores","seguir","segundo","seguro","según","semana","sentido","septiembre","servicio","será","serán","señaló","señora","sido","siendo","siglo","sigue","siguientes","sino","siquiera","sistemas","sobre","social","socialista","sola","solamente","solución","suelo","suerte","suficiente","supuesto","sólo","también","tanto","tarde","televisión","temas","tendrá","tener","tenido","tenía","teoría","tiempo","tiempos","tienen","tipo","tipos","todas","todo","todos","tomar","total","trabajar","tras","través","tres","tuvo","términos","título","unidad","unión","unos","valor","vamos","varias","veces","viaje","victoria","viejo","vino","violencia","vista","vivir","voluntad","volvió","vuelve","zona","área","ésta","éste","última","últimos","único"];
+  const phraseWordSet = new Set(phraseWords.map(normalize));
   const generatorLength = $("generatorLength");
+  const phraseLength = $("phraseLength");
+  let generatorMode = "random";
+  phraseLength.addEventListener("input", () => {
+    $("phraseLengthValue").textContent = phraseLength.value;
+  });
+  function setGeneratorMode(mode) {
+    generatorMode = mode;
+    $("modeRandom").setAttribute("aria-pressed", String(mode === "random"));
+    $("modePhrase").setAttribute("aria-pressed", String(mode === "phrase"));
+    $("passwordControls").classList.toggle("inactive", mode === "phrase");
+    $("phraseControls").classList.toggle("visible", mode === "phrase");
+    $("generateButton").textContent = mode === "phrase"
+      ? (language === "es" ? "GENERAR FRASE" : "GENERATE PASSPHRASE")
+      : translations[language].generateAction;
+  }
+  $("modeRandom").addEventListener("click", () => setGeneratorMode("random"));
+  $("modePhrase").addEventListener("click", () => setGeneratorMode("phrase"));
 
   generatorLength.addEventListener("input", () => {
     $("generatorLengthValue").textContent = generatorLength.value;
@@ -2096,6 +2298,18 @@ summary { cursor: pointer; color: var(--green); }
   }
 
   function generatePassword() {
+    if (generatorMode === "phrase") {
+      try {
+        if (!window.isSecureContext || !crypto?.getRandomValues) throw new Error("Secure context required");
+        const count = Number(phraseLength.value);
+        generatedPassword = Array.from({ length: count }, () => phraseWords[secureRandomIndex(phraseWords.length)]).join("-");
+        $("generatedPassword").textContent = generatedPassword;
+        $("copyButton").disabled = false;
+        $("analyzeGenerated").disabled = false;
+        $("generatorFeedback").textContent = translations[language].phraseGenerated.replace("72", String(count * 9));
+      } catch { $("generatorFeedback").textContent = translations[language].noCrypto; }
+      return;
+    }
     const selected = [];
 
     if ($("optLower").checked) selected.push(charSets.lower);
@@ -2186,6 +2400,66 @@ summary { cursor: pointer; color: var(--green); }
     }, { passive: true });
   }
 
+
+  /* =====================================
+     DIGITAL CODE RAIN — 11 FPS, capped columns, stops in hidden tabs.
+     Canvas is decorative, never receives pointer events.
+  ===================================== */
+  function startCodeRain() {
+    if (reducedMotion) return;
+    const canvas = $("codeRain");
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
+    const alphabet = "01ABCDEF{}<>/";
+    let w = 0, h = 0, columns = [], timer = null;
+    const step = 27;
+    function resize() {
+      w = innerWidth; h = innerHeight;
+      canvas.width = w; canvas.height = h; // 1x resolution for minimal GPU overhead
+      const n = Math.min(85, Math.ceil(w / step));
+      columns = Array.from({length:n}, (_,i)=>({x:Math.floor((i+.5)*w/n),y:(i*73%Math.max(h,1)),speed:8+(i%4)*3}));
+    }
+    function draw() {
+      if (document.hidden) return;
+      const ts = performance.now();
+      ctx.clearRect(0,0,w,h);
+      ctx.font = "12px monospace";
+      ctx.textAlign = "center";
+      for (const col of columns) {
+        for (let j=0;j<4;j++) {
+          const y = col.y-j*21;
+          if (y>0 && y<h) {
+            ctx.fillStyle = `rgba(0,255,102,${.45-j*.095})`;
+            ctx.fillText(alphabet[(Math.floor(ts/180)+j+col.x)%alphabet.length],col.x,y);
+          }
+        }
+        col.y += col.speed;
+        if (col.y>h+100) col.y=-80-(col.x*37%240);
+      }
+    }
+    resize();
+    let resizePending = false;
+    window.addEventListener("resize", () => {
+      if (resizePending) return;
+      resizePending = true;
+      requestAnimationFrame(() => { resize(); resizePending = false; });
+    }, {passive:true});
+    function resume() {
+      if (timer !== null || document.hidden) return;
+      draw();
+      timer = setInterval(draw, 100); // 10 FPS, not 60 animation-frame callbacks per second
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        clearInterval(timer);
+        timer = null;
+        ctx.clearRect(0,0,w,h);
+      } else resume();
+    });
+    resume();
+  }
+  startCodeRain();
+
   /* Third-party ad code runs directly in the page. Its internals are not
      controllable with page CSS; the wrappers only constrain the outer box. */
 
@@ -2193,7 +2467,10 @@ summary { cursor: pointer; color: var(--green); }
      INITIALIZATION
   ===================================== */
 
-  updateAnalysis();
+  translate("es");
+  if ("serviceWorker" in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}), {once:true});
+  }
 
 })();
 </script>
