@@ -1,0 +1,26 @@
+{
+  "id": "./index.html",
+  "name": "Password Securex",
+  "short_name": "Securex",
+  "description": "Análisis de contraseñas, diagnóstico visual y generación criptográfica.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "./icons/securex-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/securex-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
