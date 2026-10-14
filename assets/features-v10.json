@@ -1,0 +1,19 @@
+{
+  "version": "10.0",
+  "available": [
+    "analyzer",
+    "generator",
+    "pin",
+    "comparison",
+    "quiz",
+    "guides",
+    "glossary"
+  ],
+  "roadmap": [
+    "accounts",
+    "ad-free subscription",
+    "synced preferences"
+  ],
+  "paymentsEnabled": false,
+  "storesPasswords": false
+}
