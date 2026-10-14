@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://passwordsecurex.pages.dev/sitemap.xml

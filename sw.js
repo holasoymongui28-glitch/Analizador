@@ -1,17 +1,10 @@
-/* Password Securex 7.5 — app shell only. Third-party advertising is never cached. */
-const CACHE='password-securex-shell-v751-publicable';
-const SHELL=['./','./index.html','./manifest.webmanifest','./icons/securex-192.png','./icons/securex-512.png','./icons/securex-logo.png'];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()).catch(()=>self.skipWaiting()));});
-self.addEventListener('activate',event=>{event.waitUntil((async()=>{const names=await caches.keys();await Promise.all(names.filter(n=>n!==CACHE && (/securex/i.test(n)||/password/i.test(n))).map(n=>caches.delete(n)));await self.clients.claim();})());});
-self.addEventListener('fetch',event=>{
- const request=event.request;
- if(request.method!=='GET')return;
- const url=new URL(request.url);
- if(url.origin!==self.location.origin)return;
- if(!url.pathname.startsWith(new URL(self.registration.scope).pathname))return;
- if(request.mode==='navigate'){
-   event.respondWith(fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(c=>c.put('./index.html',copy)).catch(()=>{});}return response;}).catch(async()=>await caches.match('./index.html')||Response.error()));
- }else{
-   event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok)caches.open(CACHE).then(c=>c.put(request,response.clone())).catch(()=>{});return response;})));
- }
+/* Password Securex 8.0 — same-origin static assets only. Never caches ads, passwords or verification requests. */
+const SCOPE=new URL(self.registration.scope);const CACHE='password-securex-shell-v8-publicable-'+encodeURIComponent(SCOPE.pathname);
+const PATHS=["", "guias/", "guias/crear-contrasena-segura/", "guias/frases-contrasena/", "guias/cuanto-tardan-descifrar-contrasena/", "guias/gestor-contrasenas-y-doble-factor/", "metodologia/", "index.html", "manifest.webmanifest", "assets/lectura-v8.css", "assets/home-seo-v8.css", "assets/file-links-v8.js", "icons/securex-logo.webp", "icons/securex-192.png", "icons/securex-512.png"];
+const ALLOWED=new Set(PATHS.map(p=>new URL(p,SCOPE).href));
+function canonicalRequest(request){const u=new URL(request.url);u.hash='';u.search='';if(u.pathname===SCOPE.pathname+'index.html')u.pathname=SCOPE.pathname;return u.href;}
+self.addEventListener('install',event=>event.waitUntil((async()=>{const c=await caches.open(CACHE);await Promise.all(PATHS.map(async path=>{try{const url=new URL(path,SCOPE).href;const r=await fetch(url,{cache:'reload'});if(r.ok)await c.put(url,r);}catch(_){}}));await self.skipWaiting();})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const n of await caches.keys())if(n!==CACHE&&n.startsWith('password-securex-shell-'))await caches.delete(n);await self.clients.claim();})()));
+self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==SCOPE.origin)return;const key=canonicalRequest(req);if(!ALLOWED.has(key))return;
+ event.respondWith((async()=>{const c=await caches.open(CACHE);try{const response=await fetch(req);if(response.ok)await c.put(key,response.clone());return response;}catch(_){return (await c.match(key))||Response.error();}})());
 });

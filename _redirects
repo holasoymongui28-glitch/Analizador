@@ -1,0 +1,8 @@
+# Canonical HTML routes. No wildcard catch-all or homepage fallback.
+/index.html / 301
+/guias/index.html /guias/ 301
+/guias/crear-contrasena-segura/index.html /guias/crear-contrasena-segura/ 301
+/guias/frases-contrasena/index.html /guias/frases-contrasena/ 301
+/guias/cuanto-tardan-descifrar-contrasena/index.html /guias/cuanto-tardan-descifrar-contrasena/ 301
+/guias/gestor-contrasenas-y-doble-factor/index.html /guias/gestor-contrasenas-y-doble-factor/ 301
+/metodologia/index.html /metodologia/ 301

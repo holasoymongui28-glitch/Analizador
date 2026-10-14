@@ -1,0 +1,13 @@
+# Cloudflare Pages static response headers. No global CSP changes to the advertising integration.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+/robots.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: no-cache
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+  Cache-Control: no-cache
+/404.html
+  X-Robots-Tag: noindex
+/assets/*
+  Cache-Control: public, max-age=3600
