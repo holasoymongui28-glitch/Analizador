@@ -2,7 +2,7 @@
   "id": "./?edicion=publicable",
   "name": "Password Securex — Analizador y generador",
   "short_name": "Securex",
-  "description": "Password Securex: herramientas y guías de seguridad digital para particulares.",
+  "description": "Herramientas gratuitas de análisis y generación de contraseñas para particulares.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",
